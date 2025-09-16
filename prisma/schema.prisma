@@ -17,16 +17,19 @@ model User {
   qrCode     String       @unique
   createdAt  DateTime     @default(now())
   password   String
+
   purchases  Purchase[]
   userPoints UserPoints[]
 }
 
 /// İşletmeler
 model Company {
-  id        Int      @id @default(autoincrement())
-  name      String
-  address   String?
-  createdAt DateTime @default(now())
+  id         Int          @id @default(autoincrement())
+  name       String
+  email      String       @unique   // login için email
+  password   String                 // login için şifre
+  address    String?
+  createdAt  DateTime     @default(now())
 
   categories Category[]
   products   Product[]
@@ -36,31 +39,31 @@ model Company {
 
 /// Ürün kategorileri
 model Category {
-  id   Int    @id @default(autoincrement())
-  name String
+  id        Int      @id @default(autoincrement())
+  name      String
 
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId Int
 
-  products Product[]
+  products  Product[]
 }
 
 /// Ürünler
 model Product {
-  id           Int      @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   name         String
   price        Float
-  pointsToBuy  Int      @default(0)
-  pointsOnSell Int      @default(0)
-  createdAt    DateTime @default(now())
+  pointsToBuy  Int       @default(0)
+  pointsOnSell Int       @default(0)
+  createdAt    DateTime  @default(now())
 
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId Int
+  company      Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId    Int
 
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  categoryId Int?
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId   Int?
 
-  purchases Purchase[]
+  purchases    Purchase[]
 }
 
 /// Satın almalar
@@ -71,8 +74,8 @@ model Purchase {
   pointsEarned Int      @default(0)
   purchaseDate DateTime @default(now())
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
 
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId Int
@@ -83,14 +86,14 @@ model Purchase {
 
 /// Müşteri puanları
 model UserPoints {
-  id          Int @id @default(autoincrement())
-  totalPoints Int @default(0)
+  id          Int     @id @default(autoincrement())
+  totalPoints Int     @default(0)
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
 
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId Int
+  company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId   Int
 
   @@unique([userId, companyId]) // her müşteri + şirket için tek kayıt
 }
