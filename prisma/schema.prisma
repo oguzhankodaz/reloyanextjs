@@ -24,7 +24,7 @@ model User {
 
 /// İşletmeler
 model Company {
-  id         Int          @id @default(autoincrement())
+  id         String       @id @default(uuid()) // UUID primary key
   name       String
   email      String       @unique   // login için email
   password   String                 // login için şifre
@@ -43,7 +43,7 @@ model Category {
   name      String
 
   company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId Int
+  companyId String
 
   products  Product[]
 }
@@ -58,7 +58,7 @@ model Product {
   createdAt    DateTime  @default(now())
 
   company      Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId    Int
+  companyId    String
 
   category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   categoryId   Int?
@@ -78,7 +78,7 @@ model Purchase {
   userId    String
 
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId Int
+  companyId String
 
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId Int
@@ -93,7 +93,7 @@ model UserPoints {
   userId      String
 
   company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId   Int
+  companyId   String
 
   @@unique([userId, companyId]) // her müşteri + şirket için tek kayıt
 }
