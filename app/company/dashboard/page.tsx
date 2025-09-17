@@ -5,13 +5,36 @@ import CompanyNavbar from "@/components/company/Navbar/Navbar";
 import QRReader from "@/components/company/QrReader";
 import { QrCode, Package, Users, BarChart2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const CompanyDashboard = () => {
   const router = useRouter();
+  const [companyName, setCompanyName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("company");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setCompanyName(parsed.name || "İşletme");
+      } catch (err) {
+        console.error("Company parse error:", err);
+      }
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex flex-col">
       <CompanyNavbar />
+
+      {/* İşletme Adı */}
+      <section className="p-6">
+        <h1 className="text-2xl font-bold">
+          👋 Hoş geldiniz,{" "}
+          <span className="text-yellow-400">{companyName}</span>
+        </h1>
+        <p className="text-gray-400 mt-1">Şirket panelinizi buradan yönetebilirsiniz.</p>
+      </section>
 
       {/* Üstte hızlı istatistikler */}
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4">

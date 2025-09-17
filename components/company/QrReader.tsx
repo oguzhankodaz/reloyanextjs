@@ -28,13 +28,6 @@ export default function QRReaderModal() {
       {open && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-4 w-[360px] text-center relative">
-            <button
-              onClick={() => setOpen(false)}
-              className="absolute top-2 right-2 text-gray-600 hover:text-black"
-            >
-              ✕
-            </button>
-
             <h2 className="text-lg font-bold mb-3">📷 QR Kod Oku</h2>
 
             <Scanner
@@ -49,6 +42,14 @@ export default function QRReaderModal() {
               }}
               onError={(err) => console.error("QR hata:", err)}
             />
+
+            {/* Alt kısımda kırmızı kapatma butonu */}
+            <button
+              onClick={() => setOpen(false)}
+              className="mt-4 w-full bg-red-600 text-white font-semibold py-2 rounded-lg hover:bg-red-700 transition"
+            >
+              Kapat
+            </button>
           </div>
         </div>
       )}

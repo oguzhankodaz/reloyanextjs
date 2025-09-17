@@ -45,7 +45,7 @@ const ProductList: React.FC<Props> = ({
 
   const toggleSelect = (id: number, checked: boolean) => {
     let updated = [...selected];
-  
+
     if (checked) {
       if (!updated.find((i) => i.id === id)) {
         updated.push({ id, quantity: 1 });
@@ -53,26 +53,25 @@ const ProductList: React.FC<Props> = ({
     } else {
       updated = updated.filter((i) => i.id !== id);
     }
-  
+
     setSelected(updated);
     onSelectChange?.(updated);
   };
-  
-  
+
   const updateQuantity = (id: number, quantity: number) => {
     const updated = [...selected]; // ✅ const
     const index = updated.findIndex((i) => i.id === id);
-  
+
     if (index !== -1) {
       updated[index].quantity = quantity;
     } else {
       updated.push({ id, quantity });
     }
-  
+
     setSelected(updated);
     onSelectChange?.(updated);
   };
-  
+
   return (
     <div>
       {/* Search bar */}
@@ -83,7 +82,7 @@ const ProductList: React.FC<Props> = ({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-black focus:outline-none"
-          />
+        />
       </div>
       <hr className="border-t border-gray-300 mb-4" />
 
@@ -129,11 +128,16 @@ const ProductList: React.FC<Props> = ({
                     }
                     className="w-20 h-12 text-lg border rounded px-3 text-center"
                   />
-                  <input
-                    type="checkbox"
-                    onChange={(e) => toggleSelect(product.id, e.target.checked)}
-                    className="w-6 h-6 accent-green-600"
-                  />
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      onChange={(e) =>
+                        toggleSelect(product.id, e.target.checked)
+                      }
+                      className="w-6 h-6 accent-green-600"
+                    />
+                    <span className="text-sm text-gray-700">Seç</span>
+                  </label>
                 </div>
               )}
             </li>
