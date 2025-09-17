@@ -3,9 +3,12 @@
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
 import { getCompanyCustomersAction } from "@/actions/customers";
 import { useEffect, useState } from "react";
+import { CompanyCustomer } from "@/lib/types";
+
+
 
 const CustomersPage = () => {
-  const [customers, setCustomers] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<CompanyCustomer[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

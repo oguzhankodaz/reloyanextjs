@@ -1,9 +1,10 @@
+/** @format */
 "use client";
 
 import { getUserByIdAction } from "@/actions/users";
 import { getProductsByCompanyAction } from "@/actions/product";
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ProductList from "../company/products/ProductList";
 import { addPurchaseAction } from "@/actions/purchases";
@@ -11,9 +12,8 @@ import { addPurchaseAction } from "@/actions/purchases";
 type User = {
   id: string;
   name: string;
-  surname?: string;
+  surname?: string | null;
   email: string;
-  phone?: string;
 };
 
 type Product = {
@@ -22,22 +22,20 @@ type Product = {
   price: number;
   pointsToBuy: number;
   pointsOnSell: number;
-  createdAt: Date;
-  companyId: string;
-  categoryId?: number | null;
 };
 
 export default function QRResultPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const userId = searchParams.get("userId");
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [selected, setSelected] = useState<{ id: number; quantity: number }[]>(
-    []
-  );
+  const [selected, setSelected] = useState<
+    { id: number; quantity: number }[]
+  >([]);
   const [saving, setSaving] = useState(false);
 
   // Kullanıcı bilgisi
@@ -45,12 +43,21 @@ export default function QRResultPage() {
     if (userId) {
       getUserByIdAction(userId).then((res) => {
         if (res.success) {
-          setUser(res.user as User);
+          setUser(res.user);
         }
         setLoading(false);
       });
+    } else {
+      setLoading(false);
     }
   }, [userId]);
+
+  // Kullanıcı bulunamazsa dashboard’a yönlendir
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/company/dashboard");
+    }
+  }, [loading, user, router]);
 
   // Şirket ürünlerini getir
   useEffect(() => {
@@ -64,7 +71,7 @@ export default function QRResultPage() {
     const companyId = company.id;
 
     getProductsByCompanyAction(companyId).then((res) => {
-      if (res.success) setProducts(res.products as Product[]);
+      if (res.success) setProducts(res.products);
     });
   }, []);
 
@@ -101,10 +108,7 @@ export default function QRResultPage() {
   };
 
   if (loading) return <p className="text-center mt-10">⏳ Yükleniyor...</p>;
-  if (!user)
-    return (
-      <p className="text-center mt-10 text-red-600">Kullanıcı bulunamadı.</p>
-    );
+  if (!user) return null; // yönlendirme yapılana kadar boş dön
 
   return (
     <div>

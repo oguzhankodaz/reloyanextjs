@@ -1,8 +1,11 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { CompanyCustomer } from "@/lib/types";
 
-export async function getCompanyCustomersAction(companyId: string) {
+export async function getCompanyCustomersAction(
+  companyId: string
+): Promise<{ success: boolean; customers: CompanyCustomer[] }> {
   try {
     const customers = await prisma.userPoints.findMany({
       where: { companyId },
@@ -17,7 +20,7 @@ export async function getCompanyCustomersAction(companyId: string) {
         },
       },
       orderBy: {
-        totalPoints: "desc", // çok puanı olan en üstte
+        totalPoints: "desc",
       },
     });
 
@@ -27,3 +30,4 @@ export async function getCompanyCustomersAction(companyId: string) {
     return { success: false, customers: [] };
   }
 }
+
