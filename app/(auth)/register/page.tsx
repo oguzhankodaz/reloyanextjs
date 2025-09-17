@@ -2,6 +2,8 @@
 
 import { registerAction } from "@/actions/auth";
 import { useActionState } from "react";
+import { useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const [state, formAction] = useActionState(registerAction, {
@@ -9,6 +11,20 @@ export default function RegisterPage() {
     message: "",
     user: null,
   });
+
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  // ✅ Başarılı kayıt sonrası login sayfasına yönlendir
+  useEffect(() => {
+    if (state.success) {
+      const timeout = setTimeout(() => {
+        router.push("/login");
+      }, 1500); // 1.5 sn sonra yönlendirme
+
+      return () => clearTimeout(timeout);
+    }
+  }, [state.success, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black">
@@ -22,12 +38,20 @@ export default function RegisterPage() {
         </p>
 
         {/* Form */}
-        <form className="space-y-5" action={formAction}>
+        <form
+          className="space-y-5"
+          action={(formData) =>
+            startTransition(() => {
+              formAction(formData);
+            })
+          }
+        >
           <div>
             <input
               type="text"
               name="name"
               placeholder="Adınız"
+              required
               className=" text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
             />
           </div>
@@ -44,6 +68,7 @@ export default function RegisterPage() {
               type="email"
               name="email"
               placeholder="E-posta adresiniz"
+              required
               className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
             />
           </div>
@@ -52,14 +77,16 @@ export default function RegisterPage() {
               type="password"
               name="password"
               placeholder="Şifreniz"
+              required
               className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-800 transition-colors"
+            disabled={isPending}
+            className="w-full bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
           >
-            Kayıt Ol
+            {isPending ? "⏳ Kayıt olunuyor..." : "Kayıt Ol"}
           </button>
         </form>
 

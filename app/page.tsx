@@ -21,7 +21,7 @@ export default function HomePage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black text-white px-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black text-white px-6 pt-8">
       {/* Slogan */}
       <h1 className="text-5xl font-extrabold text-center mb-4 tracking-tight">
         ReloYa

@@ -4,8 +4,8 @@ import CompanyNavbar from "@/components/company/Navbar/Navbar";
 import { getCompanyCustomersAction } from "@/actions/customers";
 import { useEffect, useState } from "react";
 import { CompanyCustomer } from "@/lib/types";
-
-
+import CustomersSkeleton from "./CustomersSkeleton";
+import BackButton from "@/components/company/BackButton";
 
 const CustomersPage = () => {
   const [customers, setCustomers] = useState<CompanyCustomer[]>([]);
@@ -24,15 +24,17 @@ const CustomersPage = () => {
     });
   }, []);
 
-  if (loading) return <p className="p-6 text-gray-300">⏳ Yükleniyor...</p>;
-
   return (
     <div className="min-h-screen bg-black text-gray-100">
       <CompanyNavbar />
+      <BackButton />
+
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-6 text-white">👥 Müşterilerim</h1>
 
-        {customers.length === 0 ? (
+        {loading ? (
+          <CustomersSkeleton /> // ✅ skeleton ekledik
+        ) : customers.length === 0 ? (
           <p className="text-gray-400">Henüz müşteriniz yok.</p>
         ) : (
           <div className="overflow-x-auto rounded-lg shadow-md">

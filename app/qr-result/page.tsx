@@ -1,13 +1,15 @@
 /** @format */
 "use client";
 
+import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import CompanyNavbar from "@/components/company/Navbar/Navbar";
+import ProductList from "../company/products/ProductList";
+
 import { getUserByIdAction } from "@/actions/users";
 import { getProductsByCompanyAction } from "@/actions/product";
-import CompanyNavbar from "@/components/company/Navbar/Navbar";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import ProductList from "../company/products/ProductList";
 import { addPurchaseAction } from "@/actions/purchases";
+import { getUserPointsAction } from "@/actions/points";
 
 type User = {
   id: string;
@@ -30,26 +32,56 @@ export default function QRResultPage() {
   const userId = searchParams.get("userId");
 
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
   const [products, setProducts] = useState<Product[]>([]);
-  const [selected, setSelected] = useState<
-    { id: number; quantity: number }[]
-  >([]);
+  const [selected, setSelected] = useState<{ id: number; quantity: number }[]>(
+    []
+  );
+  const [totalPoints, setTotalPoints] = useState<number>(0);
+
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Kullanıcı bilgisi
+  // Kullanıcı + Puan + Ürünleri getir
   useEffect(() => {
-    if (userId) {
-      getUserByIdAction(userId).then((res) => {
-        if (res.success) {
-          setUser(res.user);
-        }
-        setLoading(false);
-      });
-    } else {
+    if (!userId) {
       setLoading(false);
+      return;
     }
+
+    const companyRaw = localStorage.getItem("company");
+    if (!companyRaw) {
+      console.warn("Company bilgisi bulunamadı.");
+      setLoading(false);
+      return;
+    }
+
+    const company = JSON.parse(companyRaw);
+    const companyId: string = company.id;
+
+    (async () => {
+      // Kullanıcı bilgisi
+      const userRes = await getUserByIdAction(userId);
+      if (userRes.success) {
+        setUser(userRes.user);
+
+        // Kullanıcının puanı
+        const pointsRes = await getUserPointsAction(userId);
+        if (pointsRes.success) {
+          const companyPoints = pointsRes.points.find(
+            (p) => p.company.id === companyId
+          );
+          setTotalPoints(companyPoints?.totalPoints ?? 0);
+        }
+      }
+
+      // Şirket ürünleri
+      const prodRes = await getProductsByCompanyAction(companyId);
+      if (prodRes.success) {
+        setProducts(prodRes.products);
+      }
+
+      setLoading(false);
+    })();
   }, [userId]);
 
   // Kullanıcı bulunamazsa dashboard’a yönlendir
@@ -59,22 +91,7 @@ export default function QRResultPage() {
     }
   }, [loading, user, router]);
 
-  // Şirket ürünlerini getir
-  useEffect(() => {
-    const companyRaw = localStorage.getItem("company");
-    if (!companyRaw) {
-      console.warn("Company bilgisi bulunamadı.");
-      return;
-    }
-
-    const company = JSON.parse(companyRaw);
-    const companyId = company.id;
-
-    getProductsByCompanyAction(companyId).then((res) => {
-      if (res.success) setProducts(res.products);
-    });
-  }, []);
-
+  // Satın alma kaydetme
   const handleSave = async () => {
     if (!userId) return;
     if (selected.length === 0) {
@@ -87,8 +104,9 @@ export default function QRResultPage() {
       alert("Şirket bilgisi bulunamadı.");
       return;
     }
+
     const company = JSON.parse(companyRaw);
-    const companyId = company.id;
+    const companyId: string = company.id;
 
     const items = selected.map((i) => ({
       productId: i.id,
@@ -102,6 +120,15 @@ export default function QRResultPage() {
     if (res.success) {
       alert(`Satın alma kaydedildi ✅ Toplam +${res.totalPoints} puan eklendi`);
       setSelected([]);
+
+      // Satın alma sonrası puanı güncelle
+      const pointsRes = await getUserPointsAction(userId);
+      if (pointsRes.success) {
+        const companyPoints = pointsRes.points.find(
+          (p) => p.company.id === companyId
+        );
+        setTotalPoints(companyPoints?.totalPoints ?? 0);
+      }
     } else {
       alert(res.message);
     }
@@ -122,6 +149,10 @@ export default function QRResultPage() {
           </p>
           <p className="text-black">
             <strong>Email:</strong> {user.email}
+          </p>
+          <p className="text-black mt-2">
+            <strong>Toplam Puanı:</strong>{" "}
+            <span className="text-green-600 font-bold">{totalPoints}</span>
           </p>
         </div>
 

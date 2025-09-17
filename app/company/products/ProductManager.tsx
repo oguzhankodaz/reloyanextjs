@@ -1,5 +1,3 @@
-/** @format */
-
 "use client";
 import React, { useEffect, useState } from "react";
 import {
@@ -8,6 +6,7 @@ import {
 } from "@/actions/product";
 import ProductForm from "./ProductForm";
 import ProductList from "./ProductList";
+import ProductSkeleton from "./ProductSkeleton"; // ✅ ekledik
 
 type Product = {
   id: number;
@@ -20,8 +19,8 @@ type Product = {
 const ProductManager = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // company id ve ürünleri al
   useEffect(() => {
     const storedCompany = localStorage.getItem("company");
     if (storedCompany) {
@@ -29,16 +28,22 @@ const ProductManager = () => {
       setCompanyId(parsed.id);
 
       (async () => {
+        setLoading(true);
         const res = await getProductsByCompanyAction(parsed.id);
         if (res.success) setProducts(res.products);
+        setLoading(false);
       })();
+    } else {
+      setLoading(false);
     }
   }, []);
 
   const refreshProducts = async () => {
     if (!companyId) return;
+    setLoading(true);
     const updated = await getProductsByCompanyAction(companyId);
     if (updated.success) setProducts(updated.products);
+    setLoading(false);
   };
 
   return (
@@ -50,10 +55,16 @@ const ProductManager = () => {
         onSuccess={refreshProducts}
         createProductAction={createProductAction}
       />
-      <ProductList
-        products={products}
-        onDelete={(id) => setProducts(products.filter((p) => p.id !== id))}
-      />
+
+      {/* ✅ Skeleton yerine ProductList */}
+      {loading ? (
+        <ProductSkeleton />
+      ) : (
+        <ProductList
+          products={products}
+          onDelete={(id) => setProducts(products.filter((p) => p.id !== id))}
+        />
+      )}
     </div>
   );
 };
