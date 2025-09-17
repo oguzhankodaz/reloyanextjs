@@ -4,7 +4,7 @@
 
 import { loginCompanyAction } from "@/actions/auth"; // 👈 company için ayrı action
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useTransition } from "react";
 
 export default function CompanyLoginPage() {
   const [state, formAction] = useActionState(loginCompanyAction, {
@@ -13,6 +13,7 @@ export default function CompanyLoginPage() {
     company: null,
   });
 
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   useEffect(() => {
@@ -34,13 +35,19 @@ export default function CompanyLoginPage() {
         </p>
 
         {/* Form */}
-        <form className="space-y-5" action={formAction}>
+        <form
+          className="space-y-5"
+          action={(formData) => {
+            startTransition(() => formAction(formData));
+          }}
+        >
           <div>
             <input
               type="email"
               name="email"
               placeholder="Şirket e-posta adresiniz"
               className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+              required
             />
           </div>
           <div>
@@ -49,13 +56,19 @@ export default function CompanyLoginPage() {
               name="password"
               placeholder="Şifreniz"
               className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+              required
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-800 transition-colors"
+            disabled={isPending}
+            className={`w-full font-semibold py-3 rounded-lg transition-colors ${
+              isPending
+                ? "bg-gray-500 text-white cursor-not-allowed"
+                : "bg-black text-white hover:bg-gray-800"
+            }`}
           >
-            Giriş Yap
+            {isPending ? "Giriş yapılıyor..." : "Giriş Yap"}
           </button>
         </form>
 

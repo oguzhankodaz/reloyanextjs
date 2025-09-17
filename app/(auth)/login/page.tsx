@@ -1,10 +1,9 @@
 /** @format */
-
 "use client";
 
 import { loginAction } from "@/actions/auth";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useTransition } from "react";
 
 export default function LoginPage() {
   const [state, formAction] = useActionState(loginAction, {
@@ -12,13 +11,16 @@ export default function LoginPage() {
     message: "",
     user: null,
   });
+
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
+
   useEffect(() => {
     if (state.success && state.user) {
       localStorage.setItem("user", JSON.stringify(state.user));
       router.push("/dashboard");
     }
-  }, [state]);
+  }, [state, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black">
@@ -32,13 +34,19 @@ export default function LoginPage() {
         </p>
 
         {/* Form */}
-        <form className="space-y-5" action={formAction}>
+        <form
+          className="space-y-5"
+          action={(formData) => {
+            startTransition(() => formAction(formData));
+          }}
+        >
           <div>
             <input
               type="email"
               name="email"
               placeholder="E-posta adresiniz"
-              className=" text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+              className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+              required
             />
           </div>
           <div>
@@ -46,14 +54,20 @@ export default function LoginPage() {
               type="password"
               name="password"
               placeholder="Şifreniz"
-              className=" text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+              className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+              required
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-800 transition-colors"
+            disabled={isPending}
+            className={`w-full font-semibold py-3 rounded-lg transition-colors ${
+              isPending
+                ? "bg-gray-500 text-white cursor-not-allowed"
+                : "bg-black text-white hover:bg-gray-800"
+            }`}
           >
-            Giriş Yap
+            {isPending ? "Giriş yapılıyor..." : "Giriş Yap"}
           </button>
         </form>
 
@@ -71,7 +85,10 @@ export default function LoginPage() {
         {/* Ekstra link */}
         <div className="mt-6 text-center text-sm text-gray-600">
           Hesabın yok mu?{" "}
-          <a href="/register" className="text-black font-semibold hover:underline">
+          <a
+            href="/register"
+            className="text-black font-semibold hover:underline"
+          >
             Kayıt Ol
           </a>
         </div>
