@@ -3,6 +3,7 @@
 "use client";
 
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
+import QRReader from "@/components/company/QrReader";
 import { QrCode, Package, Users, BarChart2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -11,7 +12,7 @@ const CompanyDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex flex-col">
-
+      <CompanyNavbar></CompanyNavbar>
       {/* Main Content */}
       <main className="flex-1 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 place-items-center">
         {/* Ürünler */}
@@ -43,9 +44,8 @@ const CompanyDashboard = () => {
       </main>
 
       {/* QR Okutma - Floating Button */}
-      <button className="fixed bottom-6 right-6 bg-yellow-400 text-black rounded-full p-4 sm:p-5 shadow-lg hover:bg-yellow-300 transition">
-  <QrCode className="w-6 h-6 sm:w-7 sm:h-7" />
-</button>
+        <QRReader />
+     
     </div>
   );
 };

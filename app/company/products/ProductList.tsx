@@ -1,6 +1,6 @@
 /** @format */
-
 "use client";
+
 import React, { useState } from "react";
 import { deleteProductAction } from "@/actions/product";
 
@@ -14,11 +14,21 @@ type Product = {
 
 type Props = {
   products: Product[];
-  onDelete?: (id: number) => void; // parent state güncelleme için opsiyonel callback
+  mode?: "manage" | "select"; // 👈 yeni parametre
+  onDelete?: (id: number) => void;
+  onSelectChange?: (selected: { id: number; quantity: number }[]) => void;
 };
 
-const ProductList: React.FC<Props> = ({ products, onDelete }) => {
+const ProductList: React.FC<Props> = ({
+  products,
+  mode = "manage",
+  onDelete,
+  onSelectChange,
+}) => {
   const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<{ id: number; quantity: number }[]>(
+    []
+  );
 
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -33,6 +43,33 @@ const ProductList: React.FC<Props> = ({ products, onDelete }) => {
     }
   };
 
+  const toggleSelect = (id: number, checked: boolean) => {
+    let updated = [...selected];
+    if (checked) {
+      // varsa tekrar ekleme, sadece güncelle
+      if (!updated.find((i) => i.id === id)) {
+        updated.push({ id, quantity: 1 });
+      }
+    } else {
+      updated = updated.filter((i) => i.id !== id);
+    }
+    setSelected(updated);
+    onSelectChange?.(updated);
+  };
+  
+  const updateQuantity = (id: number, quantity: number) => {
+    let updated = [...selected];
+    const index = updated.findIndex((i) => i.id === id);
+    if (index !== -1) {
+      updated[index].quantity = quantity;
+    } else {
+      // kullanıcı önce quantity girerse, otomatik seçili hale getir
+      updated.push({ id, quantity });
+    }
+    setSelected(updated);
+    onSelectChange?.(updated);
+  };
+  
   return (
     <div>
       {/* Search bar */}
@@ -43,8 +80,9 @@ const ProductList: React.FC<Props> = ({ products, onDelete }) => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-black focus:outline-none"
-        />
+          />
       </div>
+      <hr className="border-t border-gray-300 mb-4" />
 
       {/* Ürün listesi */}
       {filtered.length === 0 ? (
@@ -52,7 +90,7 @@ const ProductList: React.FC<Props> = ({ products, onDelete }) => {
           {search ? "Sonuç bulunamadı." : "Henüz ürün eklenmedi."}
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
           {filtered.map((product) => (
             <li
               key={product.id}
@@ -65,12 +103,36 @@ const ProductList: React.FC<Props> = ({ products, onDelete }) => {
                   {product.pointsOnSell} puan
                 </p>
               </div>
-              <button
-                onClick={() => handleDelete(product.id)}
-                className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition"
-              >
-                Sil
-              </button>
+
+              {/* Mode = manage → silme */}
+              {mode === "manage" && (
+                <button
+                  onClick={() => handleDelete(product.id)}
+                  className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition"
+                >
+                  Sil
+                </button>
+              )}
+
+              {/* Mode = select → checkbox + quantity */}
+              {mode === "select" && (
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="number"
+                    min={1}
+                    defaultValue={1}
+                    onChange={(e) =>
+                      updateQuantity(product.id, parseInt(e.target.value))
+                    }
+                    className="w-20 h-12 text-lg border rounded px-3 text-center"
+                  />
+                  <input
+                    type="checkbox"
+                    onChange={(e) => toggleSelect(product.id, e.target.checked)}
+                    className="w-6 h-6 accent-green-600"
+                  />
+                </div>
+              )}
             </li>
           ))}
         </ul>
