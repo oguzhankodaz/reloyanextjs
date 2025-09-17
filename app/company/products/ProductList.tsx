@@ -45,27 +45,30 @@ const ProductList: React.FC<Props> = ({
 
   const toggleSelect = (id: number, checked: boolean) => {
     let updated = [...selected];
+  
     if (checked) {
-      // varsa tekrar ekleme, sadece güncelle
       if (!updated.find((i) => i.id === id)) {
         updated.push({ id, quantity: 1 });
       }
     } else {
       updated = updated.filter((i) => i.id !== id);
     }
+  
     setSelected(updated);
     onSelectChange?.(updated);
   };
   
+  
   const updateQuantity = (id: number, quantity: number) => {
-    let updated = [...selected];
+    const updated = [...selected]; // ✅ const
     const index = updated.findIndex((i) => i.id === id);
+  
     if (index !== -1) {
       updated[index].quantity = quantity;
     } else {
-      // kullanıcı önce quantity girerse, otomatik seçili hale getir
       updated.push({ id, quantity });
     }
+  
     setSelected(updated);
     onSelectChange?.(updated);
   };

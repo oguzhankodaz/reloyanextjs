@@ -1,4 +1,3 @@
-/** @format */
 "use client";
 
 import { getUserByIdAction } from "@/actions/users";
@@ -9,14 +8,33 @@ import { useEffect, useState } from "react";
 import ProductList from "../company/products/ProductList";
 import { addPurchaseAction } from "@/actions/purchases";
 
+type User = {
+  id: string;
+  name: string;
+  surname?: string;
+  email: string;
+  phone?: string;
+};
+
+type Product = {
+  id: number;
+  name: string;
+  price: number;
+  pointsToBuy: number;
+  pointsOnSell: number;
+  createdAt: Date;
+  companyId: string;
+  categoryId?: number | null;
+};
+
 export default function QRResultPage() {
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [selected, setSelected] = useState<{ id: number; quantity: number }[]>(
     []
   );
@@ -27,7 +45,7 @@ export default function QRResultPage() {
     if (userId) {
       getUserByIdAction(userId).then((res) => {
         if (res.success) {
-          setUser(res.user);
+          setUser(res.user as User);
         }
         setLoading(false);
       });
@@ -42,11 +60,11 @@ export default function QRResultPage() {
       return;
     }
 
-    const company = JSON.parse(companyRaw); // 👈 JSON parse
-    const companyId = company.id; // 👈 doğru id
+    const company = JSON.parse(companyRaw);
+    const companyId = company.id;
 
     getProductsByCompanyAction(companyId).then((res) => {
-      if (res.success) setProducts(res.products);
+      if (res.success) setProducts(res.products as Product[]);
     });
   }, []);
 
