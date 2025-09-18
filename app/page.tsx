@@ -28,7 +28,7 @@ export default function HomePage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black text-white px-6 pt-8">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black text-white px-6 pt-8 pb-4">
       {/* Slogan */}
       <h1 className="text-5xl font-extrabold text-center mb-4 tracking-tight">
         ReloYa
@@ -71,7 +71,7 @@ export default function HomePage() {
         {/* Müşteri */}
         <div className="bg-white text-black rounded-2xl shadow-xl p-8 flex flex-col items-center hover:scale-105 transition-transform">
           <Users className="w-10 h-10 text-black mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Müşteri</h2>
+          <h2 className="text-2xl font-bold mb-2">Kullanıcı</h2>
           <p className="text-gray-600 text-center mb-6">
             Puan toplayın, fırsatları yakalayın, harcamalarınızdan kazançlı
             çıkın.

@@ -1,3 +1,4 @@
+/** @format */
 "use client";
 
 import { loginAction } from "@/actions/auth";
@@ -5,6 +6,7 @@ import { useActionState, useTransition } from "react";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
   const [state, formAction] = useActionState(loginAction, {
@@ -38,10 +40,19 @@ export default function LoginPage() {
   }, [state.success, state.user, setUser, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 relative">
+        {/* Geri Butonu */}
+        <button
+          onClick={() => router.push("/")}
+          className="absolute top-4 left-4 text-gray-600 hover:text-black flex items-center gap-1"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm">Geri</span>
+        </button>
+
         <h1 className="text-3xl font-extrabold text-center text-gray-900 mb-6 tracking-wide">
-          ReloYa
+          ReLoya
         </h1>
         <p className="text-center text-gray-500 mb-8">
           Müşteri Sadakat Programı • Giriş Yap
@@ -89,6 +100,17 @@ export default function LoginPage() {
             {state.message}
           </p>
         )}
+
+        {/* Kayıt ol linki */}
+        <div className="mt-6 text-center text-sm text-gray-600">
+          Hesabınız yok mu?{" "}
+          <button
+            onClick={() => router.push("/register")}
+            className="text-black font-semibold hover:underline"
+          >
+            Kayıt Ol
+          </button>
+        </div>
       </div>
     </div>
   );

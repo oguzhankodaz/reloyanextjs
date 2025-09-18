@@ -4,6 +4,7 @@ import { registerAction } from "@/actions/auth";
 import { useActionState } from "react";
 import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 export default function RegisterPage() {
   const [state, formAction] = useActionState(registerAction, {
@@ -20,15 +21,24 @@ export default function RegisterPage() {
     if (state.success) {
       const timeout = setTimeout(() => {
         router.push("/login");
-      }, 1500); // 1.5 sn sonra yönlendirme
+      }, 1500);
 
       return () => clearTimeout(timeout);
     }
   }, [state.success, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 relative">
+        {/* Geri Butonu */}
+        <button
+          onClick={() => router.push("/")}
+          className="absolute top-4 left-4 text-gray-600 hover:text-black flex items-center gap-1"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm">Geri</span>
+        </button>
+
         {/* Logo / Başlık */}
         <h1 className="text-3xl font-extrabold text-center text-gray-900 mb-6 tracking-wide">
           ReloYa
@@ -46,41 +56,33 @@ export default function RegisterPage() {
             })
           }
         >
-          <div>
-            <input
-              type="text"
-              name="name"
-              placeholder="Adınız"
-              required
-              className=" text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              name="surname"
-              placeholder="Soyadınız"
-              className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
-            />
-          </div>
-          <div>
-            <input
-              type="email"
-              name="email"
-              placeholder="E-posta adresiniz"
-              required
-              className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              name="password"
-              placeholder="Şifreniz"
-              required
-              className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
-            />
-          </div>
+          <input
+            type="text"
+            name="name"
+            placeholder="Adınız"
+            required
+            className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+          />
+          <input
+            type="text"
+            name="surname"
+            placeholder="Soyadınız"
+            className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="E-posta adresiniz"
+            required
+            className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Şifreniz"
+            required
+            className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+          />
           <button
             type="submit"
             disabled={isPending}

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { CompanyAuthProvider } from "@/context/CompanyAuthContext";
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "ReloYa",
@@ -21,6 +22,7 @@ export default function RootLayout({
         <AuthProvider>
           <CompanyAuthProvider>{children}</CompanyAuthProvider>
         </AuthProvider>
+        <Footer></Footer>
       </body>
     </html>
   );
