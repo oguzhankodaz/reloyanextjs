@@ -1,17 +1,23 @@
+/** @format */
+
 "use client";
 
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { useCompanyAuth } from "@/context/CompanyAuthContext";
 
-const LogoutButton = () => {
+const CompanyLogoutButton = () => {
   const router = useRouter();
-  const { setUser } = useAuth(); // 👈 context user’ı sıfırlamak için
+  const { setCompany } = useCompanyAuth();
 
   const handleLogout = async () => {
     await fetch("/api/logout", { method: "POST", credentials: "include" });
-    setUser(null); // context temizlendi
-    router.replace("/"); // anasayfaya yönlendir
+
+    // Context sıfırla
+    setCompany(null);
+
+    // Ana sayfaya yönlendir
+    router.replace("/");
   };
 
   return (
@@ -25,4 +31,4 @@ const LogoutButton = () => {
   );
 };
 
-export default LogoutButton;
+export default CompanyLogoutButton;

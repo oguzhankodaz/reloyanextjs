@@ -3,25 +3,13 @@
 
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
 import QRReader from "@/components/company/QrReader";
-import { QrCode, Package, Users, BarChart2 } from "lucide-react";
+import { Package, Users, BarChart2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCompanyAuth } from "@/context/CompanyAuthContext";
 
 const CompanyDashboard = () => {
   const router = useRouter();
-  const [companyName, setCompanyName] = useState<string | null>(null);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("company");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setCompanyName(parsed.name || "İşletme");
-      } catch (err) {
-        console.error("Company parse error:", err);
-      }
-    }
-  }, []);
+  const { company } = useCompanyAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex flex-col">
@@ -31,9 +19,11 @@ const CompanyDashboard = () => {
       <section className="p-6">
         <h1 className="text-2xl font-bold">
           👋 Hoş geldiniz,{" "}
-          <span className="text-yellow-400">{companyName}</span>
+          <span className="text-yellow-400">{company?.name ?? "İşletme"}</span>
         </h1>
-        <p className="text-gray-400 mt-1">Şirket panelinizi buradan yönetebilirsiniz.</p>
+        <p className="text-gray-400 mt-1">
+          Şirket panelinizi buradan yönetebilirsiniz.
+        </p>
       </section>
 
       {/* Üstte hızlı istatistikler */}
@@ -58,7 +48,6 @@ const CompanyDashboard = () => {
 
       {/* Ana Menü */}
       <main className="flex-1 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Ürünler */}
         <div
           onClick={() => router.push("/company/products")}
           className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
@@ -67,7 +56,6 @@ const CompanyDashboard = () => {
           <span className="font-medium text-base">Ürün İşlemleri</span>
         </div>
 
-        {/* Müşteriler */}
         <div
           onClick={() => router.push("/company/customers")}
           className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
@@ -76,7 +64,6 @@ const CompanyDashboard = () => {
           <span className="font-medium text-base">Müşterilerim</span>
         </div>
 
-        {/* Raporlar */}
         <div
           onClick={() => router.push("/company/reports")}
           className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
@@ -86,7 +73,7 @@ const CompanyDashboard = () => {
         </div>
       </main>
 
-      {/* Duyuru / Öneriler */}
+      {/* Duyurular */}
       <section className="p-6">
         <div className="bg-gray-800 rounded-lg p-4 shadow">
           <h2 className="text-lg font-semibold mb-2">📢 Şirket Duyuruları</h2>
@@ -98,7 +85,6 @@ const CompanyDashboard = () => {
         </div>
       </section>
 
-      {/* QR Okutma Butonu */}
       <QRReader />
     </div>
   );

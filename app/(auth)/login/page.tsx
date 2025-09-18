@@ -1,9 +1,10 @@
-/** @format */
 "use client";
 
 import { loginAction } from "@/actions/auth";
+import { useActionState, useTransition } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useTransition } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const [state, formAction] = useActionState(loginAction, {
@@ -13,19 +14,32 @@ export default function LoginPage() {
   });
 
   const [isPending, startTransition] = useTransition();
+  const { user, setUser } = useAuth();
   const router = useRouter();
 
+  // Eğer zaten giriş yapılmışsa → dashboard
+  useEffect(() => {
+    if (user) {
+      router.replace("/dashboard");
+    }
+  }, [user, router]);
+
+  // Eğer yeni login başarılı olduysa → context güncelle + dashboard
   useEffect(() => {
     if (state.success && state.user) {
-      localStorage.setItem("user", JSON.stringify(state.user));
-      router.push("/dashboard");
+      setUser({
+        userId: state.user.id, // loginAction'da id dönüyor
+        email: state.user.email,
+        name: state.user.name,
+        surname: state.user.surname,
+      });
+      router.replace("/dashboard");
     }
-  }, [state, router]);
+  }, [state.success, state.user, setUser, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
-        {/* Logo / Başlık */}
         <h1 className="text-3xl font-extrabold text-center text-gray-900 mb-6 tracking-wide">
           ReloYa
         </h1>
@@ -33,31 +47,26 @@ export default function LoginPage() {
           Müşteri Sadakat Programı • Giriş Yap
         </p>
 
-        {/* Form */}
         <form
           className="space-y-5"
           action={(formData) => {
             startTransition(() => formAction(formData));
           }}
         >
-          <div>
-            <input
-              type="email"
-              name="email"
-              placeholder="E-posta adresiniz"
-              className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
-              required
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              name="password"
-              placeholder="Şifreniz"
-              className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
-              required
-            />
-          </div>
+          <input
+            type="email"
+            name="email"
+            placeholder="E-posta adresiniz"
+            className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Şifreniz"
+            className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+            required
+          />
           <button
             type="submit"
             disabled={isPending}
@@ -71,7 +80,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Hata veya başarı mesajı */}
         {state.message && (
           <p
             className={`mt-6 text-center font-medium ${
@@ -81,17 +89,6 @@ export default function LoginPage() {
             {state.message}
           </p>
         )}
-
-        {/* Ekstra link */}
-        <div className="mt-6 text-center text-sm text-gray-600">
-          Hesabın yok mu?{" "}
-          <a
-            href="/register"
-            className="text-black font-semibold hover:underline"
-          >
-            Kayıt Ol
-          </a>
-        </div>
       </div>
     </div>
   );

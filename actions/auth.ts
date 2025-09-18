@@ -6,41 +6,49 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+import jwt from "jsonwebtoken";
+import { cookies } from "next/headers"; // Next.js 13+
+
 export async function loginAction(prevState: any, formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
   if (!email || !password) {
-    return {
-      success: false,
-      message: "Email ve şifre gerekli",
-      user: null,
-    };
+    return { success: false, message: "Email ve şifre gerekli", user: null };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
+  const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
-    return {
-      success: false,
-      message: "Kullanıcı bulunamadı",
-      user: null,
-    };
+    return { success: false, message: "Kullanıcı bulunamadı", user: null };
   }
 
   const isValid = await bcrypt.compare(password, user.password);
-
   if (!isValid) {
-    {
-      return {
-        success: false,
-        message: "Geçersiz bilgiler",
-        user: null,
-      };
-    }
+    return { success: false, message: "Geçersiz bilgiler", user: null };
   }
+
+  // ✅ JWT oluştur
+  const token = jwt.sign(
+    {
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+      surname: user.surname,
+    },
+    process.env.JWT_SECRET!,
+    { expiresIn: "7d" }
+  );
+
+  const store = await cookies();
+
+  store.set("session", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7,
+    path: "/",
+  });
 
   return {
     success: true,
@@ -48,10 +56,12 @@ export async function loginAction(prevState: any, formData: FormData) {
     user: {
       id: user.id,
       name: user.name,
+      surname: user.surname,
       email: user.email,
     },
   };
 }
+
 export async function registerAction(prevState: any, formData: FormData) {
   const name = formData.get("name") as string;
   const surname = formData.get("surname") as string;
@@ -104,33 +114,52 @@ export async function loginCompanyAction(prevState: any, formData: FormData) {
   if (!company) {
     return {
       success: false,
-      message: "Kullanıcı bulunamadı",
+      message: "Şirket bulunamadı",
       company: null,
     };
   }
 
   const isValid = await bcrypt.compare(password, company.password);
-
   if (!isValid) {
-    {
-      return {
-        success: false,
-        message: "Geçersiz bilgiler",
-        user: null,
-      };
-    }
+    return {
+      success: false,
+      message: "Geçersiz bilgiler",
+      company: null,
+    };
   }
+
+  // ✅ JWT oluştur
+  const token = jwt.sign(
+    {
+      companyId: company.id,
+      email: company.email,
+      name: company.name,
+    },
+    process.env.JWT_SECRET!,
+    { expiresIn: "7d" }
+  );
+
+  // ✅ Cookie’ye yaz
+  const store = await cookies();
+  store.set("company_session", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7,
+    path: "/",
+  });
 
   return {
     success: true,
     message: "Giriş başarılı",
     company: {
-      id: company.id,
+      companyId: company.id, // 👈 id yer
       name: company.name,
       email: company.email,
     },
   };
 }
+
 
 export async function registerCompanyAction(
   prevState: any,

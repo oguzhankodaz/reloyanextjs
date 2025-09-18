@@ -1,10 +1,10 @@
 /** @format */
-
 "use client";
 
-import { loginCompanyAction } from "@/actions/auth"; // 👈 company için ayrı action
+import { loginCompanyAction } from "@/actions/auth";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useTransition } from "react";
+import { useActionState, useTransition, useEffect } from "react";
+import { useCompanyAuth } from "@/context/CompanyAuthContext";
 
 export default function CompanyLoginPage() {
   const [state, formAction] = useActionState(loginCompanyAction, {
@@ -15,26 +15,31 @@ export default function CompanyLoginPage() {
 
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const { company, setCompany } = useCompanyAuth();
 
+  // ✅ Login başarılı olunca context’e yaz ve yönlendir
   useEffect(() => {
     if (state.success && state.company) {
-      localStorage.setItem("company", JSON.stringify(state.company));
-      router.push("/company/dashboard"); // 👈 şirket dashboard’una yönlendirme
+      setCompany(state.company);
+      router.push("/company/dashboard");
     }
-  }, [state, router]);
+  }, [state, router, setCompany]);
+
+  // ✅ Eğer zaten giriş yapılmışsa dashboard’a yönlendir
+  useEffect(() => {
+    if (company) {
+      router.replace("/company/dashboard");
+    }
+  }, [company, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
-        {/* Logo / Başlık */}
-        <h1 className="text-3xl font-extrabold text-center text-gray-900 mb-6 tracking-wide">
+        <h1 className="text-3xl font-extrabold text-center text-gray-900 mb-6">
           ReloYa Business
         </h1>
-        <p className="text-center text-gray-500 mb-8">
-          İşletme Paneli • Giriş Yap
-        </p>
+        <p className="text-center text-gray-500 mb-8">İşletme Paneli • Giriş Yap</p>
 
-        {/* Form */}
         <form
           className="space-y-5"
           action={(formData) => {
@@ -46,7 +51,7 @@ export default function CompanyLoginPage() {
               type="email"
               name="email"
               placeholder="Şirket e-posta adresiniz"
-              className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+              className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none"
               required
             />
           </div>
@@ -55,7 +60,7 @@ export default function CompanyLoginPage() {
               type="password"
               name="password"
               placeholder="Şifreniz"
-              className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
+              className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none"
               required
             />
           </div>
@@ -72,7 +77,6 @@ export default function CompanyLoginPage() {
           </button>
         </form>
 
-        {/* Hata veya başarı mesajı */}
         {state.message && (
           <p
             className={`mt-6 text-center font-medium ${
@@ -83,13 +87,9 @@ export default function CompanyLoginPage() {
           </p>
         )}
 
-        {/* Ekstra link */}
         <div className="mt-6 text-center text-sm text-gray-600">
           Şirket hesabınız yok mu?{" "}
-          <a
-            href="/company/register"
-            className="text-black font-semibold hover:underline"
-          >
+          <a href="/company/register" className="text-black font-semibold hover:underline">
             Kayıt Ol
           </a>
         </div>

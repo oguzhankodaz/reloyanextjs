@@ -2,6 +2,7 @@
 
 import { getUserPointsAction } from "@/actions/points";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 type UserPoint = {
   id: number;
@@ -13,21 +14,18 @@ type UserPoint = {
 };
 
 const PointsPage = () => {
+  const { user } = useAuth(); // 👈 user artık contextten geliyor
   const [points, setPoints] = useState<UserPoint[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userRaw = localStorage.getItem("user");
-    if (!userRaw) return;
+    if (!user?.userId) return; // user yoksa çağırma
 
-    const user = JSON.parse(userRaw);
-    const userId = user.id;
-
-    getUserPointsAction(userId).then((res) => {
+    getUserPointsAction(user.userId).then((res) => {
       if (res.success) setPoints(res.points);
       setLoading(false);
     });
-  }, []);
+  }, [user]); // user değişirse tekrar çağırır
 
   if (loading) return <p className="p-6 text-gray-300">⏳ Yükleniyor...</p>;
 

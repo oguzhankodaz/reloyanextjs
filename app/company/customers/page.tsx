@@ -6,23 +6,26 @@ import { useEffect, useState } from "react";
 import { CompanyCustomer } from "@/lib/types";
 import CustomersSkeleton from "./CustomersSkeleton";
 import BackButton from "@/components/company/BackButton";
+import { useCompanyAuth } from "@/context/CompanyAuthContext"; // ✅ context eklendi
 
 const CustomersPage = () => {
+  const { company } = useCompanyAuth(); // ✅ company context'ten alınıyor
   const [customers, setCustomers] = useState<CompanyCustomer[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const companyRaw = localStorage.getItem("company");
-    if (!companyRaw) return;
+    if (!company?.companyId) {
+      setLoading(false);
+      return;
+    }
 
-    const company = JSON.parse(companyRaw);
-    const companyId = company.id;
-
-    getCompanyCustomersAction(companyId).then((res) => {
+    (async () => {
+      setLoading(true);
+      const res = await getCompanyCustomersAction(company.companyId);
       if (res.success) setCustomers(res.customers);
       setLoading(false);
-    });
-  }, []);
+    })();
+  }, [company]);
 
   return (
     <div className="min-h-screen bg-black text-gray-100">
@@ -33,7 +36,7 @@ const CustomersPage = () => {
         <h1 className="text-2xl font-bold mb-6 text-white">👥 Müşterilerim</h1>
 
         {loading ? (
-          <CustomersSkeleton /> // ✅ skeleton ekledik
+          <CustomersSkeleton /> // ✅ skeleton
         ) : customers.length === 0 ? (
           <p className="text-gray-400">Henüz müşteriniz yok.</p>
         ) : (

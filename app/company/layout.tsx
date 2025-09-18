@@ -2,8 +2,6 @@
 
 "use client";
 
-import CompanyNavbar from "@/components/company/Navbar/Navbar";
-
 export default function CompanyLayout({
   children,
 }: {
@@ -11,12 +9,10 @@ export default function CompanyLayout({
 }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white">
-     
       {/* İçerik */}
       <main className="max-w-7xl mx-auto px-6 py-6">{children}</main>
 
       {/* Floating QR Kod Butonu */}
-   
     </div>
   );
 }

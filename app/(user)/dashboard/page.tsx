@@ -3,25 +3,22 @@
 
 import React, { useState, useEffect } from "react";
 import UserQrButton from "@/components/user/UserQRCode";
+import { useAuth } from "@/context/AuthContext";
 
 const DashboardPage = () => {
-  const [userName, setUserName] = useState("");
+  const { user } = useAuth();
+
+
 
   // localStorage erişimi sadece client tarafında ve effect içinde yapılmalı
-  useEffect(() => {
-    const userRaw = localStorage.getItem("user");
-    if (userRaw) {
-      const user = JSON.parse(userRaw);
-      setUserName(user.name);
-    }
-  }, []);
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
       {/* Başlık */}
-      <h1 className="text-3xl font-bold mb-2">👋 Hoş Geldiniz, {userName}</h1>
+      <h1 className="text-3xl font-bold mb-2">👋 Hoş Geldiniz, {user?.name}</h1>
       <p className="text-gray-400 mb-6">
-        Buradan puanlarınızı, işlemlerinizi ve avantajlarınızı takip edebilirsiniz.
+        Buradan puanlarınızı, işlemlerinizi ve avantajlarınızı takip
+        edebilirsiniz.
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -39,7 +36,9 @@ const DashboardPage = () => {
 
         {/* İşletmelere Göre Puan */}
         <div className="col-span-2 bg-gray-800 rounded-xl p-6 shadow">
-          <h2 className="text-xl font-semibold mb-4">🏢 İşletmelere Göre Puanlarım</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            🏢 İşletmelere Göre Puanlarım
+          </h2>
           <div className="space-y-3">
             <div className="flex justify-between">
               <span>Kahve Dükkanı</span>

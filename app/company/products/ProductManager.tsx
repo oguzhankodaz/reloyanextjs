@@ -6,7 +6,8 @@ import {
 } from "@/actions/product";
 import ProductForm from "./ProductForm";
 import ProductList from "./ProductList";
-import ProductSkeleton from "./ProductSkeleton"; // ✅ ekledik
+import ProductSkeleton from "./ProductSkeleton";
+import { useCompanyAuth } from "@/context/CompanyAuthContext"; // ✅ context
 
 type Product = {
   id: number;
@@ -17,31 +18,28 @@ type Product = {
 };
 
 const ProductManager = () => {
+  const { company } = useCompanyAuth(); // ✅ artık company buradan geliyor
   const [products, setProducts] = useState<Product[]>([]);
-  const [companyId, setCompanyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedCompany = localStorage.getItem("company");
-    if (storedCompany) {
-      const parsed = JSON.parse(storedCompany);
-      setCompanyId(parsed.id);
-
-      (async () => {
-        setLoading(true);
-        const res = await getProductsByCompanyAction(parsed.id);
-        if (res.success) setProducts(res.products);
-        setLoading(false);
-      })();
-    } else {
+    if (!company?.companyId) {
       setLoading(false);
+      return;
     }
-  }, []);
+
+    (async () => {
+      setLoading(true);
+      const res = await getProductsByCompanyAction(company.companyId);
+      if (res.success) setProducts(res.products);
+      setLoading(false);
+    })();
+  }, [company]);
 
   const refreshProducts = async () => {
-    if (!companyId) return;
+    if (!company?.companyId) return;
     setLoading(true);
-    const updated = await getProductsByCompanyAction(companyId);
+    const updated = await getProductsByCompanyAction(company.companyId);
     if (updated.success) setProducts(updated.products);
     setLoading(false);
   };
@@ -50,19 +48,23 @@ const ProductManager = () => {
     <div className="bg-white text-black rounded-xl p-6 shadow">
       <h2 className="text-lg font-bold mb-4">Ürünler</h2>
 
-      <ProductForm
-        companyId={companyId}
-        onSuccess={refreshProducts}
-        createProductAction={createProductAction}
-      />
+      {/* ✅ Formu sadece company varsa gösterelim */}
+      {company?.companyId && (
+        <ProductForm
+          companyId={company.companyId}
+          onSuccess={refreshProducts}
+          createProductAction={createProductAction}
+        />
+      )}
 
-      {/* ✅ Skeleton yerine ProductList */}
       {loading ? (
         <ProductSkeleton />
       ) : (
         <ProductList
           products={products}
-          onDelete={(id) => setProducts(products.filter((p) => p.id !== id))}
+          onDelete={(id) =>
+            setProducts(products.filter((p) => p.id !== id))
+          }
         />
       )}
     </div>
