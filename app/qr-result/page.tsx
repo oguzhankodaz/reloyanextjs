@@ -10,6 +10,7 @@ import { getUserByIdAction } from "@/actions/users";
 import { getProductsByCompanyAction } from "@/actions/product";
 import { addPurchaseAction } from "@/actions/purchases";
 import { getUserPointsAction } from "@/actions/points";
+import { useCompanyAuth } from "@/context/CompanyAuthContext"; // ✅ context
 
 type User = {
   id: string;
@@ -31,6 +32,8 @@ export default function QRResultPage() {
   const router = useRouter();
   const userId = searchParams.get("userId");
 
+  const { company } = useCompanyAuth(); // ✅ şirket bilgisi context'ten
+
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [selected, setSelected] = useState<{ id: number; quantity: number }[]>(
@@ -43,20 +46,10 @@ export default function QRResultPage() {
 
   // Kullanıcı + Puan + Ürünleri getir
   useEffect(() => {
-    if (!userId) {
+    if (!userId || !company) {
       setLoading(false);
       return;
     }
-
-    const companyRaw = localStorage.getItem("company");
-    if (!companyRaw) {
-      console.warn("Company bilgisi bulunamadı.");
-      setLoading(false);
-      return;
-    }
-
-    const company = JSON.parse(companyRaw);
-    const companyId: string = company.id;
 
     (async () => {
       // Kullanıcı bilgisi
@@ -68,21 +61,21 @@ export default function QRResultPage() {
         const pointsRes = await getUserPointsAction(userId);
         if (pointsRes.success) {
           const companyPoints = pointsRes.points.find(
-            (p) => p.company.id === companyId
+            (p) => p.company.id === company.companyId
           );
           setTotalPoints(companyPoints?.totalPoints ?? 0);
         }
       }
 
       // Şirket ürünleri
-      const prodRes = await getProductsByCompanyAction(companyId);
+      const prodRes = await getProductsByCompanyAction(company.companyId);
       if (prodRes.success) {
         setProducts(prodRes.products);
       }
 
       setLoading(false);
     })();
-  }, [userId]);
+  }, [userId, company]);
 
   // Kullanıcı bulunamazsa dashboard’a yönlendir
   useEffect(() => {
@@ -91,22 +84,20 @@ export default function QRResultPage() {
     }
   }, [loading, user, router]);
 
+  // Eğer şirket yoksa login'e yönlendir
+  useEffect(() => {
+    if (!company) {
+      router.replace("/company/login");
+    }
+  }, [company, router]);
+
   // Satın alma kaydetme
   const handleSave = async () => {
-    if (!userId) return;
+    if (!userId || !company) return;
     if (selected.length === 0) {
       alert("En az bir ürün seçmelisiniz.");
       return;
     }
-
-    const companyRaw = localStorage.getItem("company");
-    if (!companyRaw) {
-      alert("Şirket bilgisi bulunamadı.");
-      return;
-    }
-
-    const company = JSON.parse(companyRaw);
-    const companyId: string = company.id;
 
     const items = selected.map((i) => ({
       productId: i.id,
@@ -114,7 +105,7 @@ export default function QRResultPage() {
     }));
 
     setSaving(true);
-    const res = await addPurchaseAction(userId, companyId, items);
+    const res = await addPurchaseAction(userId, company.companyId, items);
     setSaving(false);
 
     if (res.success) {
@@ -125,7 +116,7 @@ export default function QRResultPage() {
       const pointsRes = await getUserPointsAction(userId);
       if (pointsRes.success) {
         const companyPoints = pointsRes.points.find(
-          (p) => p.company.id === companyId
+          (p) => p.company.id === company.companyId
         );
         setTotalPoints(companyPoints?.totalPoints ?? 0);
       }

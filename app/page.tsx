@@ -1,23 +1,30 @@
 /** @format */
-
 "use client";
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Gift, TrendingUp, Building2, Users } from "lucide-react"; // ikonlar
+import {
+  Sparkles,
+  Gift,
+  TrendingUp,
+  Building2,
+  Users,
+} from "lucide-react";
+import { checkSession } from "@/actions/auth";
 
 export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    const storedCompany = localStorage.getItem("company");
+    (async () => {
+      const session = await checkSession();
 
-    if (storedUser) {
-      router.replace("/dashboard"); // müşteri dashboard
-    } else if (storedCompany) {
-      router.replace("/company/dashboard"); // şirket dashboard
-    }
+      if (session?.type === "user") {
+        router.replace("/dashboard"); // müşteri
+      } else if (session?.type === "company") {
+        router.replace("/company/dashboard"); // şirket
+      }
+    })();
   }, [router]);
 
   return (

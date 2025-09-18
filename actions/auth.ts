@@ -31,6 +31,7 @@ export async function loginAction(prevState: any, formData: FormData) {
   // ✅ JWT oluştur
   const token = jwt.sign(
     {
+       type: "user",
       userId: user.id,
       email: user.email,
       name: user.name,
@@ -131,6 +132,7 @@ export async function loginCompanyAction(prevState: any, formData: FormData) {
   // ✅ JWT oluştur
   const token = jwt.sign(
     {
+      type: "company",
       companyId: company.id,
       email: company.email,
       name: company.name,
@@ -186,4 +188,29 @@ export async function registerCompanyAction(
   });
 
   return { success: true, message: "Kayıt Başarılı" };
+}
+
+
+
+
+export async function checkSession() {
+  const store = await cookies();
+
+  const userToken = store.get("session")?.value;
+  const companyToken = store.get("company_session")?.value;
+
+  try {
+    if (userToken) {
+      const decoded: any = jwt.verify(userToken, process.env.JWT_SECRET!);
+      return { type: "user", data: decoded };
+    }
+    if (companyToken) {
+      const decoded: any = jwt.verify(companyToken, process.env.JWT_SECRET!);
+      return { type: "company", data: decoded };
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
 }

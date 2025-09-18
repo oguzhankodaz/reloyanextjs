@@ -10,8 +10,6 @@ const DashboardPage = () => {
 
 
 
-  // localStorage erişimi sadece client tarafında ve effect içinde yapılmalı
-
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
       {/* Başlık */}

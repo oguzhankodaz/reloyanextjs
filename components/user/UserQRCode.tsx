@@ -1,20 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { QrCode } from "lucide-react";
 import QRCode from "react-qr-code";
+import { useAuth } from "@/context/AuthContext"; // ✅ context eklendi
 
 const UserQrButton = () => {
   const [open, setOpen] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsed = JSON.parse(storedUser);
-      setUserId(parsed.id);
-    }
-  }, []);
+  const { user } = useAuth(); // ✅ user context’ten alınır
 
   return (
     <>
@@ -37,9 +30,10 @@ const UserQrButton = () => {
               🎟️ Benim QR Kodum
             </h2>
 
-            {userId ? (
+            {user?.userId ? (
               <div className="bg-white rounded-xl p-4 shadow-inner inline-block">
-                <QRCode value={userId} size={180} />
+                {/* ✅ user.id değerini QR koda bastık */}
+                <QRCode value={user.userId} size={180} />
               </div>
             ) : (
               <p className="text-gray-500">Kullanıcı bulunamadı</p>
