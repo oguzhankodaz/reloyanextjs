@@ -51,6 +51,8 @@ export async function spendPointsAction(
       },
     });
 
+    //test
+
     // ✅ Kullanım kaydını ekle
     await prisma.pointsUsage.create({
       data: {
