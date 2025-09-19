@@ -71,9 +71,6 @@ export async function spendPointsAction(
   }
 }
 
-
-
-
 export async function getUserHistoryAction(userId: string, companyId: string) {
   try {
     const purchases = await prisma.purchase.findMany({
