@@ -72,7 +72,7 @@ const CustomersPage = () => {
                 <tr className="bg-gray-800 text-gray-200">
                   <th className="px-4 py-3 text-left">Ad Soyad</th>
                   {/* <th className="px-4 py-3 text-left">Email</th> */}
-                  
+
                   <th className="px-4 py-3 text-center">Puan</th>
                   <th className="px-4 py-3 text-center">Detay</th>
                 </tr>
@@ -135,21 +135,22 @@ const CustomersPage = () => {
                                 <tbody>
                                   {purchases.map((h) => (
                                     <tr key={h.id} className="bg-gray-800">
-                                      <td className="px-3 py-2">
-                                        {h.type === "purchase"
-                                          ? h.product
-                                          : "🎯 Puan Kullanımı"}
-                                      </td>
+                                      {/* Ürün adı */}
+                                      <td className="px-3 py-2">{h.product}</td>
+
+                                      {/* Adet */}
                                       <td className="px-3 py-2 text-center">
-                                        {h.type === "purchase"
-                                          ? h.quantity
-                                          : "-"}
+                                        {h.quantity}
                                       </td>
+
+                                      {/* Fiyat */}
                                       <td className="px-3 py-2 text-center">
-                                        {h.type === "purchase"
+                                        {h.totalPrice > 0
                                           ? `${h.totalPrice}₺`
                                           : "-"}
                                       </td>
+
+                                      {/* Puan */}
                                       <td
                                         className={`px-3 py-2 text-center font-semibold ${
                                           h.points > 0
@@ -161,6 +162,8 @@ const CustomersPage = () => {
                                           ? `+${h.points}`
                                           : h.points}
                                       </td>
+
+                                      {/* Tarih */}
                                       <td className="px-3 py-2 text-center">
                                         {new Date(h.date).toLocaleDateString(
                                           "tr-TR"

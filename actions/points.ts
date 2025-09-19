@@ -29,7 +29,10 @@ export async function getUserPointsAction(userId: string) {
 export async function spendPointsAction(
   userId: string,
   companyId: string,
-  pointsToUse: number
+  pointsToUse: number,
+  productId?: number,
+  quantity?: number,
+  price?: number
 ) {
   if (!userId || !companyId || pointsToUse <= 0) {
     return { success: false, message: "Geçersiz işlem" };
@@ -51,14 +54,15 @@ export async function spendPointsAction(
       },
     });
 
-    //test
-
     // ✅ Kullanım kaydını ekle
     await prisma.pointsUsage.create({
       data: {
         amount: pointsToUse,
+        quantity: quantity ?? 1,
+        price: price ?? 0,
         userId,
         companyId,
+        productId: productId ?? null,
       },
     });
 
@@ -73,6 +77,7 @@ export async function spendPointsAction(
   }
 }
 
+
 export async function getUserHistoryAction(userId: string, companyId: string) {
   try {
     const purchases = await prisma.purchase.findMany({
@@ -82,8 +87,9 @@ export async function getUserHistoryAction(userId: string, companyId: string) {
 
     const usages = await prisma.pointsUsage.findMany({
       where: { userId, companyId },
+      include: { product: true }, // ürün ismini gösterebilmek için
     });
-
+    
     const history: UserHistory[] = [
       ...purchases.map((p) => ({
         type: "purchase" as const,
@@ -97,11 +103,16 @@ export async function getUserHistoryAction(userId: string, companyId: string) {
       ...usages.map((u) => ({
         type: "usage" as const,
         id: u.id,
-        amount: u.amount,
-        points: -u.amount, // negatif puan
+        product: u.product?.name ?? "🎯 Puan Kullanımı",
+        quantity: u.quantity,
+        totalPrice: u.price,
+        amount: u.amount,     // ✅ burası önemliydi
+        points: -u.amount,
         date: u.usedAt,
-      })),
+      }))
+      
     ].sort((a, b) => b.date.getTime() - a.date.getTime());
+    
 
     return { success: true, history };
   } catch (err) {

@@ -3,6 +3,7 @@
 
 import React, { useState } from "react";
 import { deleteProductAction } from "@/actions/product";
+import { SelectedItem } from "@/lib/types";
 
 type Product = {
   id: number;
@@ -26,9 +27,8 @@ const ProductList: React.FC<Props> = ({
   onSelectChange,
 }) => {
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<{ id: number; quantity: number }[]>(
-    []
-  );
+  const [selected, setSelected] = useState<SelectedItem[]>([]);
+
 
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -43,20 +43,21 @@ const ProductList: React.FC<Props> = ({
     }
   };
 
-  const toggleSelect = (id: number, checked: boolean) => {
+  const toggleSelect = (id: number, checked: boolean, usePoints = false) => {
     let updated = [...selected];
-
+  
     if (checked) {
       if (!updated.find((i) => i.id === id)) {
-        updated.push({ id, quantity: 1 });
+        updated.push({ id, quantity: 1, usePoints });
       }
     } else {
       updated = updated.filter((i) => i.id !== id);
     }
-
+  
     setSelected(updated);
     onSelectChange?.(updated);
   };
+  
 
   const updateQuantity = (id: number, quantity: number) => {
     const updated = [...selected]; // ✅ const
@@ -119,6 +120,17 @@ const ProductList: React.FC<Props> = ({
               {/* Mode = select → checkbox + quantity */}
               {mode === "select" && (
                 <div className="flex items-center space-x-3">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      onChange={(e) =>
+                        toggleSelect(product.id, e.target.checked, true)
+                      }
+                      className="w-6 h-6 accent-blue-600"
+                    />
+                    <span className="text-sm text-gray-700">Puanla Al</span>
+                  </label>
+
                   <input
                     type="number"
                     min={1}

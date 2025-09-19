@@ -52,20 +52,21 @@ model Category {
 
 /// Ürünler
 model Product {
-  id           Int       @id @default(autoincrement())
+  id           Int           @id @default(autoincrement())
   name         String
   price        Float
-  pointsToBuy  Int       @default(0)
-  pointsOnSell Int       @default(0)
-  createdAt    DateTime  @default(now())
+  pointsToBuy  Int           @default(0)
+  pointsOnSell Int           @default(0)
+  createdAt    DateTime      @default(now())
 
-  company      Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId    String
 
-  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   categoryId   Int?
 
   purchases    Purchase[]
+  pointsUsages PointsUsage[]   // ✅ karşı taraf eklendi
 }
 
 /// Satın almalar
@@ -103,15 +104,21 @@ model UserPoints {
 /// Kullanılan puanlar
 model PointsUsage {
   id        Int      @id @default(autoincrement())
-  amount    Int      // kullanılan puan miktarı
+  amount    Int
+  quantity  Int      @default(1)
+  price     Float    @default(0)
   usedAt    DateTime @default(now())
 
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
 
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
+
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productId Int?
 }
+
 //test edildi
 
 // model TestDummy {

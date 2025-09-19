@@ -11,6 +11,7 @@ import { getProductsByCompanyAction } from "@/actions/product";
 import { addPurchaseAction } from "@/actions/purchases";
 import { getUserPointsAction, spendPointsAction } from "@/actions/points";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
+import { SelectedItem } from "@/lib/types";
 
 type User = {
   id: string;
@@ -27,6 +28,7 @@ type Product = {
   pointsOnSell: number;
 };
 
+
 export default function QRResultPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -36,9 +38,7 @@ export default function QRResultPage() {
 
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [selected, setSelected] = useState<{ id: number; quantity: number }[]>(
-    []
-  );
+  const [selected, setSelected] = useState<SelectedItem[]>([]);
   const [totalPoints, setTotalPoints] = useState<number>(0);
 
   const [loading, setLoading] = useState(true);
@@ -99,32 +99,51 @@ export default function QRResultPage() {
       alert("En az bir ürün seçmelisiniz.");
       return;
     }
-
-    const items = selected.map((i) => ({
-      productId: i.id,
-      quantity: i.quantity,
-    }));
-
+  
     setSaving(true);
-    const res = await addPurchaseAction(userId, company.companyId, items);
-    setSaving(false);
-
-    if (res.success) {
-      alert(`Satın alma kaydedildi ✅ Toplam +${res.totalPoints} puan eklendi`);
-      setSelected([]);
-
-      // Satın alma sonrası puanı güncelle
-      const pointsRes = await getUserPointsAction(userId);
-      if (pointsRes.success) {
-        const companyPoints = pointsRes.points.find(
-          (p) => p.company.id === company.companyId
+  
+    for (const item of selected) {
+      const product = products.find((p) => p.id === item.id);
+      if (!product) continue;
+  
+      if (item.usePoints) {
+        // ürünün puanla alış değeri × adet
+        const totalUse = product.pointsToBuy * item.quantity;
+  
+        const res = await spendPointsAction(
+          userId,
+          company.companyId,
+          totalUse,
+          product.id,          // ✅ productId gönder
+          item.quantity,       // ✅ adet gönder
+          product.price        // ✅ fiyat gönder
         );
-        setTotalPoints(companyPoints?.totalPoints ?? 0);
+  
+        if (!res.success) {
+          alert(res.message);
+        }
+      } else {
+        await addPurchaseAction(userId, company.companyId, [
+          { productId: item.id, quantity: item.quantity },
+        ]);
       }
-    } else {
-      alert(res.message);
     }
+  
+    setSaving(false);
+  
+    // puanı güncelle
+    const pointsRes = await getUserPointsAction(userId);
+    if (pointsRes.success) {
+      const companyPoints = pointsRes.points.find(
+        (p) => p.company.id === company.companyId
+      );
+      setTotalPoints(companyPoints?.totalPoints ?? 0);
+    }
+  
+    alert("İşlemler tamamlandı ✅");
+    setSelected([]);
   };
+  
 
   // Puan kullanma işlemi
   const handleUsePoints = async () => {
