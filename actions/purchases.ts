@@ -68,3 +68,19 @@ export async function addPurchaseAction(
     return { success: false, message: "Satın alma sırasında hata oluştu" };
   }
 }
+
+
+export async function getUserPurchasesAction(userId: string, companyId: string) {
+  try {
+    const purchases = await prisma.purchase.findMany({
+      where: { userId, companyId },
+      include: { product: true }, // ürün bilgisi gelsin
+      orderBy: { purchaseDate: "desc" },
+    });
+
+    return { success: true, purchases };
+  } catch (error) {
+    console.error(error);
+    return { success: false, message: "Satın alımlar alınamadı" };
+  }
+}

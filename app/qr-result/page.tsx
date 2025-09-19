@@ -9,8 +9,8 @@ import ProductList from "../company/products/ProductList";
 import { getUserByIdAction } from "@/actions/users";
 import { getProductsByCompanyAction } from "@/actions/product";
 import { addPurchaseAction } from "@/actions/purchases";
-import { getUserPointsAction } from "@/actions/points";
-import { useCompanyAuth } from "@/context/CompanyAuthContext"; // ✅ context
+import { getUserPointsAction, usePointsAction } from "@/actions/points";
+import { useCompanyAuth } from "@/context/CompanyAuthContext";
 
 type User = {
   id: string;
@@ -32,7 +32,7 @@ export default function QRResultPage() {
   const router = useRouter();
   const userId = searchParams.get("userId");
 
-  const { company } = useCompanyAuth(); // ✅ şirket bilgisi context'ten
+  const { company } = useCompanyAuth();
 
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -43,6 +43,7 @@ export default function QRResultPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [useAmountInput, setUseAmountInput] = useState<string>("");
 
   // Kullanıcı + Puan + Ürünleri getir
   useEffect(() => {
@@ -125,31 +126,78 @@ export default function QRResultPage() {
     }
   };
 
+  // Puan kullanma işlemi
+  const handleUsePoints = async () => {
+    if (!userId || !company) return;
+
+    const amount = parseInt(useAmountInput, 10);
+    if (isNaN(amount) || amount <= 0) {
+      alert("Geçerli bir puan girin.");
+      return;
+    }
+
+    setSaving(true);
+    const res = await usePointsAction(userId, company.companyId, amount);
+    setSaving(false);
+
+    if (res.success) {
+      alert(`-${amount} puan düşüldü ✅`);
+      setTotalPoints(res.totalPoints ?? 0);
+      setUseAmountInput(""); // input'u sıfırla
+    } else {
+      alert(res.message);
+    }
+  };
+
   if (loading) return <p className="text-center mt-10">⏳ Yükleniyor...</p>;
-  if (!user) return null; // yönlendirme yapılana kadar boş dön
+  if (!user) return null;
 
   return (
     <div>
       <CompanyNavbar />
       <div className="flex flex-col items-center justify-start min-h-screen p-6">
-        {/* Kullanıcı bilgisi */}
-        <h1 className="text-2xl font-bold mb-6">📌 Kullanıcı Bilgileri</h1>
-        <div className="bg-gray-100 rounded-lg shadow-md p-6 w-[320px] text-left mb-6">
-          <p className="text-black">
-            <strong>Ad Soyad:</strong> {user.name} {user.surname}
-          </p>
-          <p className="text-black">
-            <strong>Email:</strong> {user.email}
-          </p>
-          <p className="text-black mt-2">
-            <strong>Toplam Puanı:</strong>{" "}
-            <span className="text-green-600 font-bold">{totalPoints}</span>
-          </p>
+        {/* Kullanıcı bilgisi + Puan Kullan yan yana */}
+        <div className="flex flex-col md:flex-row gap-6 mb-8 w-full max-w-4xl">
+          {/* Kullanıcı bilgisi */}
+          <div className="bg-gray-100 rounded-lg shadow-md p-6 flex-1">
+            <h1 className="text-xl font-bold mb-4 text-black">📌 Kullanıcı Bilgileri</h1>
+            <p className="text-black">
+              <strong>Ad Soyad:</strong> {user.name} {user.surname}
+            </p>
+            <p className="text-black">
+              <strong>Email:</strong> {user.email}
+            </p>
+            <p className="text-black mt-2">
+              <strong>Toplam Puanı:</strong>{" "}
+              <span className="text-green-600 font-bold">{totalPoints}</span>
+            </p>
+          </div>
+
+          {/* Puan Kullanma Alanı */}
+          <div className="bg-white text-black rounded-lg shadow-md p-6 flex-1">
+            <h2 className="text-xl font-semibold mb-4">🎯 Puan Kullan</h2>
+            <input
+              type="number"
+              min={1}
+              max={totalPoints}
+              value={useAmountInput}
+              onChange={(e) => setUseAmountInput(e.target.value)} // string olarak tut
+              className="w-full border rounded px-3 py-2 mb-4 text-black"
+              placeholder="Kullanılacak puan"
+            />
+            <button
+              onClick={handleUsePoints}
+              disabled={saving || parseInt(useAmountInput, 10) <= 0}
+              className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 disabled:opacity-50"
+            >
+              {saving ? "İşlem yapılıyor..." : "Puanı Kullan"}
+            </button>
+          </div>
         </div>
 
         {/* Ürün listesi */}
         <h2 className="text-xl font-semibold mb-4">🛒 Ürün Seç</h2>
-        <div className="bg-white text-black rounded-xl p-6 shadow">
+        <div className="bg-white text-black rounded-xl p-6 shadow w-full max-w-4xl">
           <ProductList
             products={products}
             mode="select"

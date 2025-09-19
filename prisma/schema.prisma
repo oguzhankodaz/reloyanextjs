@@ -9,7 +9,7 @@ datasource db {
 
 /// Kullanıcılar (müşteriler)
 model User {
-  id         String       @id @default(uuid()) // UUID primary key
+  id         String       @id @default(uuid())
   name       String
   surname    String?
   email      String       @unique
@@ -18,24 +18,26 @@ model User {
   createdAt  DateTime     @default(now())
   password   String
 
-  purchases  Purchase[]
-  userPoints UserPoints[]
+  purchases    Purchase[]
+  userPoints   UserPoints[]
+  pointsUsages PointsUsage[]   // ✅ eklendi
 }
 
-/// İşletmeler
 model Company {
-  id         String       @id @default(uuid()) // UUID primary key
+  id         String       @id @default(uuid())
   name       String
-  email      String       @unique   // login için email
-  password   String                 // login için şifre
+  email      String       @unique
+  password   String
   address    String?
   createdAt  DateTime     @default(now())
 
-  categories Category[]
-  products   Product[]
-  purchases  Purchase[]
-  userPoints UserPoints[]
+  categories  Category[]
+  products    Product[]
+  purchases   Purchase[]
+  userPoints  UserPoints[]
+  pointsUsages PointsUsage[]   // ✅ eklendi
 }
+
 
 /// Ürün kategorileri
 model Category {
@@ -96,4 +98,17 @@ model UserPoints {
   companyId   String
 
   @@unique([userId, companyId]) // her müşteri + şirket için tek kayıt
+}
+
+/// Kullanılan puanlar
+model PointsUsage {
+  id        Int      @id @default(autoincrement())
+  amount    Int      // kullanılan puan miktarı
+  usedAt    DateTime @default(now())
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
 }
