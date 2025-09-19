@@ -4,9 +4,8 @@
 
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
 import { getCompanyCustomersAction } from "@/actions/customers";
-import { getUserPurchasesAction } from "@/actions/purchases"; // ✅ yeni eklenen action
 import React, { useEffect, useState } from "react";
-import { CompanyCustomer } from "@/lib/types";
+import { CompanyCustomer, UserHistory } from "@/lib/types";
 import CustomersSkeleton from "./CustomersSkeleton";
 import BackButton from "@/components/company/BackButton";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
@@ -19,7 +18,7 @@ const CustomersPage = () => {
 
   // detay için state
   const [openUserId, setOpenUserId] = useState<string | null>(null);
-  const [purchases, setPurchases] = useState<any[]>([]);
+  const [purchases, setPurchases] = useState<UserHistory[]>([]);
   const [loadingPurchases, setLoadingPurchases] = useState(false);
 
   useEffect(() => {

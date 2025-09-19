@@ -3,6 +3,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { UserHistory } from "@/lib/types";
 
 export async function getUserPointsAction(userId: string) {
   try {
@@ -84,10 +85,10 @@ export async function getUserHistoryAction(userId: string, companyId: string) {
       where: { userId, companyId },
     });
 
-    const history = [
+    const history: UserHistory[] = [
       ...purchases.map((p) => ({
-        id: `purchase-${p.id}`,
-        type: "purchase",
+        type: "purchase" as const,
+        id: p.id,
         product: p.product.name,
         quantity: p.quantity,
         totalPrice: p.totalPrice,
@@ -95,15 +96,13 @@ export async function getUserHistoryAction(userId: string, companyId: string) {
         date: p.purchaseDate,
       })),
       ...usages.map((u) => ({
-        id: `usage-${u.id}`,
-        type: "usage",
-        product: "🎯 Puan Kullanımı",
-        quantity: null,
-        totalPrice: null,
-        points: -u.amount, // negatif göster
-        date: u.usedAt ?? u.usedAt, // kolon adına göre
+        type: "usage" as const,
+        id: u.id,
+        amount: u.amount,
+        points: -u.amount, // negatif puan
+        date: u.usedAt,
       })),
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
     return { success: true, history };
   } catch (err) {
