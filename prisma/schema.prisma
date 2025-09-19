@@ -112,3 +112,4 @@ model PointsUsage {
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
 }
+//test edildi
