@@ -72,6 +72,7 @@ const CustomersPage = () => {
                 <tr className="bg-gray-800 text-gray-200">
                   <th className="px-4 py-3 text-left">Ad Soyad</th>
                   {/* <th className="px-4 py-3 text-left">Email</th> */}
+                  
                   <th className="px-4 py-3 text-center">Puan</th>
                   <th className="px-4 py-3 text-center">Detay</th>
                 </tr>
