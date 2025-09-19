@@ -6,6 +6,7 @@ import QRReader from "@/components/company/QrReader";
 import { Package, Users, BarChart2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
+import CompanyDashboardReport from "./CompanyDashboardReport";
 
 const CompanyDashboard = () => {
   const router = useRouter();
@@ -27,24 +28,7 @@ const CompanyDashboard = () => {
       </section>
 
       {/* Üstte hızlı istatistikler */}
-      <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4">
-        <div className="bg-gray-800 rounded-lg p-4 text-center shadow">
-          <p className="text-sm text-gray-400">Toplam Müşteri</p>
-          <p className="text-xl font-bold">120</p>
-        </div>
-        <div className="bg-gray-800 rounded-lg p-4 text-center shadow">
-          <p className="text-sm text-gray-400">Bugünkü Satış</p>
-          <p className="text-xl font-bold">32</p>
-        </div>
-        <div className="bg-gray-800 rounded-lg p-4 text-center shadow">
-          <p className="text-sm text-gray-400">Toplam Puan</p>
-          <p className="text-xl font-bold">15,240</p>
-        </div>
-        <div className="bg-gray-800 rounded-lg p-4 text-center shadow">
-          <p className="text-sm text-gray-400">Ürün Sayısı</p>
-          <p className="text-xl font-bold">58</p>
-        </div>
-      </section>
+      <CompanyDashboardReport></CompanyDashboardReport>
 
       {/* Ana Menü */}
       <main className="flex-1 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
