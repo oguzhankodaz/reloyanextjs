@@ -25,7 +25,7 @@ export async function getUserPointsAction(userId: string) {
   }
 }
 
-export async function usePointsAction(
+export async function spendPointsAction(
   userId: string,
   companyId: string,
   pointsToUse: number

@@ -9,7 +9,7 @@ import ProductList from "../company/products/ProductList";
 import { getUserByIdAction } from "@/actions/users";
 import { getProductsByCompanyAction } from "@/actions/product";
 import { addPurchaseAction } from "@/actions/purchases";
-import { getUserPointsAction, usePointsAction } from "@/actions/points";
+import { getUserPointsAction, spendPointsAction } from "@/actions/points";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 
 type User = {
@@ -137,7 +137,7 @@ export default function QRResultPage() {
     }
 
     setSaving(true);
-    const res = await usePointsAction(userId, company.companyId, amount);
+    const res = await spendPointsAction(userId, company.companyId, amount);
     setSaving(false);
 
     if (res.success) {
