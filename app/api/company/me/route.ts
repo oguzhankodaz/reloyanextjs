@@ -10,7 +10,7 @@ interface CompanyPayload extends jwt.JwtPayload {
 
 export async function GET() {
   const store = await cookies();
-  const cookie = store.get("company_session")?.value;
+  const cookie = store.get("cmp_sess_z71f8")?.value;
 
   if (!cookie) {
     return NextResponse.json({ company: null });

@@ -10,7 +10,7 @@ interface UserPayload extends jwt.JwtPayload {
 
 export async function getUserFromCookie(): Promise<UserPayload | null> {
   const store = await cookies();
-  const cookie = store.get("session")?.value;
+  const cookie = store.get("usr_sess_x92h1")?.value;
   if (!cookie) return null;
 
   try {

@@ -13,8 +13,8 @@ export function middleware(req: NextRequest) {
     "/company/register",
   ];
 
-  const userToken = req.cookies.get("session")?.value;
-  const companyToken = req.cookies.get("company_session")?.value;
+  const userToken = req.cookies.get("usr_sess_x92h1")?.value;
+  const companyToken = req.cookies.get("cmp_sess_z71f8")?.value;
 
   // ✅ Eğer public path'teyiz
   if (publicPaths.includes(pathname)) {

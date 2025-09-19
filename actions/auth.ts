@@ -43,7 +43,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 
   const store = await cookies();
 
-  store.set("session", token, {
+  store.set("usr_sess_x92h1", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -143,7 +143,7 @@ export async function loginCompanyAction(prevState: any, formData: FormData) {
 
   // ✅ Cookie’ye yaz
   const store = await cookies();
-  store.set("company_session", token, {
+  store.set("cmp_sess_z71f8", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -196,8 +196,8 @@ export async function registerCompanyAction(
 export async function checkSession() {
   const store = await cookies();
 
-  const userToken = store.get("session")?.value;
-  const companyToken = store.get("company_session")?.value;
+  const userToken = store.get("usr_sess_x92h1")?.value;
+  const companyToken = store.get("cmp_sess_z71f8")?.value;
 
   try {
     if (userToken) {

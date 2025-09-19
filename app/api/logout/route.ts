@@ -5,7 +5,7 @@ export async function POST() {
   const store = await cookies();
 
   // User session temizle
-  store.set("session", "", {
+  store.set("usr_sess_x92h1", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -15,7 +15,7 @@ export async function POST() {
   });
 
   // Company session temizle
-  store.set("company_session", "", {
+  store.set("cmp_sess_z71f8", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
