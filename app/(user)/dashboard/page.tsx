@@ -1,7 +1,7 @@
 /** @format */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import UserQrButton from "@/components/user/UserQRCode";
 import { useAuth } from "@/context/AuthContext";
 

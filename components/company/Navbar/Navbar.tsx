@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import React from "react";
 import Link from "next/link";
 import { Package, Users, BarChart2, Home } from "lucide-react";
-import LogoutButton from "@/components/LogoutButton";
 import CompanyLogoutButton from "../CompanyLogoutButton";
 
 const CompanyNavbar = () => {
