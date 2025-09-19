@@ -113,3 +113,8 @@ model PointsUsage {
   companyId String
 }
 //test edildi
+
+model TestDummy {
+  id   Int    @id @default(autoincrement())
+  name String
+}
