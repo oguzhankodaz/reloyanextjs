@@ -1,14 +1,31 @@
 /** @format */
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import UserQrButton from "@/components/user/UserQRCode";
 import { useAuth } from "@/context/AuthContext";
+import { getUserDashboard } from "@/actions/userDashboard";
+import { UserDashboardData } from "@/lib/types";
 
 const DashboardPage = () => {
   const { user } = useAuth();
+  const [data, setData] = useState<UserDashboardData | null>(null);
 
+  useEffect(() => {
+    if (!user?.userId) return;
+    (async () => {
+      const res = await getUserDashboard(user.userId);
+      setData(res);
+    })();
+  }, [user?.userId]);
 
+  if (!data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-white">
+        Yükleniyor...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
@@ -23,12 +40,17 @@ const DashboardPage = () => {
         {/* Toplam Puan Kartı */}
         <div className="col-span-1 bg-gray-800 rounded-xl p-6 shadow">
           <h2 className="text-xl font-semibold mb-2">⭐ Toplam Puanınız</h2>
-          <p className="text-4xl font-bold text-yellow-400">214</p>
+          <p className="text-4xl font-bold text-yellow-400">
+            {data.totalPoints}
+          </p>
           <p className="text-sm text-gray-400 mt-2">
             5000 puanda özel ödül sizi bekliyor!
           </p>
           <div className="w-full bg-gray-700 h-3 rounded mt-4">
-            <div className="bg-yellow-400 h-3 rounded w-1/5"></div>
+            <div
+              className="bg-yellow-400 h-3 rounded"
+              style={{ width: `${(data.totalPoints / 5000) * 100}%` }}
+            ></div>
           </div>
         </div>
 
@@ -38,18 +60,14 @@ const DashboardPage = () => {
             🏢 İşletmelere Göre Puanlarım
           </h2>
           <div className="space-y-3">
-            <div className="flex justify-between">
-              <span>Kahve Dükkanı</span>
-              <span className="font-semibold text-green-400">1200</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Marketim</span>
-              <span className="font-semibold text-green-400">800</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Kitapçı</span>
-              <span className="font-semibold text-green-400">450</span>
-            </div>
+            {data.companyPoints.map((c) => (
+              <div key={c.companyId} className="flex justify-between">
+                <span>{c.companyName}</span>
+                <span className="font-semibold text-green-400">
+                  {c.points}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -60,18 +78,17 @@ const DashboardPage = () => {
         <div className="bg-gray-800 rounded-xl p-6 shadow">
           <h2 className="text-xl font-semibold mb-4">📜 Son İşlemlerim</h2>
           <ul className="space-y-3 text-gray-300 text-sm">
-            <li className="flex justify-between border-b border-gray-700 pb-2">
-              <span>Latte Kahve</span>
-              <span>+50 puan</span>
-            </li>
-            <li className="flex justify-between border-b border-gray-700 pb-2">
-              <span>Kitap Alımı</span>
-              <span>+120 puan</span>
-            </li>
-            <li className="flex justify-between">
-              <span>Market Alışverişi</span>
-              <span>+200 puan</span>
-            </li>
+            {data.lastPurchases.map((p) => (
+              <li
+                key={p.id}
+                className="flex justify-between border-b border-gray-700 pb-2"
+              >
+                <span>
+                  {p.product} ({p.company})
+                </span>
+                <span className="text-green-400">+{p.points} puan</span>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -79,15 +96,16 @@ const DashboardPage = () => {
         <div className="bg-gray-800 rounded-xl p-6 shadow">
           <h2 className="text-xl font-semibold mb-4">🎁 Kampanyalar</h2>
           <div className="space-y-3">
-            <div className="p-3 bg-gray-700 rounded">
-              ☕ Kahve Dükkanı’nda bu hafta 2x puan!
-            </div>
-            <div className="p-3 bg-gray-700 rounded">
-              📚 Kitapçı’dan 200 TL üzeri alışverişe +300 puan!
-            </div>
-            <div className="p-3 bg-gray-700 rounded">
-              🛒 Marketim’den hafta sonuna özel %10 indirim.
-            </div>
+            {data.campaigns.map((c) => (
+              <div key={c.id} className="p-3 bg-gray-700 rounded">
+                <p className="font-semibold">{c.title}</p>
+                {c.detail && <p className="text-sm text-gray-300">{c.detail}</p>}
+                <p className="text-xs text-gray-400 mt-1">
+                  {c.company.name} • {new Date(c.startDate).toLocaleDateString()} -{" "}
+                  {new Date(c.endDate).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

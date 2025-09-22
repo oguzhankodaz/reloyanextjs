@@ -24,8 +24,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     fetch("/api/me", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
-        console.log("API response:", data); // burada dolu olmalı
-  
         if (data?.user) {
           const cleanUser = {
             userId: data.user.userId,

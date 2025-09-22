@@ -28,7 +28,6 @@ export const CompanyAuthProvider = ({
     fetch("/api/company/me", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
-        console.log("Company API response:", data);
 
         if (data.company) {
           const { companyId, email, name } = data.company;

@@ -69,3 +69,30 @@ export type MostActiveCompany = {
     purchases: number;
   };
 };
+
+export type UserDashboardData = {
+  totalPoints: number;
+  companyPoints: {
+    companyId: string;
+    companyName: string;
+    points: number;
+  }[];
+  lastPurchases: {
+    id: number;
+    product: string;
+    company: string;
+    points: number;
+    date: Date;
+  }[];
+  campaigns: {
+    id: number;
+    title: string;
+    detail?: string | null;
+    company: {
+      id: string;
+      name: string;
+    };
+    startDate: Date;
+    endDate: Date;
+  }[];
+};

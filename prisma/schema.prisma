@@ -36,6 +36,7 @@ model Company {
   purchases   Purchase[]
   userPoints  UserPoints[]
   pointsUsages PointsUsage[]   // ✅ eklendi
+   campaigns    Campaign[]   // 👈 eklendi
 }
 
 
@@ -125,3 +126,15 @@ model PointsUsage {
 //   id   Int    @id @default(autoincrement())
 //   name String
 // }
+
+model Campaign {
+  id        Int      @id @default(autoincrement())
+  title     String
+  detail    String?
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+}
