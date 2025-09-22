@@ -42,7 +42,7 @@ export type SelectedItem = {
 export type ReportData = {
   totalCustomers: number;
   totalPointsGiven: number;
-  mostActiveCompany: any;
+  mostActiveCompany: MostActiveCompany | null;
   customerPoints: CustomerPoints[];
   monthlyPoints: { month: string; points: number }[];
 };
@@ -56,4 +56,16 @@ export type CustomerPoints = {
     surname: string | null;
   };
   lastAction?: string | null;
+};
+
+export type MostActiveCompany = {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  address: string | null;
+  createdAt: Date;
+  _count: {
+    purchases: number;
+  };
 };

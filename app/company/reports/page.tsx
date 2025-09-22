@@ -17,6 +17,11 @@ import {
 } from "recharts";
 import { CustomerPoints, ReportData } from "@/lib/types";
 
+// Skeleton Loader Component
+const Skeleton = ({ className }: { className?: string }) => (
+  <div className={`animate-pulse bg-gray-700 rounded ${className}`} />
+);
+
 const ReportsPage = () => {
   const [data, setData] = useState<ReportData | null>(null);
 
@@ -29,12 +34,74 @@ const ReportsPage = () => {
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white">
-        Yükleniyor...
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white">
+        <CompanyNavbar />
+        <div className="p-6">
+          <BackButton />
+
+          <h1 className="text-2xl font-bold mb-6 mt-4">📊 Raporlar</h1>
+
+          {/* Skeleton Kartlar */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="bg-gray-800 rounded-xl p-6 shadow flex flex-col items-center">
+              <Skeleton className="w-10 h-10 mb-3" />
+              <Skeleton className="w-24 h-5 mb-2" />
+              <Skeleton className="w-16 h-8" />
+            </div>
+            <div className="bg-gray-800 rounded-xl p-6 shadow flex flex-col items-center">
+              <Skeleton className="w-10 h-10 mb-3" />
+              <Skeleton className="w-24 h-5 mb-2" />
+              <Skeleton className="w-20 h-8" />
+            </div>
+            <div className="bg-gray-800 rounded-xl p-6 shadow flex flex-col items-center">
+              <Skeleton className="w-10 h-10 mb-3" />
+              <Skeleton className="w-28 h-5 mb-2" />
+              <Skeleton className="w-20 h-6" />
+            </div>
+          </div>
+
+          {/* Skeleton Tablo */}
+          <div className="bg-gray-800 rounded-xl p-6 shadow mt-8">
+            <h2 className="text-xl font-semibold mb-4">👥 Müşteri Puanları</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-700 text-gray-200">
+                    <th className="px-4 py-2 text-left">Ad Soyad</th>
+                    <th className="px-4 py-2 text-center">Toplam Puan</th>
+                    <th className="px-4 py-2 text-center">Son İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="hover:bg-gray-700">
+                      <td className="px-4 py-3">
+                        <Skeleton className="w-32 h-4" />
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Skeleton className="w-12 h-4 mx-auto" />
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Skeleton className="w-24 h-4 mx-auto" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Skeleton Grafik */}
+          <div className="bg-gray-800 rounded-xl p-6 shadow mt-8">
+            <h2 className="text-xl font-semibold mb-4">📈 Aylık Puan Dağılımı</h2>
+            <Skeleton className="w-full h-48" />
+          </div>
+        </div>
       </div>
     );
   }
 
+  // Normal veri yüklendiğinde gerçek rapor sayfası render olacak
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white">
       <CompanyNavbar />
@@ -74,7 +141,7 @@ const ReportsPage = () => {
           </div>
         </div>
 
-        {/* Müşteri Puanları Tablosu */}
+        {/* Tablo */}
         <div className="bg-gray-800 rounded-xl p-6 shadow mt-8">
           <h2 className="text-xl font-semibold mb-4">👥 Müşteri Puanları</h2>
           <div className="overflow-x-auto">
@@ -87,7 +154,7 @@ const ReportsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {data.customerPoints.map((c: CustomerPoints) => (
+                {data.customerPoints.map((c) => (
                   <tr key={c.userId} className="hover:bg-gray-700">
                     <td className="px-4 py-2">
                       {c.user.name} {c.user.surname}
