@@ -10,11 +10,11 @@ export default async function CompanyProductsPage({
   params: Promise<{ companyId: string }>;
 }) {
   const { companyId } = await params;
-
   const products = await getCompanyProducts(companyId);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white px-4 py-6">
+      {/* Geri Butonu */}
       <div className="max-w-3xl mx-auto mb-6">
         <Link
           href="/points"
@@ -25,6 +25,7 @@ export default async function CompanyProductsPage({
         </Link>
       </div>
 
+      {/* Başlık */}
       <div className="max-w-3xl mx-auto mb-6">
         <h1 className="text-3xl font-bold text-yellow-400">Şirket Ürünleri</h1>
         <p className="text-gray-400 text-sm mt-1">
@@ -32,36 +33,39 @@ export default async function CompanyProductsPage({
         </p>
       </div>
 
+      {/* Ürün Listesi (scrollable) */}
       <div className="max-w-3xl mx-auto">
         {products.length === 0 ? (
           <p className="text-gray-500">Bu şirkete ait ürün bulunamadı.</p>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-lg hover:shadow-yellow-400/10 transition-shadow"
-              >
-                <h2 className="text-xl font-semibold text-white mb-2">
-                  {product.name}
-                </h2>
+          <div className="h-[70vh] overflow-y-auto pr-2">
+            <div className="grid gap-5 sm:grid-cols-2">
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  className="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-lg hover:shadow-yellow-400/10 transition-shadow"
+                >
+                  <h2 className="text-xl font-semibold text-white mb-2">
+                    {product.name}
+                  </h2>
 
-                <div className="text-sm space-y-1">
-                  <p className="text-gray-400">
-                    💰 Fiyat:{" "}
-                    <span className="text-white">
-                      {product.price.toFixed(2)} ₺
-                    </span>
-                  </p>
-                  <p className="text-green-400">
-                    🎯 Kazanılacak Puan: {product.pointsOnSell}
-                  </p>
-                  <p className="text-yellow-400">
-                    🛒 Puanla Almak İçin: {product.pointsToBuy}
-                  </p>
+                  <div className="text-sm space-y-1">
+                    <p className="text-gray-400">
+                      💰 Fiyat:{" "}
+                      <span className="text-white">
+                        {product.price.toFixed(2)} ₺
+                      </span>
+                    </p>
+                    <p className="text-green-400">
+                      🎯 Kazanılacak Puan: {product.pointsOnSell}
+                    </p>
+                    <p className="text-yellow-400">
+                      🛒 Puanla Almak İçin: {product.pointsToBuy}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
