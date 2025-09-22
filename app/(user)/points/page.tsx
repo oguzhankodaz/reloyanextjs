@@ -1,9 +1,12 @@
+/** @format */
+
 "use client";
 
 import { getUserPointsAction } from "@/actions/points";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Award, Building2 } from "lucide-react";
+import { Award, Building2, Gift } from "lucide-react";
+import Link from "next/link";
 
 type UserPoint = {
   id: number;
@@ -36,44 +39,56 @@ const PointsPage = () => {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white p-4 flex flex-col items-center">
-      {/* Başlık */}
-      <h1 className="text-2xl font-extrabold mb-2 text-yellow-400 flex items-center gap-2">
-        <Award className="w-6 h-6 text-yellow-400" />
-        Kazandığınız Puanlar
-      </h1>
-      <p className="text-gray-400 text-sm mb-6 text-center">
-        İşletmelerden topladığınız puanlar burada listeleniyor
-      </p>
+    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white px-4 py-6">
+      {/* Sayfa Başlığı */}
+      <div className="max-w-xl mx-auto text-center mb-8">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-yellow-400 flex items-center justify-center gap-2">
+          <Award className="w-7 h-7" />
+          Kazandığınız Puanlar
+        </h1>
+        <p className="text-gray-400 text-sm md:text-base mt-2">
+          Aşağıda işletmelere göre kazandığınız puanları görebilir ve ürünleri görüntüleyebilirsiniz.
+        </p>
+      </div>
 
-      {points.length === 0 ? (
-        <p className="text-gray-400 mt-10">Henüz hiç puanınız yok 🙁</p>
-      ) : (
-        <div className="w-full max-w-md space-y-4">
-          {points.map((p) => (
+      {/* Kartlar */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-4xl mx-auto">
+        {points.length === 0 ? (
+          <p className="text-center text-gray-400 col-span-full">
+            Henüz hiç puanınız yok 🙁
+          </p>
+        ) : (
+          points.map((p) => (
             <div
               key={p.id}
-              className="bg-gray-800 p-4 rounded-xl shadow-md hover:scale-[1.02] transition-transform"
+              className="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-lg hover:shadow-yellow-400/10 transition-all duration-200 flex flex-col justify-between"
             >
-              {/* İşletme İsmi */}
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+              <div>
+                <div className="flex items-center gap-3 mb-3">
                   <Building2 className="w-5 h-5 text-blue-400" />
-                  <h2 className="text-lg font-semibold">{p.company.name}</h2>
+                  <h2 className="text-lg font-semibold text-white">
+                    {p.company.name}
+                  </h2>
                 </div>
+                <p className="text-green-400 text-2xl font-bold mb-1">
+                  {p.totalPoints.toLocaleString()} Puan
+                </p>
+                <p className="text-gray-400 text-sm">
+                  Bu işletmedeki toplam puanınız
+                </p>
               </div>
 
-              {/* Puan Göstergesi */}
-              <p className="text-green-400 text-2xl font-bold">
-                {p.totalPoints.toLocaleString()} Puan
-              </p>
-
-        
-           
+              <Link
+                href={`/points/${p.company.id}`}
+                className="mt-4 inline-flex items-center gap-2 justify-center bg-yellow-400 text-black font-medium px-4 py-2 rounded-lg hover:bg-yellow-300 transition text-sm"
+              >
+                <Gift className="w-4 h-4" />
+                Ürünleri Görüntüle
+              </Link>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 };

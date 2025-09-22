@@ -48,6 +48,8 @@ export async function getUserDashboard(userId: string) {
     take: 5,
   });
 
+  
+
   return {
     totalPoints,
     companyPoints,

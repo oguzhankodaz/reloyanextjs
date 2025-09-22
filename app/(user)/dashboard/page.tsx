@@ -76,7 +76,7 @@ const DashboardPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         {/* Son İşlemler */}
         <div className="bg-gray-800 rounded-xl p-6 shadow">
-          <h2 className="text-xl font-semibold mb-4">📜 Son İşlemlerim</h2>
+          <h2 className="text-xl font-semibold mb-4">📜 Son Kazanılan Puanlar</h2>
           <ul className="space-y-3 text-gray-300 text-sm">
             {data.lastPurchases.map((p) => (
               <li

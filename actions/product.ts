@@ -63,3 +63,19 @@ export async function deleteProductAction(productId: number) {
     return { success: false, message: "Ürün silinemedi ❌" };
   }
 }
+
+
+// actions/products.ts
+
+export async function getCompanyProducts(companyId: string) {
+  return await prisma.product.findMany({
+    where: { companyId },
+    select: {
+      id: true,
+      name: true,
+      price: true,
+      pointsOnSell: true,
+      pointsToBuy: true,
+    },
+  });
+}

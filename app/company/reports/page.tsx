@@ -166,7 +166,7 @@ const ReportsPage = () => {
               </thead>
               <tbody>
                 {data.customerPoints.map((c) => (
-                  <tr key={c.userId} className="hover:bg-gray-700">
+                  <tr key={c.id} className="hover:bg-gray-700">
                     <td className="px-4 py-2">
                       {c.user.name} {c.user.surname}
                     </td>
