@@ -7,9 +7,9 @@ import { getCompanyProducts } from "@/actions/product";
 export default async function CompanyProductsPage({
   params,
 }: {
-  params: { companyId: string };
+  params: Promise<{ companyId: string }>;
 }) {
-  const companyId = params.companyId;
+  const { companyId } = await params;
 
   const products = await getCompanyProducts(companyId);
 
