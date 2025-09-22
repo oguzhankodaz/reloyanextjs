@@ -93,7 +93,9 @@ const ReportsPage = () => {
 
           {/* Skeleton Grafik */}
           <div className="bg-gray-800 rounded-xl p-6 shadow mt-8">
-            <h2 className="text-xl font-semibold mb-4">📈 Aylık Puan Dağılımı</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              📈 Aylık Puan Dağılımı
+            </h2>
             <Skeleton className="w-full h-48" />
           </div>
         </div>
@@ -126,6 +128,15 @@ const ReportsPage = () => {
             <p className="text-3xl font-bold mt-2">
               {data.totalPointsGiven.toLocaleString()}
             </p>
+          </div>
+          {/* Puanla Alınan Ürünlerin Toplam Değeri */}
+          <div className="bg-gray-800 rounded-xl p-6 shadow flex flex-col items-center">
+            <BarChart className="w-10 h-10 text-purple-400 mb-3" />
+            <h2 className="text-lg font-semibold">Puanla Alınan Ürünler</h2>
+            <p className="text-3xl font-bold mt-2">
+              {data.pointsUsageTotal.toLocaleString()} ₺
+            </p>
+            <p className="text-sm text-gray-400 mt-1">Toplam ürün değeri</p>
           </div>
 
           {/* En Aktif İşletme */}

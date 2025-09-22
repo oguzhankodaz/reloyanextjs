@@ -42,10 +42,16 @@ export type SelectedItem = {
 export type ReportData = {
   totalCustomers: number;
   totalPointsGiven: number;
-  mostActiveCompany: MostActiveCompany | null;
+  mostActiveCompany: {
+    id: string;
+    name: string;
+    _count: { purchases: number };
+  } | null;
   customerPoints: CustomerPoints[];
   monthlyPoints: { month: string; points: number }[];
+  pointsUsageTotal: number; // 👈 eklendi
 };
+
 
 export type CustomerPoints = {
   id: number;

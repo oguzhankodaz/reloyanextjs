@@ -74,7 +74,7 @@ export async function getReportData() {
     take: 10,
   });
 
-  // Son işlem bilgisi için purchase çekelim
+  // Son işlem bilgisi
   const purchases = await prisma.purchase.findMany({
     orderBy: { purchaseDate: "desc" },
     include: { user: true, product: true },
@@ -105,11 +105,17 @@ export async function getReportData() {
     points: Number(m.total),
   }));
 
+  // ✅ Puanla alınan ürünlerin toplam fiyatı
+  const pointsUsageAgg = await prisma.pointsUsage.aggregate({
+    _sum: { price: true },
+  });
+
   return {
     totalCustomers,
     totalPointsGiven: pointsAgg._sum.pointsEarned ?? 0,
     mostActiveCompany,
     customerPoints: customerPointsWithLast,
     monthlyPoints,
+    pointsUsageTotal: pointsUsageAgg._sum.price ?? 0, // 👈 yeni alan
   };
 }
