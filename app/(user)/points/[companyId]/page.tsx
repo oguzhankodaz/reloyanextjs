@@ -4,11 +4,11 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getCompanyProducts } from "@/actions/product";
 
-type PageProps = {
+export default async function CompanyProductsPage({
+  params,
+}: {
   params: { companyId: string };
-};
-
-export default async function CompanyProductsPage({ params }: PageProps) {
+}) {
   const products = await getCompanyProducts(params.companyId);
 
   return (
