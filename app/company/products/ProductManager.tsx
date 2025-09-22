@@ -5,9 +5,9 @@ import {
   getProductsByCompanyAction,
 } from "@/actions/product";
 import ProductForm from "./ProductForm";
-import ProductList from "./ProductList";
 import ProductSkeleton from "./ProductSkeleton";
 import { useCompanyAuth } from "@/context/CompanyAuthContext"; // ✅ context
+import { ProductList } from "./ProductList";
 
 type Product = {
   id: number;

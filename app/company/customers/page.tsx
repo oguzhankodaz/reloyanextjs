@@ -79,7 +79,7 @@ const CustomersPage = () => {
               </thead>
               <tbody>
                 {customers.map((c, idx) => (
-                  <React.Fragment key={c.user.id}>
+                  <React.Fragment key={`customer-${c.user.id}`}>
                     <tr
                       className={`${
                         idx % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
@@ -88,8 +88,6 @@ const CustomersPage = () => {
                       <td className="px-4 py-3">
                         {c.user.name} {c.user.surname}
                       </td>
-                      {/* // email alanı üst kısımıda açman geerek açmak için */}
-                      {/* <td className="px-4 py-3">{c.user.email}</td> */}
                       <td className="px-4 py-3 text-center font-semibold text-green-400">
                         {c.totalPoints}
                       </td>
@@ -133,24 +131,20 @@ const CustomersPage = () => {
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {purchases.map((h) => (
-                                    <tr key={h.id} className="bg-gray-800">
-                                      {/* Ürün adı */}
+                                  {purchases.map((h, index) => (
+                                    <tr
+                                      key={`history-${c.user.id}-${h.id}-${index}`}
+                                      className="bg-gray-800"
+                                    >
                                       <td className="px-3 py-2">{h.product}</td>
-
-                                      {/* Adet */}
                                       <td className="px-3 py-2 text-center">
                                         {h.quantity}
                                       </td>
-
-                                      {/* Fiyat */}
                                       <td className="px-3 py-2 text-center">
                                         {h.totalPrice > 0
                                           ? `${h.totalPrice}₺`
                                           : "-"}
                                       </td>
-
-                                      {/* Puan */}
                                       <td
                                         className={`px-3 py-2 text-center font-semibold ${
                                           h.points > 0
@@ -162,8 +156,6 @@ const CustomersPage = () => {
                                           ? `+${h.points}`
                                           : h.points}
                                       </td>
-
-                                      {/* Tarih */}
                                       <td className="px-3 py-2 text-center">
                                         {new Date(h.date).toLocaleDateString(
                                           "tr-TR"

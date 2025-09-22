@@ -4,14 +4,13 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
-import ProductList from "../company/products/ProductList";
 
 import { getUserByIdAction } from "@/actions/users";
 import { getProductsByCompanyAction } from "@/actions/product";
 import { addPurchaseAction } from "@/actions/purchases";
 import { getUserPointsAction, spendPointsAction } from "@/actions/points";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
-import { SelectedItem } from "@/lib/types";
+import { ProductList } from "../company/products/ProductList";
 
 type User = {
   id: string;
@@ -28,7 +27,6 @@ type Product = {
   pointsOnSell: number;
 };
 
-
 export default function QRResultPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -38,12 +36,15 @@ export default function QRResultPage() {
 
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [selected, setSelected] = useState<SelectedItem[]>([]);
   const [totalPoints, setTotalPoints] = useState<number>(0);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [useAmountInput, setUseAmountInput] = useState<string>("");
+
+  const [cartItems, setCartItems] = useState<
+    { id: number; name: string; quantity: number; usePoints: boolean }[]
+  >([]);
 
   // Kullanıcı + Puan + Ürünleri getir
   useEffect(() => {
@@ -53,12 +54,10 @@ export default function QRResultPage() {
     }
 
     (async () => {
-      // Kullanıcı bilgisi
       const userRes = await getUserByIdAction(userId);
       if (userRes.success) {
         setUser(userRes.user);
 
-        // Kullanıcının puanı
         const pointsRes = await getUserPointsAction(userId);
         if (pointsRes.success) {
           const companyPoints = pointsRes.points.find(
@@ -68,7 +67,6 @@ export default function QRResultPage() {
         }
       }
 
-      // Şirket ürünleri
       const prodRes = await getProductsByCompanyAction(company.companyId);
       if (prodRes.success) {
         setProducts(prodRes.products);
@@ -92,33 +90,59 @@ export default function QRResultPage() {
     }
   }, [company, router]);
 
-  // Satın alma kaydetme
+  // Sepete ekle
+  const handleAddToCart = (item: {
+    id: number;
+    name: string;
+    quantity: number;
+  }) => {
+    setCartItems((prev) => {
+      const existing = prev.find((i) => i.id === item.id);
+      if (existing) {
+        return prev.map((i) =>
+          i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
+        );
+      }
+      return [...prev, { ...item, usePoints: false }];
+    });
+  };
+
+  const toggleUsePoints = (id: number) => {
+    setCartItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, usePoints: !i.usePoints } : i))
+    );
+  };
+
+  const handleRemove = (id: number) => {
+    setCartItems((prev) => prev.filter((i) => i.id !== id));
+  };
+
+  // Kaydetme
   const handleSave = async () => {
     if (!userId || !company) return;
-    if (selected.length === 0) {
-      alert("En az bir ürün seçmelisiniz.");
+    if (cartItems.length === 0) {
+      alert("Sepet boş.");
       return;
     }
-  
+
     setSaving(true);
-  
-    for (const item of selected) {
+
+    for (const item of cartItems) {
       const product = products.find((p) => p.id === item.id);
       if (!product) continue;
-  
+
       if (item.usePoints) {
-        // ürünün puanla alış değeri × adet
         const totalUse = product.pointsToBuy * item.quantity;
-  
+
         const res = await spendPointsAction(
           userId,
           company.companyId,
           totalUse,
-          product.id,          // ✅ productId gönder
-          item.quantity,       // ✅ adet gönder
-          product.price        // ✅ fiyat gönder
+          product.id,
+          item.quantity,
+          product.price
         );
-  
+
         if (!res.success) {
           alert(res.message);
         }
@@ -128,9 +152,10 @@ export default function QRResultPage() {
         ]);
       }
     }
-  
+
     setSaving(false);
-  
+    setCartItems([]);
+
     // puanı güncelle
     const pointsRes = await getUserPointsAction(userId);
     if (pointsRes.success) {
@@ -139,13 +164,11 @@ export default function QRResultPage() {
       );
       setTotalPoints(companyPoints?.totalPoints ?? 0);
     }
-  
-    alert("İşlemler tamamlandı ✅");
-    setSelected([]);
-  };
-  
 
-  // Puan kullanma işlemi
+    alert("İşlemler tamamlandı ✅");
+  };
+
+  // Manuel puan düşme
   const handleUsePoints = async () => {
     if (!userId || !company) return;
 
@@ -162,7 +185,7 @@ export default function QRResultPage() {
     if (res.success) {
       alert(`-${amount} puan düşüldü ✅`);
       setTotalPoints(res.totalPoints ?? 0);
-      setUseAmountInput(""); // input'u sıfırla
+      setUseAmountInput("");
     } else {
       alert(res.message);
     }
@@ -175,24 +198,21 @@ export default function QRResultPage() {
     <div>
       <CompanyNavbar />
       <div className="flex flex-col items-center justify-start min-h-screen p-6">
-        {/* Kullanıcı bilgisi + Puan Kullan yan yana */}
-        <div className="flex flex-col md:flex-row gap-6 mb-8 w-full max-w-4xl">
-          {/* Kullanıcı bilgisi */}
-          <div className="bg-gray-100 rounded-lg shadow-md p-6 flex-1">
-            <h1 className="text-xl font-bold mb-4 text-black">📌 Kullanıcı Bilgileri</h1>
-            <p className="text-black">
-              <strong>Ad Soyad:</strong> {user.name} {user.surname}
-            </p>
-            <p className="text-black">
-              <strong>Email:</strong> {user.email}
-            </p>
-            <p className="text-black mt-2">
-              <strong>Toplam Puanı:</strong>{" "}
-              <span className="text-green-600 font-bold">{totalPoints}</span>
-            </p>
-          </div>
-
-   
+        {/* Kullanıcı bilgisi */}
+        <div className="bg-gray-100 rounded-lg shadow-md p-6 w-full max-w-4xl mb-6">
+          <h1 className="text-xl font-bold mb-4 text-black">
+            📌 Kullanıcı Bilgileri
+          </h1>
+          <p className="text-black">
+            <strong>Ad Soyad:</strong> {user.name} {user.surname}
+          </p>
+          <p className="text-black">
+            <strong>Email:</strong> {user.email}
+          </p>
+          <p className="text-black mt-2">
+            <strong>Toplam Puanı:</strong>{" "}
+            <span className="text-green-600 font-bold">{totalPoints}</span>
+          </p>
         </div>
 
         {/* Ürün listesi */}
@@ -200,9 +220,72 @@ export default function QRResultPage() {
         <div className="bg-white text-black rounded-xl p-6 shadow w-full max-w-4xl">
           <ProductList
             products={products}
-            mode="select"
-            onSelectChange={(sel) => setSelected(sel)}
+            onAdd={handleAddToCart} // sepete ekleme fonksiyonunu ver
           />
+        </div>
+
+        {/* Sepet */}
+        <div className="bg-black p-6 rounded-xl shadow-md mt-6 w-full max-w-4xl">
+          <h3 className="font-semibold mb-4 text-white text-lg tracking-wide">
+            🛍 Sepetiniz
+          </h3>
+          {cartItems.length === 0 && (
+            <p className="text-gray-400 text-sm">Henüz ürün eklemediniz.</p>
+          )}
+
+          <div className="divide-y divide-gray-700">
+            {cartItems.map((item) => {
+              const product = products.find((p) => p.id === item.id);
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between py-3"
+                >
+                  <span className="text-gray-100 font-medium">
+                    {item.name} × {item.quantity}
+                  </span>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 text-sm text-gray-300">
+                      <input
+                        type="checkbox"
+                        checked={item.usePoints}
+                        onChange={() => toggleUsePoints(item.id)}
+                        className="w-5 h-5 accent-green-500"
+                      />
+                      Puan kullan
+                    </label>
+                    <button
+                      onClick={() => handleRemove(item.id)}
+                      className="text-red-400 hover:text-red-500 text-sm font-semibold"
+                    >
+                      ❌ Sil
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Toplamlar */}
+          {cartItems.length > 0 && (
+            <div className="mt-4 border-t border-gray-700 pt-4 text-gray-200">
+              <p className="mb-1">
+                🎯 <span className="font-semibold">Toplam Verilecek Puan:</span>{" "}
+                {cartItems.reduce((sum, item) => {
+                  const product = products.find((p) => p.id === item.id);
+                  return sum + (product?.pointsOnSell || 0) * item.quantity;
+                }, 0)}
+              </p>
+              <p>
+                💳 <span className="font-semibold">Gerekli Puan:</span>{" "}
+                {cartItems.reduce((sum, item) => {
+                  if (!item.usePoints) return sum;
+                  const product = products.find((p) => p.id === item.id);
+                  return sum + (product?.pointsToBuy || 0) * item.quantity;
+                }, 0)}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Kaydet butonu */}
@@ -214,26 +297,27 @@ export default function QRResultPage() {
           {saving ? "Kaydediliyor..." : "Kaydet ✅"}
         </button>
       </div>
-             {/* Puan Kullanma Alanı */}
-             <div className="bg-white text-black rounded-lg shadow-md p-6 flex-1">
-            <h2 className="text-xl font-semibold mb-4">🎯 Manuel Puan Kullan</h2>
-            <input
-              type="number"
-              min={1}
-              max={totalPoints}
-              value={useAmountInput}
-              onChange={(e) => setUseAmountInput(e.target.value)} // string olarak tut
-              className="w-full border rounded px-3 py-2 mb-4 text-black"
-              placeholder="Kullanılacak puan"
-            />
-            <button
-              onClick={handleUsePoints}
-              disabled={saving || parseInt(useAmountInput, 10) <= 0}
-              className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 disabled:opacity-50"
-            >
-              {saving ? "İşlem yapılıyor..." : "Puanı Kullan"}
-            </button>
-          </div>
+
+      {/* Manuel Puan Kullan */}
+      <div className="bg-white text-black rounded-lg shadow-md p-6 m-6">
+        <h2 className="text-xl font-semibold mb-4">🎯 Manuel Puan Kullan</h2>
+        <input
+          type="number"
+          min={1}
+          max={totalPoints}
+          value={useAmountInput}
+          onChange={(e) => setUseAmountInput(e.target.value)}
+          className="w-full border rounded px-3 py-2 mb-4 text-black"
+          placeholder="Kullanılacak puan"
+        />
+        <button
+          onClick={handleUsePoints}
+          disabled={saving || parseInt(useAmountInput, 10) <= 0}
+          className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 disabled:opacity-50"
+        >
+          {saving ? "İşlem yapılıyor..." : "Puanı Kullan"}
+        </button>
+      </div>
     </div>
   );
 }
