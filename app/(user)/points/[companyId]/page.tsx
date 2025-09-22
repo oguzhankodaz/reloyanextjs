@@ -4,12 +4,18 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getCompanyProducts } from "@/actions/product";
 
-export default async function CompanyProductsPage({
-  params,
-}: {
-  params: { companyId: string };
-}) {
-  const products = await getCompanyProducts(params.companyId);
+// ✅ Özel tip tanımı
+interface CompanyProductsPageProps {
+  params: {
+    companyId: string;
+  };
+}
+
+export default async function CompanyProductsPage({ params }: CompanyProductsPageProps) {
+  // companyId parametresi string olacak
+  const companyId = params.companyId;
+
+  const products = await getCompanyProducts(companyId);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white px-4 py-6">
