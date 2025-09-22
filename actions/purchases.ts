@@ -8,64 +8,49 @@ export async function addPurchaseAction(
   items: { productId: number; quantity: number }[]
 ) {
   try {
-    if (!items || items.length === 0) {
-      return { success: false, message: "Ürün seçilmedi" };
-    }
+    return await prisma.$transaction(async (tx) => {
+      // ürünleri DB’den çek
+      const products = await tx.product.findMany({
+        where: { id: { in: items.map((i) => i.productId) } },
+        select: { id: true, price: true, pointsOnSell: true },
+      });
 
-    // Seçilen ürünleri DB’den al
-    const products = await prisma.product.findMany({
-      where: { id: { in: items.map((i) => i.productId) }, companyId },
-    });
-
-    if (products.length === 0) {
-      return { success: false, message: "Ürün bulunamadı veya şirkete ait değil" };
-    }
-
-    let totalPoints = 0;
-    let totalPrice = 0;
-
-    // Transaction başlat
-    await prisma.$transaction(async (tx) => {
-      for (const item of items) {
+      // satın alma kayıtları
+      const purchaseData = items.map((item) => {
         const product = products.find((p) => p.id === item.productId);
-        if (!product) continue;
+        if (!product) throw new Error("Ürün bulunamadı");
 
-        const points = product.pointsOnSell * item.quantity;
-        const price = product.price * item.quantity;
+        return {
+          userId,
+          companyId,
+          productId: product.id,
+          quantity: item.quantity,
+          totalPrice: product.price * item.quantity,
+          pointsEarned: product.pointsOnSell * item.quantity,
+        };
+      });
 
-        totalPoints += points;
-        totalPrice += price;
+      // toplu ekleme
+      await tx.purchase.createMany({ data: purchaseData });
 
-        // Purchase kaydı
-        await tx.purchase.create({
-          data: {
-            userId,
-            companyId,
-            productId: product.id,
-            quantity: item.quantity,
-            totalPrice: price,
-            pointsEarned: points,
-          },
-        });
-      }
+      // toplam puanı hesapla
+      const totalEarned = purchaseData.reduce(
+        (sum, p) => sum + p.pointsEarned,
+        0
+      );
 
-      // UserPoints güncelle veya oluştur
+      // puan güncelle
       await tx.userPoints.upsert({
         where: { userId_companyId: { userId, companyId } },
-        update: { totalPoints: { increment: totalPoints } },
-        create: { userId, companyId, totalPoints },
+        update: { totalPoints: { increment: totalEarned } },
+        create: { userId, companyId, totalPoints: totalEarned },
       });
-    });
 
-    return {
-      success: true,
-      message: "Satın alma kaydedildi ✅",
-      totalPoints,
-      totalPrice,
-    };
+      return { success: true, earned: totalEarned };
+    });
   } catch (error) {
-    console.error("addPurchaseAction error:", error);
-    return { success: false, message: "Satın alma sırasında hata oluştu" };
+    console.error("addPurchaseAction error", error);
+    return { success: false, message: "Satın alma işlemi başarısız oldu." };
   }
 }
 
