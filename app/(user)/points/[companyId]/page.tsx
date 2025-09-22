@@ -4,22 +4,17 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getCompanyProducts } from "@/actions/product";
 
-// ✅ Özel tip tanımı
-interface CompanyProductsPageProps {
-  params: {
-    companyId: string;
-  };
-}
-
-export default async function CompanyProductsPage({ params }: CompanyProductsPageProps) {
-  // companyId parametresi string olacak
+export default async function CompanyProductsPage({
+  params,
+}: {
+  params: { companyId: string };
+}) {
   const companyId = params.companyId;
 
   const products = await getCompanyProducts(companyId);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white px-4 py-6">
-      {/* Geri Butonu */}
       <div className="max-w-3xl mx-auto mb-6">
         <Link
           href="/points"
@@ -30,7 +25,6 @@ export default async function CompanyProductsPage({ params }: CompanyProductsPag
         </Link>
       </div>
 
-      {/* Başlık */}
       <div className="max-w-3xl mx-auto mb-6">
         <h1 className="text-3xl font-bold text-yellow-400">Şirket Ürünleri</h1>
         <p className="text-gray-400 text-sm mt-1">
@@ -38,7 +32,6 @@ export default async function CompanyProductsPage({ params }: CompanyProductsPag
         </p>
       </div>
 
-      {/* Ürün Listesi */}
       <div className="max-w-3xl mx-auto">
         {products.length === 0 ? (
           <p className="text-gray-500">Bu şirkete ait ürün bulunamadı.</p>
