@@ -39,3 +39,21 @@ export type SelectedItem = {
   quantity: number;
   usePoints?: boolean; // ✅ ekstra alan (puanla alındı mı?)
 };
+export type ReportData = {
+  totalCustomers: number;
+  totalPointsGiven: number;
+  mostActiveCompany: any;
+  customerPoints: CustomerPoints[];
+  monthlyPoints: { month: string; points: number }[];
+};
+
+export type CustomerPoints = {
+  id: number;
+  totalPoints: number;
+  userId: string;
+  user: {
+    name: string;
+    surname: string | null;
+  };
+  lastAction?: string | null;
+};

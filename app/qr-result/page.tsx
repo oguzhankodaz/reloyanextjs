@@ -192,26 +192,7 @@ export default function QRResultPage() {
             </p>
           </div>
 
-          {/* Puan Kullanma Alanı */}
-          <div className="bg-white text-black rounded-lg shadow-md p-6 flex-1">
-            <h2 className="text-xl font-semibold mb-4">🎯 Puan Kullan</h2>
-            <input
-              type="number"
-              min={1}
-              max={totalPoints}
-              value={useAmountInput}
-              onChange={(e) => setUseAmountInput(e.target.value)} // string olarak tut
-              className="w-full border rounded px-3 py-2 mb-4 text-black"
-              placeholder="Kullanılacak puan"
-            />
-            <button
-              onClick={handleUsePoints}
-              disabled={saving || parseInt(useAmountInput, 10) <= 0}
-              className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 disabled:opacity-50"
-            >
-              {saving ? "İşlem yapılıyor..." : "Puanı Kullan"}
-            </button>
-          </div>
+   
         </div>
 
         {/* Ürün listesi */}
@@ -233,6 +214,26 @@ export default function QRResultPage() {
           {saving ? "Kaydediliyor..." : "Kaydet ✅"}
         </button>
       </div>
+             {/* Puan Kullanma Alanı */}
+             <div className="bg-white text-black rounded-lg shadow-md p-6 flex-1">
+            <h2 className="text-xl font-semibold mb-4">🎯 Manuel Puan Kullan</h2>
+            <input
+              type="number"
+              min={1}
+              max={totalPoints}
+              value={useAmountInput}
+              onChange={(e) => setUseAmountInput(e.target.value)} // string olarak tut
+              className="w-full border rounded px-3 py-2 mb-4 text-black"
+              placeholder="Kullanılacak puan"
+            />
+            <button
+              onClick={handleUsePoints}
+              disabled={saving || parseInt(useAmountInput, 10) <= 0}
+              className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 disabled:opacity-50"
+            >
+              {saving ? "İşlem yapılıyor..." : "Puanı Kullan"}
+            </button>
+          </div>
     </div>
   );
 }

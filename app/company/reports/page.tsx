@@ -1,10 +1,40 @@
-'use client'
-import BackButton from '@/components/company/BackButton'
-import CompanyNavbar from '@/components/company/Navbar/Navbar'
-import { BarChart, PieChart, Activity } from 'lucide-react'
-import React from 'react'
+/** @format */
+"use client";
+
+import BackButton from "@/components/company/BackButton";
+import CompanyNavbar from "@/components/company/Navbar/Navbar";
+import { Activity, BarChart, PieChart } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { getReportData } from "@/actions/companyStats";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { CustomerPoints, ReportData } from "@/lib/types";
 
 const ReportsPage = () => {
+  const [data, setData] = useState<ReportData | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const res = await getReportData();
+      setData(res);
+    })();
+  }, []);
+
+  if (!data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-white">
+        Yükleniyor...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white">
       <CompanyNavbar />
@@ -13,33 +43,38 @@ const ReportsPage = () => {
 
         <h1 className="text-2xl font-bold mb-6 mt-4">📊 Raporlar</h1>
 
+        {/* Kartlar */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Kart: Toplam Müşteri */}
+          {/* Toplam Müşteri */}
           <div className="bg-gray-800 rounded-xl p-6 shadow flex flex-col items-center">
             <Activity className="w-10 h-10 text-yellow-400 mb-3" />
             <h2 className="text-lg font-semibold">Toplam Müşteri</h2>
-            <p className="text-3xl font-bold mt-2">1,245</p>
-            <p className="text-sm text-gray-400 mt-1">Bu ay +124 yeni müşteri</p>
+            <p className="text-3xl font-bold mt-2">{data.totalCustomers}</p>
           </div>
 
-          {/* Kart: Toplam Puan */}
+          {/* Dağıtılan Puan */}
           <div className="bg-gray-800 rounded-xl p-6 shadow flex flex-col items-center">
             <BarChart className="w-10 h-10 text-green-400 mb-3" />
             <h2 className="text-lg font-semibold">Dağıtılan Puan</h2>
-            <p className="text-3xl font-bold mt-2">56,780</p>
-            <p className="text-sm text-gray-400 mt-1">Geçen aya göre %12 artış</p>
+            <p className="text-3xl font-bold mt-2">
+              {data.totalPointsGiven.toLocaleString()}
+            </p>
           </div>
 
-          {/* Kart: En Aktif İşletme */}
+          {/* En Aktif İşletme */}
           <div className="bg-gray-800 rounded-xl p-6 shadow flex flex-col items-center">
             <PieChart className="w-10 h-10 text-blue-400 mb-3" />
             <h2 className="text-lg font-semibold">En Aktif İşletme</h2>
-            <p className="text-xl font-bold mt-2">☕ Kahve Dükkanı</p>
-            <p className="text-sm text-gray-400 mt-1">15,200 puan dağıttı</p>
+            <p className="text-xl font-bold mt-2">
+              {data.mostActiveCompany?.name ?? "-"}
+            </p>
+            <p className="text-sm text-gray-400 mt-1">
+              {data.mostActiveCompany?._count?.purchases ?? 0} işlem yaptı
+            </p>
           </div>
         </div>
 
-        {/* Tablo: Müşterilere Göre Puanlar */}
+        {/* Müşteri Puanları Tablosu */}
         <div className="bg-gray-800 rounded-xl p-6 shadow mt-8">
           <h2 className="text-xl font-semibold mb-4">👥 Müşteri Puanları</h2>
           <div className="overflow-x-auto">
@@ -52,36 +87,45 @@ const ReportsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr className="hover:bg-gray-700">
-                  <td className="px-4 py-2">Oğuzhan Kodaz</td>
-                  <td className="px-4 py-2 text-center text-green-400">2,450</td>
-                  <td className="px-4 py-2 text-center">Latte Kahve (+50)</td>
-                </tr>
-                <tr className="hover:bg-gray-700">
-                  <td className="px-4 py-2">Emma Levine</td>
-                  <td className="px-4 py-2 text-center text-green-400">1,920</td>
-                  <td className="px-4 py-2 text-center">Market Alışverişi (+200)</td>
-                </tr>
-                <tr className="hover:bg-gray-700">
-                  <td className="px-4 py-2">Blair Lopez</td>
-                  <td className="px-4 py-2 text-center text-green-400">1,500</td>
-                  <td className="px-4 py-2 text-center">Kitap Alımı (+120)</td>
-                </tr>
+                {data.customerPoints.map((c: CustomerPoints) => (
+                  <tr key={c.userId} className="hover:bg-gray-700">
+                    <td className="px-4 py-2">
+                      {c.user.name} {c.user.surname}
+                    </td>
+                    <td className="px-4 py-2 text-center text-green-400">
+                      {c.totalPoints}
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      {c.lastAction ?? "-"}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Grafik Placeholder */}
+        {/* Grafik */}
         <div className="bg-gray-800 rounded-xl p-6 shadow mt-8">
           <h2 className="text-xl font-semibold mb-4">📈 Aylık Puan Dağılımı</h2>
-          <div className="h-48 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-600 rounded">
-            [Buraya grafik gelecek]
-          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={data.monthlyPoints}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+              <XAxis dataKey="month" stroke="#aaa" />
+              <YAxis stroke="#aaa" />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="points"
+                stroke="#4ade80"
+                strokeWidth={2}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ReportsPage
+export default ReportsPage;

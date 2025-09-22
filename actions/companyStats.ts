@@ -42,3 +42,74 @@ export async function getCompanyStatsAction(companyId: string) {
     return { success: false, stats: null };
   }
 }
+
+
+export async function getReportData() {
+  // Toplam müşteri
+  const totalCustomers = await prisma.user.count();
+
+  // Dağıtılan puan
+  const pointsAgg = await prisma.purchase.aggregate({
+    _sum: { pointsEarned: true },
+  });
+
+  // En aktif işletme
+  const mostActiveCompany = await prisma.company.findFirst({
+    orderBy: {
+      purchases: {
+        _count: "desc",
+      },
+    },
+    include: {
+      _count: { select: { purchases: true } },
+    },
+  });
+
+  // Müşteri Puanları
+  const customerPoints = await prisma.userPoints.findMany({
+    include: {
+      user: true,
+    },
+    orderBy: { totalPoints: "desc" },
+    take: 10,
+  });
+
+  // Son işlem bilgisi için purchase çekelim
+  const purchases = await prisma.purchase.findMany({
+    orderBy: { purchaseDate: "desc" },
+    include: { user: true, product: true },
+  });
+
+  const customerPointsWithLast = customerPoints.map((cp) => {
+    const lastPurchase = purchases.find((p) => p.userId === cp.userId);
+    return {
+      ...cp,
+      lastAction: lastPurchase
+        ? `${lastPurchase.product.name} (+${lastPurchase.pointsEarned})`
+        : null,
+    };
+  });
+
+  // Aylık Puan Dağılımı
+  const monthlyRaw = await prisma.$queryRaw<
+    { month: string; total: number }[]
+  >`
+    SELECT TO_CHAR("purchaseDate", 'YYYY-MM') as month, SUM("pointsEarned") as total
+    FROM "Purchase"
+    GROUP BY 1
+    ORDER BY 1
+  `;
+
+  const monthlyPoints = monthlyRaw.map((m) => ({
+    month: m.month,
+    points: Number(m.total),
+  }));
+
+  return {
+    totalCustomers,
+    totalPointsGiven: pointsAgg._sum.pointsEarned ?? 0,
+    mostActiveCompany,
+    customerPoints: customerPointsWithLast,
+    monthlyPoints,
+  };
+}

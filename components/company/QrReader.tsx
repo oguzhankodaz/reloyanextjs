@@ -1,3 +1,5 @@
+/** @format */
+
 "use client";
 
 import dynamic from "next/dynamic";
@@ -32,12 +34,15 @@ export default function QRReaderModal() {
 
             <Scanner
               components={{}}
+              //sound={false}
               onScan={(data) => {
                 if (data && data[0]?.rawValue) {
                   const userId = data[0].rawValue;
                   setOpen(false);
                   // ✅ QR okunduğunda yönlendirme
-                  router.push(`/qr-result?userId=${encodeURIComponent(userId)}`);
+                  router.push(
+                    `/qr-result?userId=${encodeURIComponent(userId)}`
+                  );
                 }
               }}
               onError={(err) => console.error("QR hata:", err)}
