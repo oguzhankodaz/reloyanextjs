@@ -16,6 +16,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { getReportData } from "@/actions/companyStats";
 import { ReportData } from "@/lib/types";
+import { useCompanyAuth } from "@/context/CompanyAuthContext";
 
 // Skeleton Loader Component
 const Skeleton = ({ className }: { className?: string }) => (
@@ -23,14 +24,18 @@ const Skeleton = ({ className }: { className?: string }) => (
 );
 
 const ReportsPage = () => {
+  const { company } = useCompanyAuth(); // ✅ giriş yapan şirket
+
   // ✅ React Query ile rapor verisi
   const { data, isLoading, isError } = useQuery<ReportData>({
-    queryKey: ["reports"],
+    queryKey: ["reports", company?.companyId], // 🔥 companyId'ye göre cache
     queryFn: async () => {
-      const res = await getReportData();
+      if (!company?.companyId) throw new Error("Şirket bulunamadı");
+      const res = await getReportData(company.companyId); // 🔥 companyId parametreli çağrı
       return res;
     },
-    staleTime: 1000 * 60 * 10, // 10 dk boyunca cache
+    enabled: !!company?.companyId, // 🔥 companyId yoksa çalışmaz
+    staleTime: 1000 * 60 * 10, // 10 dk cache
   });
 
   if (isLoading) {
