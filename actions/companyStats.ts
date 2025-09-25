@@ -46,18 +46,15 @@ export async function getCompanyStatsAction(companyId: string) {
 
 export async function getReportData(companyId: string): Promise<ReportData> {
   try {
-    // Toplam müşteri (sadece bu şirketin müşterileri)
     const totalCustomers = await prisma.userPoints.count({
       where: { companyId },
     });
 
-    // Dağıtılan puan
     const pointsAgg = await prisma.purchase.aggregate({
-      where: { companyId }, // 👈 filtre eklendi
+      where: { companyId },
       _sum: { pointsEarned: true },
     });
 
-    // En aktif işletme (bu şirkete özel raporda aslında bu tek şirket olacak)
     const mostActiveCompany = await prisma.company.findUnique({
       where: { id: companyId },
       include: {
@@ -65,7 +62,6 @@ export async function getReportData(companyId: string): Promise<ReportData> {
       },
     });
 
-    // Müşteri Puanları
     const customerPoints = await prisma.userPoints.findMany({
       where: { companyId },
       include: { user: true },
@@ -73,9 +69,8 @@ export async function getReportData(companyId: string): Promise<ReportData> {
       take: 10,
     });
 
-    // Son işlem bilgisi
     const purchases = await prisma.purchase.findMany({
-      where: { companyId }, // 👈 filtre
+      where: { companyId },
       orderBy: { purchaseDate: "desc" },
       include: { user: true, product: true },
     });
@@ -88,18 +83,15 @@ export async function getReportData(companyId: string): Promise<ReportData> {
         totalPoints: cp.totalPoints,
         user: cp.user,
         lastAction: lastPurchase
-          ? `${lastPurchase.product?.name ?? "Toplam Harcama"} (+${
-              lastPurchase.pointsEarned
-            })`
+          ? `${lastPurchase.product?.name ?? "Toplam Harcama"} (+${lastPurchase.pointsEarned})`
           : null,
       };
     });
 
-    // Aylık Puan Dağılımı
     const monthlyRaw = await prisma.$queryRaw<{ month: string; total: any }[]>`
       SELECT TO_CHAR("purchaseDate", 'YYYY-MM') as month, SUM("pointsEarned") as total
       FROM "Purchase"
-      WHERE "companyId" = ${companyId}   -- 👈 filtre
+      WHERE "companyId" = ${companyId}
       GROUP BY 1
       ORDER BY 1
     `;
@@ -109,13 +101,13 @@ export async function getReportData(companyId: string): Promise<ReportData> {
       points: Number(m.total),
     }));
 
-    // Puanla alınan ürünler
     const pointsUsageAgg = await prisma.pointsUsage.aggregate({
-      where: { companyId }, // 👈 filtre
+      where: { companyId },
       _sum: { price: true },
     });
 
     return {
+      success: true,  // ✅ burayı ekledim
       totalCustomers,
       totalPointsGiven: pointsAgg._sum.pointsEarned ?? 0,
       mostActiveCompany,

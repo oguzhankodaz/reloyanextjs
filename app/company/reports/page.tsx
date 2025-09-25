@@ -32,7 +32,6 @@ const ReportsPage = () => {
     );
   }
 
-  
 
   if (isError || !data) {
     return (
@@ -41,7 +40,6 @@ const ReportsPage = () => {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white">
       <CompanyNavbar />
