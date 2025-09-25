@@ -40,6 +40,7 @@ export type SelectedItem = {
   usePoints?: boolean; // ✅ ekstra alan (puanla alındı mı?)
 };
 export type ReportData = {
+  success: true;
   totalCustomers: number;
   totalPointsGiven: number;
   mostActiveCompany: {
