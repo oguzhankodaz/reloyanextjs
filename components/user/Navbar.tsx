@@ -5,6 +5,7 @@ import React from "react";
 import Link from "next/link";
 import { Home, Star } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
+import Image from "next/image";
 
 const UserNavbar = () => {
   const pathname = usePathname();
@@ -18,9 +19,27 @@ const UserNavbar = () => {
     <nav className="border-b border-gray-800 bg-black/40 backdrop-blur">
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between py-4">
         {/* Logo */}
-        <h1 className="text-xl font-bold">
-          <Link href="/dashboard">Reloya</Link>
-        </h1>
+        <div className="flex items-center">
+          {/* Küçük ekran için logo */}
+          <Image
+            src="/logo_xs_white.webp"
+            alt="Reloya Logo XS"
+            width={100}
+            height={32}
+            className="h-8 w-auto block sm:hidden"
+            priority
+          />
+
+          {/* Büyük ekran için logo */}
+          <Image
+            src="/logo_xl_white.webp"
+            alt="Reloya Logo XL"
+            width={160}
+            height={40}
+            className="h-10 w-auto hidden sm:block"
+            priority
+          />
+        </div>
 
         {/* Menü */}
         <div className="flex items-center gap-6">

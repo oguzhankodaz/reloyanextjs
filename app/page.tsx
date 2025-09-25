@@ -3,14 +3,9 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Sparkles,
-  Gift,
-  TrendingUp,
-  Building2,
-  Users,
-} from "lucide-react";
+import { Sparkles, Gift, TrendingUp, Building2, Users } from "lucide-react";
 import { checkSession } from "@/actions/auth";
+import Image from "next/image";
 
 export default function HomePage() {
   const router = useRouter();
@@ -31,7 +26,14 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black text-white px-6 pt-8 pb-4">
       {/* Slogan */}
       <h1 className="text-5xl font-extrabold text-center mb-4 tracking-tight">
-        ReloYa
+        <Image
+          src="/homepage_logo.webp"
+          alt="ReloYa Logo"
+          width={200} // istediğin boyuta göre ayarla
+          height={66} // orantılı yükseklik
+          className="mx-auto"
+          priority
+        />
       </h1>
       <p className="text-lg sm:text-xl text-gray-300 text-center max-w-2xl mb-10">
         <span className="font-semibold text-white">

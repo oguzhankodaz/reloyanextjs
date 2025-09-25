@@ -1,77 +1,36 @@
 /** @format */
-"use client";
 
-import CompanyNavbar from "@/components/company/Navbar/Navbar";
-import QRReader from "@/components/company/QrReader";
-import { Package, Users, BarChart2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCompanyAuth } from "@/context/CompanyAuthContext";
-import CompanyDashboardReport from "./CompanyDashboardReport";
+import type { Metadata } from "next";
+import CompanyDashboardPage from "./CompanyDashboardPage"; // client component
 
-const CompanyDashboard = () => {
-  const router = useRouter();
-  const { company } = useCompanyAuth();
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex flex-col">
-      <CompanyNavbar />
-
-      {/* İşletme Adı */}
-      <section className="p-6">
-        <h1 className="text-2xl font-bold">
-          👋 Hoş geldiniz,{" "}
-          <span className="text-yellow-400">{company?.name ?? "İşletme"}</span>
-        </h1>
-        <p className="text-gray-400 mt-1">
-          Şirket panelinizi buradan yönetebilirsiniz.
-        </p>
-      </section>
-
-      {/* Üstte hızlı istatistikler */}
-      <CompanyDashboardReport></CompanyDashboardReport>
-
-      {/* Ana Menü */}
-      <main className="flex-1 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div
-          onClick={() => router.push("/company/products")}
-          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
-        >
-          <Package className="w-10 h-10 mb-3 text-yellow-500" />
-          <span className="font-medium text-base">Ürün İşlemleri</span>
-        </div>
-
-        <div
-          onClick={() => router.push("/company/customers")}
-          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
-        >
-          <Users className="w-10 h-10 mb-3 text-green-500" />
-          <span className="font-medium text-base">Müşterilerim</span>
-        </div>
-
-        <div
-          onClick={() => router.push("/company/reports")}
-          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
-        >
-          <BarChart2 className="w-10 h-10 mb-3 text-blue-500" />
-          <span className="font-medium text-base">Raporlar</span>
-        </div>
-      </main>
-
-      {/* Duyurular */}
-      <section className="p-6">
-        <div className="bg-gray-800 rounded-lg p-4 shadow">
-          <h2 className="text-lg font-semibold mb-2">📢 Şirket Duyuruları</h2>
-          <ul className="space-y-2 text-gray-300 text-sm">
-            <li>☕ Bu hafta kahve ürünlerinde çift puan kampanyası başladı!</li>
-            <li>📊 Yeni raporlama ekranı eklendi.</li>
-            <li>🎉 Sadakat programımız 500 müşteriyle büyüyor.</li>
-          </ul>
-        </div>
-      </section>
-
-      <QRReader />
-    </div>
-  );
+export const metadata: Metadata = {
+  title: "Şirket Dashboard | ReloYa",
+  description:
+    "Şirketinizin müşteri puanlarını, satışlarını ve raporlarını görüntüleyin.",
+  keywords: [
+    "müşteri sadakat programı",
+    "puan sistemi",
+    "reloya",
+    "şirket dashboard",
+  ],
+  openGraph: {
+    title: "Şirket Dashboard | ReloYa",
+    description:
+      "Şirketinizin müşteri puanlarını, satışlarını ve raporlarını görüntüleyin.",
+    url: "https://reloya.com/company/dashboard",
+    siteName: "ReloYa",
+    images: [
+      {
+        url: "https://reloya.com/og-image.png",
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: "tr_TR",
+    type: "website",
+  },
 };
 
-export default CompanyDashboard;
+export default function DashboardPage() {
+  return <CompanyDashboardPage />;
+}
