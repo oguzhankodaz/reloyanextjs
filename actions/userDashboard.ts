@@ -1,3 +1,5 @@
+/** @format */
+
 "use server";
 
 import prisma from "@/lib/prisma";
@@ -18,7 +20,6 @@ export async function getUserDashboard(userId: string) {
     points: p.totalPoints,
   }));
 
-
   // 📜 Son İşlemler
   const purchases = await prisma.purchase.findMany({
     where: { userId },
@@ -27,10 +28,9 @@ export async function getUserDashboard(userId: string) {
     take: 5,
   });
 
-
   const lastPurchases = purchases.map((p) => ({
     id: p.id,
-    product: p.product.name,
+    product: p.product ? p.product.name : `${p.totalPrice}₺ Harcama`,
     company: p.company.name,
     points: p.pointsEarned,
     date: p.purchaseDate,
@@ -47,8 +47,6 @@ export async function getUserDashboard(userId: string) {
     include: { company: true },
     take: 5,
   });
-
-  
 
   return {
     totalPoints,

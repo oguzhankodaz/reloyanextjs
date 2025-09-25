@@ -46,6 +46,10 @@ export default function QRResultPage() {
     { id: number; name: string; quantity: number; usePoints: boolean }[]
   >([]);
 
+  // 🔹 Yeni state (toplam harcama + yüzde)
+  const [totalSpendInput, setTotalSpendInput] = useState<string>("");
+  const [percentageInput, setPercentageInput] = useState<string>("3");
+
   // Kullanıcı + Puan + Ürünleri getir
   useEffect(() => {
     if (!userId || !company) {
@@ -117,7 +121,7 @@ export default function QRResultPage() {
     setCartItems((prev) => prev.filter((i) => i.id !== id));
   };
 
-  // Kaydetme
+  // Kaydetme (ürün bazlı işlemler)
   const handleSave = async () => {
     if (!userId || !company) return;
     if (cartItems.length === 0) {
@@ -191,132 +195,216 @@ export default function QRResultPage() {
     }
   };
 
+  // 🔹 Toplam harcama üzerinden puan verme
+  const handleGivePointsBySpend = async () => {
+    if (!userId || !company) return;
+
+    const spend = parseFloat(totalSpendInput);
+    const percent = parseFloat(percentageInput);
+
+    if (isNaN(spend) || isNaN(percent) || spend <= 0 || percent <= 0) {
+      alert("Geçerli değerler girin.");
+      return;
+    }
+
+    const pointsToGive = Math.floor((spend * percent) / 100);
+
+    setSaving(true);
+    const res = await addPurchaseAction(userId, company.companyId, [
+      { totalSpend: spend, points: pointsToGive },
+    ]);
+    setSaving(false);
+
+    if (res.success) {
+      alert(`${pointsToGive} puan verildi ✅`);
+      setTotalSpendInput("");
+      setPercentageInput("");
+      // puanı güncelle
+      const pointsRes = await getUserPointsAction(userId);
+      if (pointsRes.success) {
+        const companyPoints = pointsRes.points.find(
+          (p) => p.company.id === company.companyId
+        );
+        setTotalPoints(companyPoints?.totalPoints ?? 0);
+      }
+    } else {
+      alert(res.success);
+    }
+  };
+
   if (loading) return <p className="text-center mt-10">⏳ Yükleniyor...</p>;
   if (!user) return null;
 
   return (
-    <div>
+    <div className="bg-gray-950 min-h-screen">
       <CompanyNavbar />
-      <div className="flex flex-col items-center justify-start min-h-screen p-6">
+      <div className="flex flex-col items-center justify-start p-4 space-y-6">
         {/* Kullanıcı bilgisi */}
-        <div className="bg-gray-100 rounded-lg shadow-md p-6 w-full max-w-4xl mb-6">
-          <h1 className="text-xl font-bold mb-4 text-black">
+        <div className="bg-gray-900 rounded-lg shadow-md p-6 w-full max-w-3xl">
+          <h1 className="text-lg font-bold text-gray-100 mb-2">
             📌 Kullanıcı Bilgileri
           </h1>
-          <p className="text-black">
-            <strong>Ad Soyad:</strong> {user.name} {user.surname}
+          <p className="text-gray-300">
+            <strong className="text-gray-100">Ad Soyad:</strong> {user.name}{" "}
+            {user.surname}
           </p>
-          <p className="text-black">
-            <strong>Email:</strong> {user.email}
+          <p className="text-gray-300">
+            <strong className="text-gray-100">Email:</strong> {user.email}
           </p>
-          <p className="text-black mt-2">
-            <strong>Toplam Puanı:</strong>{" "}
-            <span className="text-green-600 font-bold">{totalPoints}</span>
+          <p className="text-gray-300 mt-2">
+            <strong className="text-gray-100">Toplam Puanı:</strong>{" "}
+            <span className="text-green-400 font-bold">{totalPoints}</span>
           </p>
         </div>
 
-        {/* Ürün listesi */}
-        <h2 className="text-xl font-semibold mb-4">🛒 Ürün Seç</h2>
-        <div className="bg-white text-black rounded-xl p-6 shadow w-full max-w-4xl">
-          <ProductList
-            products={products}
-            onAdd={handleAddToCart} // sepete ekleme fonksiyonunu ver
-          />
-        </div>
+        {/* Ürün işlemleri */}
+        <div className="bg-gray-900 rounded-lg shadow-md p-6 w-full max-w-3xl space-y-6">
+          <h2 className="text-lg font-semibold text-gray-100">
+            🛒 Ürün Seç ve Sepet
+          </h2>
 
-        {/* Sepet */}
-        <div className="bg-black p-6 rounded-xl shadow-md mt-6 w-full max-w-4xl">
-          <h3 className="font-semibold mb-4 text-white text-lg tracking-wide">
-            🛍 Sepetiniz
-          </h3>
-          {cartItems.length === 0 && (
-            <p className="text-gray-400 text-sm">Henüz ürün eklemediniz.</p>
-          )}
-
-          <div className="divide-y divide-gray-700">
-            {cartItems.map((item) => {
-              const product = products.find((p) => p.id === item.id);
-              return (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between py-3"
-                >
-                  <span className="text-gray-100 font-medium">
-                    {item.name} × {item.quantity}
-                  </span>
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 text-sm text-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={item.usePoints}
-                        onChange={() => toggleUsePoints(item.id)}
-                        className="w-5 h-5 accent-green-500"
-                      />
-                      Puan kullan
-                    </label>
-                    <button
-                      onClick={() => handleRemove(item.id)}
-                      className="text-red-400 hover:text-red-500 text-sm font-semibold"
-                    >
-                      ❌ Sil
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+          {/* Ürün listesi */}
+          <div className="bg-white text-black p-2 rounded ">
+            <ProductList products={products} onAdd={handleAddToCart} />
           </div>
 
-          {/* Toplamlar */}
-          {cartItems.length > 0 && (
-            <div className="mt-4 border-t border-gray-700 pt-4 text-gray-200">
-              <p className="mb-1">
-                🎯 <span className="font-semibold">Toplam Verilecek Puan:</span>{" "}
-                {cartItems.reduce((sum, item) => {
+          {/* Sepet */}
+          <div className="bg-gray-800 text-gray-100 p-4 rounded-lg">
+            <h3 className="font-semibold mb-3">🛍 Sepetiniz</h3>
+            {cartItems.length === 0 ? (
+              <p className="text-gray-400 text-sm">Henüz ürün eklemediniz.</p>
+            ) : (
+              <div className="space-y-3">
+                {cartItems.map((item) => {
                   const product = products.find((p) => p.id === item.id);
-                  return sum + (product?.pointsOnSell || 0) * item.quantity;
-                }, 0)}
-              </p>
-              <p>
-                💳 <span className="font-semibold">Gerekli Puan:</span>{" "}
-                {cartItems.reduce((sum, item) => {
-                  if (!item.usePoints) return sum;
-                  const product = products.find((p) => p.id === item.id);
-                  return sum + (product?.pointsToBuy || 0) * item.quantity;
-                }, 0)}
-              </p>
-            </div>
-          )}
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex justify-between items-center"
+                    >
+                      <span>
+                        {item.name} × {item.quantity}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-1 text-sm text-gray-300">
+                          <input
+                            type="checkbox"
+                            checked={item.usePoints}
+                            onChange={() => toggleUsePoints(item.id)}
+                            className="w-4 h-4 accent-green-500"
+                          />
+                          Puan
+                        </label>
+                        <button
+                          onClick={() => handleRemove(item.id)}
+                          className="text-red-400 hover:text-red-500 text-sm"
+                        >
+                          ❌ Sil
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Toplamlar */}
+                <div className="border-t border-gray-700 pt-3 text-sm">
+                  <p>
+                    🎯{" "}
+                    <span className="font-semibold text-gray-100">
+                      Verilecek Puan:
+                    </span>{" "}
+                    {cartItems.reduce((sum, item) => {
+                      const product = products.find((p) => p.id === item.id);
+                      return sum + (product?.pointsOnSell || 0) * item.quantity;
+                    }, 0)}
+                  </p>
+                  <p>
+                    💳{" "}
+                    <span className="font-semibold text-gray-100">
+                      Gerekli Puan:
+                    </span>{" "}
+                    {cartItems.reduce((sum, item) => {
+                      if (!item.usePoints) return sum;
+                      const product = products.find((p) => p.id === item.id);
+                      return sum + (product?.pointsToBuy || 0) * item.quantity;
+                    }, 0)}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Kaydet butonu */}
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+          >
+            {saving ? "Kaydediliyor..." : "Kaydet ✅"}
+          </button>
         </div>
 
-        {/* Kaydet butonu */}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="mt-6 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition disabled:opacity-50"
-        >
-          {saving ? "Kaydediliyor..." : "Kaydet ✅"}
-        </button>
-      </div>
+        {/* Ek İşlemler */}
+        <div className="bg-gray-900 rounded-lg shadow-md p-6 w-full max-w-3xl space-y-6">
+          <h2 className="text-lg font-semibold text-gray-100">
+            ⚙️ Ek İşlemler
+          </h2>
 
-      {/* Manuel Puan Kullan */}
-      <div className="bg-white text-black rounded-lg shadow-md p-6 m-6">
-        <h2 className="text-xl font-semibold mb-4">🎯 Manuel Puan Kullan</h2>
-        <input
-          type="number"
-          min={1}
-          max={totalPoints}
-          value={useAmountInput}
-          onChange={(e) => setUseAmountInput(e.target.value)}
-          className="w-full border rounded px-3 py-2 mb-4 text-black"
-          placeholder="Kullanılacak puan"
-        />
-        <button
-          onClick={handleUsePoints}
-          disabled={saving || parseInt(useAmountInput, 10) <= 0}
-          className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 disabled:opacity-50"
-        >
-          {saving ? "İşlem yapılıyor..." : "Puanı Kullan"}
-        </button>
+          {/* Toplam Harcama */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-300 mb-2">
+              💰 Toplam Harcama ile Puan Ver
+            </h3>
+            <input
+              type="number"
+              value={totalSpendInput}
+              onChange={(e) => setTotalSpendInput(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
+              placeholder="Toplam harcama (₺)"
+            />
+            <h3 className="text-sm font-medium text-gray-300 mb-2">
+              Yüzde oranı %
+            </h3>
+
+            <input
+              type="number"
+              value={percentageInput}
+              onChange={(e) => setPercentageInput(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
+              placeholder="Yüzde (%)"
+            />
+            <button
+              onClick={handleGivePointsBySpend}
+              disabled={saving}
+              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {saving ? "İşlem yapılıyor..." : "Puan Ver"}
+            </button>
+          </div>
+
+          {/* Manuel Puan Kullan */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-300 mb-2">
+              🎯 Manuel Puan Kullan
+            </h3>
+            <input
+              type="number"
+              min={1}
+              max={totalPoints}
+              value={useAmountInput}
+              onChange={(e) => setUseAmountInput(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
+              placeholder="Kullanılacak puan"
+            />
+            <button
+              onClick={handleUsePoints}
+              disabled={saving || parseInt(useAmountInput, 10) <= 0}
+              className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
+            >
+              {saving ? "İşlem yapılıyor..." : "Puanı Kullan"}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

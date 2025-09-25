@@ -49,7 +49,7 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => 
           className="w-full px-3 py-2 border rounded"
         />
       </div>
-
+      <hr className="border-gray-300 my-4" />
       {filtered.length === 0 ? (
         <p className="text-gray-500 text-sm text-center">
           {search ? "Sonuç bulunamadı." : "Henüz ürün eklenmedi."}

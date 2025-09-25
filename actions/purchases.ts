@@ -1,71 +1,66 @@
 "use server";
-
+// purchases.ts
 import prisma from "@/lib/prisma";
 
 export async function addPurchaseAction(
   userId: string,
   companyId: string,
-  items: { productId: number; quantity: number }[]
+  purchases: { productId?: number; quantity?: number; totalSpend?: number; points?: number }[]
 ) {
   try {
     return await prisma.$transaction(async (tx) => {
-      // ürünleri DB’den çek
-      const products = await tx.product.findMany({
-        where: { id: { in: items.map((i) => i.productId) } },
-        select: { id: true, price: true, pointsOnSell: true },
-      });
+      for (const p of purchases) {
+        if (p.productId) {
+          // ✅ Ürün bazlı satın alma
+          const product = await tx.product.findUnique({
+            where: { id: p.productId },
+          });
+          if (!product) throw new Error("Ürün bulunamadı");
 
-      // satın alma kayıtları
-      const purchaseData = items.map((item) => {
-        const product = products.find((p) => p.id === item.productId);
-        if (!product) throw new Error("Ürün bulunamadı");
+          const qty = p.quantity ?? 1;
+          const totalPrice = product.price * qty;
+          const earned = product.pointsOnSell * qty;
 
-        return {
-          userId,
-          companyId,
-          productId: product.id,
-          quantity: item.quantity,
-          totalPrice: product.price * item.quantity,
-          pointsEarned: product.pointsOnSell * item.quantity,
-        };
-      });
+          await tx.purchase.create({
+            data: {
+              userId,
+              companyId,
+              productId: p.productId,
+              quantity: qty,
+              totalPrice,
+              pointsEarned: earned,
+            },
+          });
 
-      // toplu ekleme
-      await tx.purchase.createMany({ data: purchaseData });
+          await tx.userPoints.upsert({
+            where: { userId_companyId: { userId, companyId } },
+            create: { userId, companyId, totalPoints: earned },
+            update: { totalPoints: { increment: earned } },
+          });
+        } else if (p.totalSpend && p.points) {
+          // ✅ Toplam harcama bazlı kayıt
+          await tx.purchase.create({
+            data: {
+              userId,
+              companyId,
+              totalPrice: p.totalSpend,
+              pointsEarned: p.points,
+              quantity: 1, // default
+            },
+          });
 
-      // toplam puanı hesapla
-      const totalEarned = purchaseData.reduce(
-        (sum, p) => sum + p.pointsEarned,
-        0
-      );
+          await tx.userPoints.upsert({
+            where: { userId_companyId: { userId, companyId } },
+            create: { userId, companyId, totalPoints: p.points },
+            update: { totalPoints: { increment: p.points } },
+          });
+        }
+      }
 
-      // puan güncelle
-      await tx.userPoints.upsert({
-        where: { userId_companyId: { userId, companyId } },
-        update: { totalPoints: { increment: totalEarned } },
-        create: { userId, companyId, totalPoints: totalEarned },
-      });
-
-      return { success: true, earned: totalEarned };
+      return { success: true };
     });
-  } catch (error) {
-    console.error("addPurchaseAction error", error);
-    return { success: false, message: "Satın alma işlemi başarısız oldu." };
-  }
-}
-
-
-export async function getUserPurchasesAction(userId: string, companyId: string) {
-  try {
-    const purchases = await prisma.purchase.findMany({
-      where: { userId, companyId },
-      include: { product: true }, // ürün bilgisi gelsin
-      orderBy: { purchaseDate: "desc" },
-    });
-
-    return { success: true, purchases };
-  } catch (error) {
-    console.error(error);
-    return { success: false, message: "Satın alımlar alınamadı" };
+  } catch (err) {
+    console.error("addPurchaseAction error:", err);
+    return { success: false, message: "Satın alma kaydedilemedi." };
   }
 }

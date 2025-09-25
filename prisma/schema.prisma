@@ -20,25 +20,24 @@ model User {
 
   purchases    Purchase[]
   userPoints   UserPoints[]
-  pointsUsages PointsUsage[]   // ✅ eklendi
+  pointsUsages PointsUsage[]
 }
 
 model Company {
-  id         String       @id @default(uuid())
-  name       String
-  email      String       @unique
-  password   String
-  address    String?
-  createdAt  DateTime     @default(now())
+  id          String       @id @default(uuid())
+  name        String
+  email       String       @unique
+  password    String
+  address     String?
+  createdAt   DateTime     @default(now())
 
-  categories  Category[]
-  products    Product[]
-  purchases   Purchase[]
-  userPoints  UserPoints[]
-  pointsUsages PointsUsage[]   // ✅ eklendi
-   campaigns    Campaign[]   // 👈 eklendi
+  categories   Category[]
+  products     Product[]
+  purchases    Purchase[]
+  userPoints   UserPoints[]
+  pointsUsages PointsUsage[]
+  campaigns    Campaign[]
 }
-
 
 /// Ürün kategorileri
 model Category {
@@ -67,7 +66,7 @@ model Product {
   categoryId   Int?
 
   purchases    Purchase[]
-  pointsUsages PointsUsage[]   // ✅ karşı taraf eklendi
+  pointsUsages PointsUsage[]
 }
 
 /// Satın almalar
@@ -84,8 +83,8 @@ model Purchase {
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
 
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId Int
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull) // 🔥 artık opsiyonel
+  productId Int?
 }
 
 /// Müşteri puanları
@@ -99,7 +98,7 @@ model UserPoints {
   company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId   String
 
-  @@unique([userId, companyId]) // her müşteri + şirket için tek kayıt
+  @@unique([userId, companyId])
 }
 
 /// Kullanılan puanlar
@@ -119,13 +118,6 @@ model PointsUsage {
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   productId Int?
 }
-
-//test edildi
-
-// model TestDummy {
-//   id   Int    @id @default(autoincrement())
-//   name String
-// }
 
 model Campaign {
   id        Int      @id @default(autoincrement())

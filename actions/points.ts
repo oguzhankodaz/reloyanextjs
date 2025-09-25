@@ -77,7 +77,6 @@ export async function spendPointsAction(
   }
 }
 
-
 export async function getUserHistoryAction(userId: string, companyId: string) {
   try {
     const purchases = await prisma.purchase.findMany({
@@ -89,12 +88,12 @@ export async function getUserHistoryAction(userId: string, companyId: string) {
       where: { userId, companyId },
       include: { product: true }, // ürün ismini gösterebilmek için
     });
-    
+
     const history: UserHistory[] = [
       ...purchases.map((p) => ({
         type: "purchase" as const,
         id: p.id,
-        product: p.product.name,
+        product: p.product?.name ?? "Toplam Harcama", // 🔥 null kontrolü eklendi
         quantity: p.quantity,
         totalPrice: p.totalPrice,
         points: p.pointsEarned,
@@ -106,13 +105,11 @@ export async function getUserHistoryAction(userId: string, companyId: string) {
         product: u.product?.name ?? "🎯 Puan Kullanımı",
         quantity: u.quantity,
         totalPrice: u.price,
-        amount: u.amount,     // ✅ burası önemliydi
+        amount: u.amount, // ✅ burası önemliydi
         points: -u.amount,
         date: u.usedAt,
-      }))
-      
+      })),
     ].sort((a, b) => b.date.getTime() - a.date.getTime());
-    
 
     return { success: true, history };
   } catch (err) {
