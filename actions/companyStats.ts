@@ -2,6 +2,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { ReportData } from "@/lib/types";
 
 export async function getCompanyStatsAction(companyId: string) {
   try {
@@ -39,11 +40,11 @@ export async function getCompanyStatsAction(companyId: string) {
     };
   } catch (err) {
     console.error("getCompanyStatsAction error:", err);
-    return { success: false, stats: null };
+    throw new Error("Şirket istatistikleri alınamadı.");
   }
 }
 
-export async function getReportData() {
+export async function getReportData(): Promise<ReportData> {
   try {
     // Toplam müşteri
     const totalCustomers = await prisma.user.count();
@@ -110,7 +111,6 @@ export async function getReportData() {
     });
 
     return {
-      success: true,
       totalCustomers,
       totalPointsGiven: pointsAgg._sum.pointsEarned ?? 0,
       mostActiveCompany,
@@ -120,6 +120,6 @@ export async function getReportData() {
     };
   } catch (err) {
     console.error("getReportData error:", err);
-    return { success: false, message: "Rapor verileri alınamadı." };
+    throw new Error("Rapor verileri alınamadı.");
   }
 }

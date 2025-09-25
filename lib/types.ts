@@ -49,8 +49,9 @@ export type ReportData = {
   } | null;
   customerPoints: CustomerPoints[];
   monthlyPoints: { month: string; points: number }[];
-  pointsUsageTotal: number; // 👈 eklendi
+  pointsUsageTotal: number;
 };
+
 
 
 export type CustomerPoints = {
