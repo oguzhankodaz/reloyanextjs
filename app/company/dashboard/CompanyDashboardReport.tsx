@@ -1,25 +1,26 @@
-import { useEffect, useState } from "react";
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
 import { getCompanyStatsAction } from "@/actions/companyStats";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 
 export default function CompanyDashboardReport() {
   const { company } = useCompanyAuth();
-  const [stats, setStats] = useState<{
-    totalCustomers: number;
-    todaySales: number;
-    totalPoints: number;
-    productCount: number;
-  } | null>(null);
 
-  useEffect(() => {
-    if (!company) return;
-    (async () => {
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ["company-stats", company?.companyId], // cache key
+    queryFn: async () => {
+      if (!company) return null;
       const res = await getCompanyStatsAction(company.companyId);
-      if (res.success) {
-        setStats(res.stats);
-      }
-    })();
-  }, [company]);
+      return res.success ? res.stats : null;
+    },
+    enabled: !!company, // company yoksa sorgu atma
+    staleTime: 1000 * 60 * 5, // 5 dakika boyunca tekrar sorgu atmaz
+  });
+
+  if (isLoading) {
+    return <p className="p-4 text-gray-400">Yükleniyor...</p>;
+  }
 
   return (
     <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4">

@@ -1,29 +1,51 @@
 "use client";
-import { ActionResponse } from "@/lib/types";
-import React from "react";
+import React, { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createProduct } from "@/actions/product"; // ✅ helper fonksiyon
 
 type Props = {
   companyId: string | null;
-  onSuccess: () => void;
-  createProductAction: (
-    prevState: unknown,
-    formData: FormData
-  ) => Promise<ActionResponse>;
+
 };
 
-const ProductForm: React.FC<Props> = ({ companyId, onSuccess, createProductAction }) => {
+const ProductForm: React.FC<Props> = ({ companyId }) => {
+  const queryClient = useQueryClient();
+  const [loading, setLoading] = useState(false);
+
+  const mutation = useMutation({
+    mutationFn: (newProduct: {
+      name: string;
+      price: number;
+      pointsToBuy?: number;
+      pointsOnSell?: number;
+      companyId: string;
+    }) => createProduct(newProduct),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products", companyId] });
+      setLoading(false);
+    },
+    onError: () => {
+      setLoading(false);
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!companyId) return;
+
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
+    const price = parseFloat(formData.get("price") as string);
+    const pointsToBuy = parseInt(formData.get("pointsToBuy") as string) || 0;
+    const pointsOnSell = parseInt(formData.get("pointsOnSell") as string) || 0;
+
+    setLoading(true);
+    mutation.mutate({ name, price, pointsToBuy, pointsOnSell, companyId });
+    e.currentTarget.reset();
+  };
+
   return (
-    <form
-      action={async (formData: FormData) => {
-        const res = await createProductAction(null, formData);
-        if (res.success) {
-          onSuccess();
-        } else {
-          alert(res.message);
-        }
-      }}
-      className="space-y-3 mb-6"
-    >
+    <form onSubmit={handleSubmit} className="space-y-3 mb-6">
       <input
         type="text"
         name="name"
@@ -53,13 +75,12 @@ const ProductForm: React.FC<Props> = ({ companyId, onSuccess, createProductActio
         />
       </div>
 
-      <input type="hidden" name="companyId" value={companyId || ""} />
-
       <button
         type="submit"
+        disabled={loading}
         className="w-full bg-black text-white py-2 rounded hover:bg-gray-800"
       >
-        + Ürün Ekle
+        {loading ? "Ekleniyor..." : "+ Ürün Ekle"}
       </button>
     </form>
   );

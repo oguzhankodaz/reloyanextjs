@@ -1,28 +1,39 @@
 /** @format */
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import UserQrButton from "@/components/user/UserQRCode";
 import { useAuth } from "@/context/AuthContext";
 import { getUserDashboard } from "@/actions/userDashboard";
 import { UserDashboardData } from "@/lib/types";
+import { useQuery } from "@tanstack/react-query";
 
 const DashboardPage = () => {
   const { user } = useAuth();
-  const [data, setData] = useState<UserDashboardData | null>(null);
 
-  useEffect(() => {
-    if (!user?.userId) return;
-    (async () => {
-      const res = await getUserDashboard(user.userId);
-      setData(res);
-    })();
-  }, [user?.userId]);
+  // ✅ React Query ile data çekme
+  const { data, isLoading, isError } = useQuery<UserDashboardData | null>({
+    queryKey: ["user-dashboard", user?.userId],
+    queryFn: async () => {
+      if (!user?.userId) return null; // ✅ null dönebiliyor
+      return await getUserDashboard(user.userId);
+    },
+    enabled: !!user?.userId,
+    staleTime: 1000 * 60 * 5,
+  });
 
-  if (!data) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white">
         Yükleniyor...
+      </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500">
+        Veriler yüklenemedi ❌
       </div>
     );
   }
@@ -63,9 +74,7 @@ const DashboardPage = () => {
             {data.companyPoints.map((c) => (
               <div key={c.companyId} className="flex justify-between">
                 <span>{c.companyName}</span>
-                <span className="font-semibold text-green-400">
-                  {c.points}
-                </span>
+                <span className="font-semibold text-green-400">{c.points}</span>
               </div>
             ))}
           </div>
@@ -76,7 +85,9 @@ const DashboardPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         {/* Son İşlemler */}
         <div className="bg-gray-800 rounded-xl p-6 shadow">
-          <h2 className="text-xl font-semibold mb-4">📜 Son Kazanılan Puanlar</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            📜 Son Kazanılan Puanlar
+          </h2>
           <ul className="space-y-3 text-gray-300 text-sm">
             {data.lastPurchases.map((p) => (
               <li
@@ -99,9 +110,12 @@ const DashboardPage = () => {
             {data.campaigns.map((c) => (
               <div key={c.id} className="p-3 bg-gray-700 rounded">
                 <p className="font-semibold">{c.title}</p>
-                {c.detail && <p className="text-sm text-gray-300">{c.detail}</p>}
+                {c.detail && (
+                  <p className="text-sm text-gray-300">{c.detail}</p>
+                )}
                 <p className="text-xs text-gray-400 mt-1">
-                  {c.company.name} • {new Date(c.startDate).toLocaleDateString()} -{" "}
+                  {c.company.name} •{" "}
+                  {new Date(c.startDate).toLocaleDateString()} -{" "}
                   {new Date(c.endDate).toLocaleDateString()}
                 </p>
               </div>

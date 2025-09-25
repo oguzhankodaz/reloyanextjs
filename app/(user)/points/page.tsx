@@ -1,12 +1,11 @@
 /** @format */
-
 "use client";
 
 import { getUserPointsAction } from "@/actions/points";
-import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Award, Building2, Gift } from "lucide-react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 
 type UserPoint = {
   id: number;
@@ -19,24 +18,38 @@ type UserPoint = {
 
 const PointsPage = () => {
   const { user } = useAuth();
-  const [points, setPoints] = useState<UserPoint[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user?.userId) return;
+  // ✅ React Query ile puanları çekiyoruz
+  const {
+    data: points,
+    isLoading,
+    isError,
+  } = useQuery<UserPoint[]>({
+    queryKey: ["user-points", user?.userId],
+    queryFn: async () => {
+      if (!user?.userId) return [];
+      const res = await getUserPointsAction(user.userId);
+      return res.success ? res.points : [];
+    },
+    enabled: !!user?.userId,
+    staleTime: 1000 * 60 * 5, // 5 dk cache
+  });
 
-    getUserPointsAction(user.userId).then((res) => {
-      if (res.success) setPoints(res.points);
-      setLoading(false);
-    });
-  }, [user?.userId]);
-
-  if (loading)
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-300">
         ⏳ Puanlar yükleniyor...
       </div>
     );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500">
+        ❌ Puanlar yüklenirken hata oluştu
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white px-4 py-6">
@@ -47,13 +60,14 @@ const PointsPage = () => {
           Kazandığınız Puanlar
         </h1>
         <p className="text-gray-400 text-sm md:text-base mt-2">
-          Aşağıda işletmelere göre kazandığınız puanları görebilir ve ürünleri görüntüleyebilirsiniz.
+          Aşağıda işletmelere göre kazandığınız puanları görebilir ve ürünleri
+          görüntüleyebilirsiniz.
         </p>
       </div>
 
       {/* Kartlar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-4xl mx-auto">
-        {points.length === 0 ? (
+        {!points || points.length === 0 ? (
           <p className="text-center text-gray-400 col-span-full">
             Henüz hiç puanınız yok 🙁
           </p>

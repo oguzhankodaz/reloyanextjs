@@ -1,56 +1,57 @@
 /** @format */
-
 "use client";
 
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
-import { getCompanyCustomersAction } from "@/actions/customers";
-import React, { useEffect, useState } from "react";
-import { CompanyCustomer, UserHistory } from "@/lib/types";
-import CustomersSkeleton from "./CustomersSkeleton";
 import BackButton from "@/components/company/BackButton";
+import CustomersSkeleton from "./CustomersSkeleton";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { getCompanyCustomersAction } from "@/actions/customers";
 import { getUserHistoryAction } from "@/actions/points";
+import { CompanyCustomer, UserHistory } from "@/lib/types";
+import React, { useState } from "react";
 
 const CustomersPage = () => {
   const { company } = useCompanyAuth();
-  const [customers, setCustomers] = useState<CompanyCustomer[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // detay için state
   const [openUserId, setOpenUserId] = useState<string | null>(null);
-  const [purchases, setPurchases] = useState<UserHistory[]>([]);
-  const [loadingPurchases, setLoadingPurchases] = useState(false);
 
-  useEffect(() => {
-    if (!company?.companyId) {
-      setLoading(false);
-      return;
-    }
-
-    (async () => {
-      setLoading(true);
+  // ✅ Müşteriler
+  const {
+    data: customers,
+    isLoading,
+    isError,
+  } = useQuery<CompanyCustomer[]>({
+    queryKey: ["customers", company?.companyId],
+    queryFn: async () => {
+      if (!company?.companyId) return [];
       const res = await getCompanyCustomersAction(company.companyId);
-      if (res.success) setCustomers(res.customers);
-      setLoading(false);
-    })();
-  }, [company]);
+      return res.success ? res.customers : [];
+    },
+    enabled: !!company?.companyId,
+    staleTime: 1000 * 60 * 5, // 5 dk cache
+  });
 
-  const handleShowDetails = async (userId: string) => {
+  // ✅ Kullanıcı detayları (userId değişince çalışır)
+  const {
+    data: purchases,
+    isLoading: loadingPurchases,
+  } = useQuery<UserHistory[]>({
+    queryKey: ["user-history", openUserId, company?.companyId],
+    queryFn: async () => {
+      if (!openUserId || !company?.companyId) return [];
+      const res = await getUserHistoryAction(openUserId, company.companyId);
+      return res.success ? res.history ?? [] : [];
+    },
+    enabled: !!openUserId && !!company?.companyId, // sadece detay açıkken fetch et
+    staleTime: 1000 * 60 * 2, // 2 dk cache
+  });
+
+  const handleShowDetails = (userId: string) => {
     if (openUserId === userId) {
-      setOpenUserId(null);
-      return;
-    }
-    setOpenUserId(userId);
-    setLoadingPurchases(true);
-
-    const res = await getUserHistoryAction(userId, company!.companyId);
-    if (res.success) {
-      setPurchases(res.history ?? []); // artık purchases değil history
+      setOpenUserId(null); // tekrar tıklayınca kapat
     } else {
-      setPurchases([]);
+      setOpenUserId(userId);
     }
-
-    setLoadingPurchases(false);
   };
 
   return (
@@ -61,9 +62,11 @@ const CustomersPage = () => {
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-6 text-white">👥 Müşterilerim</h1>
 
-        {loading ? (
+        {isLoading ? (
           <CustomersSkeleton />
-        ) : customers.length === 0 ? (
+        ) : isError ? (
+          <p className="text-red-500">Müşteriler yüklenirken hata oluştu ❌</p>
+        ) : !customers || customers.length === 0 ? (
           <p className="text-gray-400">Henüz müşteriniz yok.</p>
         ) : (
           <div className="overflow-x-auto rounded-lg shadow-md">
@@ -71,8 +74,6 @@ const CustomersPage = () => {
               <thead>
                 <tr className="bg-gray-800 text-gray-200">
                   <th className="px-4 py-3 text-left">Ad Soyad</th>
-                  {/* <th className="px-4 py-3 text-left">Email</th> */}
-
                   <th className="px-4 py-3 text-center">Puan</th>
                   <th className="px-4 py-3 text-center">Detay</th>
                 </tr>
@@ -106,7 +107,7 @@ const CustomersPage = () => {
                         <td colSpan={4} className="bg-gray-700 px-4 py-3">
                           {loadingPurchases ? (
                             <p className="text-gray-300">Yükleniyor...</p>
-                          ) : purchases.length === 0 ? (
+                          ) : !purchases || purchases.length === 0 ? (
                             <p className="text-gray-400">Henüz işlem yok.</p>
                           ) : (
                             <div className="overflow-x-auto max-h-64 overflow-y-auto rounded-md">

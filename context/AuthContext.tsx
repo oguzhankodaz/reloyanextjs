@@ -31,7 +31,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             name: data.user.name,
             surname: data.user.surname,
           };
-          console.log("Clean user (setUser öncesi):", cleanUser);
           setUser(cleanUser);
         } else {
           console.log("API'den user gelmedi!");

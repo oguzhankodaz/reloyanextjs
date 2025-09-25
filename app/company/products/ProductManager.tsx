@@ -1,12 +1,12 @@
+/** @format */
+
 "use client";
-import React, { useEffect, useState } from "react";
-import {
-  createProductAction,
-  getProductsByCompanyAction,
-} from "@/actions/product";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createProduct, getProductsByCompanyAction } from "@/actions/product";
 import ProductForm from "./ProductForm";
 import ProductSkeleton from "./ProductSkeleton";
-import { useCompanyAuth } from "@/context/CompanyAuthContext"; // ✅ context
+import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import { ProductList } from "./ProductList";
 
 type Product = {
@@ -18,53 +18,48 @@ type Product = {
 };
 
 const ProductManager = () => {
-  const { company } = useCompanyAuth(); // ✅ artık company buradan geliyor
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { company } = useCompanyAuth();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (!company?.companyId) {
-      setLoading(false);
-      return;
-    }
-
-    (async () => {
-      setLoading(true);
+  // ✅ Ürünleri cache'le
+  const { data: products, isLoading } = useQuery({
+    queryKey: ["products", company?.companyId],
+    queryFn: async () => {
+      if (!company?.companyId) return [];
       const res = await getProductsByCompanyAction(company.companyId);
-      if (res.success) setProducts(res.products);
-      setLoading(false);
-    })();
-  }, [company]);
+      return res.success ? res.products : [];
+    },
+    enabled: !!company?.companyId, // company yoksa çalışmaz
+    staleTime: 1000 * 60 * 5, // 5 dk cache
+  });
 
-  const refreshProducts = async () => {
-    if (!company?.companyId) return;
-    setLoading(true);
-    const updated = await getProductsByCompanyAction(company.companyId);
-    if (updated.success) setProducts(updated.products);
-    setLoading(false);
-  };
+  // ✅ Yeni ürün ekleme
+  const createMutation = useMutation({
+    mutationFn: (newProduct: {
+      name: string;
+      price: number;
+      companyId: string;
+    }) => createProduct(newProduct), // ✅ helper fonksiyon
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["products", company?.companyId],
+      });
+    },
+  });
 
   return (
     <div className="bg-white text-black rounded-xl p-6 shadow">
       <h2 className="text-lg font-bold mb-4">Ürünler</h2>
 
-      {/* ✅ Formu sadece company varsa gösterelim */}
-      {company?.companyId && (
-        <ProductForm
-          companyId={company.companyId}
-          onSuccess={refreshProducts}
-          createProductAction={createProductAction}
-        />
-      )}
+      {/* ✅ Form */}
+      {company?.companyId && <ProductForm companyId={company.companyId} />}
 
-      {loading ? (
+      {isLoading ? (
         <ProductSkeleton />
       ) : (
         <ProductList
-          products={products}
-          onDelete={(id) =>
-            setProducts(products.filter((p) => p.id !== id))
-          }
+          products={products || []}
+          companyId={company?.companyId || null} // ✅ invalidate için gerekli
         />
       )}
     </div>

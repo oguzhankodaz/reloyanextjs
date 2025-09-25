@@ -1,8 +1,9 @@
 /** @format */
 "use client";
 
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteProductAction } from "@/actions/product";
-import React, { useState } from "react";
 
 type Product = {
   id: number;
@@ -14,13 +15,23 @@ type Product = {
 
 type Props = {
   products: Product[];
+  companyId?: string | null; // ✅ hangi company için cache invalidate edilecek
   onAdd?: (item: { id: number; name: string; quantity: number }) => void;
-  onDelete?: (id: number) => void;
 };
 
-export const ProductList: React.FC<Props> = ({ products, onAdd, onDelete }) => {
+export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => {
   const [search, setSearch] = useState("");
   const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
+  const queryClient = useQueryClient();
+
+  // ✅ React Query mutation for delete
+  const deleteMutation = useMutation({
+    mutationFn: (productId: number) => deleteProductAction(productId),
+    onSuccess: () => {
+      // Silindikten sonra cache yenilenir
+      queryClient.invalidateQueries({ queryKey: ["products", companyId] });
+    },
+  });
 
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -88,30 +99,20 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, onDelete }) => {
                 </div>
               )}
 
-              {/* Eğer onDelete varsa → yönetici modu */}
-              {onDelete && (
+              {/* Yönetici modu → silme */}
+              {!onAdd && (
                 <button
-                  onClick={async () => {
+                  onClick={() => {
                     const confirmed = confirm(
                       "Bu ürünü silmek istediğinize emin misiniz?"
                     );
                     if (!confirmed) return;
-
-                    try {
-                      const res = await deleteProductAction(product.id);
-                      if (res.success) {
-                        onDelete?.(product.id); // parent state’i de güncelle
-                      } else {
-                        alert(res.message || "Ürün silinemedi.");
-                      }
-                    } catch (err) {
-                      console.error(err);
-                      alert("Sunucu hatası!");
-                    }
+                    deleteMutation.mutate(product.id);
                   }}
-                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                  disabled={deleteMutation.isPending}
+                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 disabled:opacity-50"
                 >
-                  ❌ Sil
+                  {deleteMutation.isPending ? "Siliniyor..." : "❌ Sil"}
                 </button>
               )}
             </li>
