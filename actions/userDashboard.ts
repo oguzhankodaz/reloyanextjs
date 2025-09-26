@@ -71,9 +71,9 @@ export async function getUserDashboard(userId: string): Promise<UserDashboardDat
     const lastPurchases = [
       ...purchases.map((p) => ({
         type: "purchase" as const,
-        id: p.id,   // ✅ direkt number
+        id: p.id,
         product: p.product?.name ?? "Toplam Harcama",
-        company: p.company?.name ?? "-",
+        company: p.company?.name ?? "-",  // ✅ eklendi
         quantity: p.quantity,
         totalPrice: p.totalPrice,
         cashbackEarned: p.cashbackEarned,
@@ -81,18 +81,19 @@ export async function getUserDashboard(userId: string): Promise<UserDashboardDat
       })),
       ...usages.map((u) => ({
         type: "usage" as const,
-        id: u.id,   // ✅ direkt number
+        id: u.id,
         product: u.product?.name ?? "💳 Nakit İade Kullanımı",
-        company: u.company?.name ?? "-",
+        company: u.company?.name ?? "-",  // ✅ eklendi
         quantity: u.quantity,
         totalPrice: u.price,
         amount: u.amount,
-        cashbackEarned: -u.amount, // ✅ harcama negatif
+        cashbackEarned: -u.amount, // harcama → negatif
         date: u.usedAt,
       })),
     ]
       .sort((a, b) => b.date.getTime() - a.date.getTime())
       .slice(0, 5);
+    
     
 
     // Kampanyalar

@@ -97,12 +97,12 @@ export async function getUserHistoryAction(userId: string, companyId: string) {
   try {
     const purchases = await prisma.purchase.findMany({
       where: { userId, companyId },
-      include: { product: true },
+      include: { product: true, company: true }, // ✅ company eklendi
     });
 
     const usages = await prisma.pointsUsage.findMany({
       where: { userId, companyId },
-      include: { product: true },
+      include: { product: true, company: true }, // ✅ company eklendi
     });
 
     const history: UserHistory[] = [
@@ -110,19 +110,21 @@ export async function getUserHistoryAction(userId: string, companyId: string) {
         type: "purchase" as const,
         id: p.id,
         product: p.product?.name ?? "Toplam Harcama",
+        company: p.company?.name ?? "-", // ✅ artık var
         quantity: p.quantity,
         totalPrice: p.totalPrice,
-        cashbackEarned: p.cashbackEarned, // ✅ artık TL iade
+        cashbackEarned: p.cashbackEarned,
         date: p.purchaseDate,
       })),
       ...usages.map((u) => ({
         type: "usage" as const,
         id: u.id,
         product: u.product?.name ?? "💳 Nakit İade Kullanımı",
+        company: u.company?.name ?? "-", // ✅ artık var
         quantity: u.quantity,
         totalPrice: u.price,
-        amount: u.amount, // ✅ eksik alan eklendi
-        cashbackEarned: -u.amount, // ✅ negatif TL
+        amount: u.amount,
+        cashbackEarned: -u.amount,
         date: u.usedAt,
       })),
     ].sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -133,3 +135,4 @@ export async function getUserHistoryAction(userId: string, companyId: string) {
     return { success: false, history: [] };
   }
 }
+
