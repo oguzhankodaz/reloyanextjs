@@ -1,8 +1,11 @@
+/** @format */
+
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
 import { getCompanyStatsAction } from "@/actions/companyStats";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
+import { formatCurrency } from "@/lib/helpers";
 
 export default function CompanyDashboardReport() {
   const { company } = useCompanyAuth();
@@ -22,6 +25,8 @@ export default function CompanyDashboardReport() {
     return <p className="p-4 text-gray-400">Yükleniyor...</p>;
   }
 
+
+
   return (
     <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4">
       <div className="bg-gray-800 rounded-lg p-4 text-center shadow">
@@ -32,14 +37,14 @@ export default function CompanyDashboardReport() {
       <div className="bg-gray-800 rounded-lg p-4 text-center shadow">
         <p className="text-sm text-gray-400">Bugünkü Satış (₺)</p>
         <p className="text-xl font-bold">
-          {stats ? stats.todaySales.toFixed(2) : "-"} ₺
+          {stats ? formatCurrency(stats.todaySales) : "-"}
         </p>
       </div>
 
       <div className="bg-gray-800 rounded-lg p-4 text-center shadow">
         <p className="text-sm text-gray-400">Toplam Nakit İade (₺)</p>
         <p className="text-xl font-bold">
-          {stats ? stats.totalCashback.toFixed(2) : "-"} ₺
+          {stats ? formatCurrency(stats.totalCashback) : "-"}
         </p>
       </div>
 
