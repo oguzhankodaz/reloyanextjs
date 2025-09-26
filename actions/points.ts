@@ -10,25 +10,34 @@ import { UserHistory } from "@/lib/types";
  */
 export async function getUserCashbackAction(userId: string) {
   try {
-    // Şirket bazlı grupla
-    const results = await prisma.purchase.groupBy({
+    // Kazanılan
+    const earned = await prisma.purchase.groupBy({
       by: ["companyId"],
       where: { userId },
       _sum: { cashbackEarned: true },
     });
 
-    // Şirket isimlerini ekle
+    // Harcanan
+    const spent = await prisma.pointsUsage.groupBy({
+      by: ["companyId"],
+      where: { userId },
+      _sum: { amount: true },
+    });
+
     const cashback = await Promise.all(
-      results.map(async (r) => {
+      earned.map(async (e) => {
         const company = await prisma.company.findUnique({
-          where: { id: r.companyId },
+          where: { id: e.companyId },
           select: { id: true, name: true },
         });
 
+        const spentAmount =
+          spent.find((s) => s.companyId === e.companyId)?._sum.amount ?? 0;
+
         return {
-          companyId: r.companyId,
+          companyId: e.companyId,
           companyName: company?.name ?? "Bilinmeyen Şirket",
-          totalCashback: r._sum.cashbackEarned ?? 0,
+          totalCashback: (e._sum.cashbackEarned ?? 0) - spentAmount, // ✅ net bakiye
         };
       })
     );
@@ -39,6 +48,7 @@ export async function getUserCashbackAction(userId: string) {
     return { success: false, cashback: [] };
   }
 }
+
 /**
  * Cashback harcama (müşteri TL bakiyesinden düşme)
  */
