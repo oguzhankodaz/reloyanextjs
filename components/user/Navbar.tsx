@@ -12,7 +12,7 @@ const UserNavbar = () => {
 
   const navItems = [
     { href: "/dashboard", label: "Ana Sayfa", icon: Home },
-    { href: "/points", label: "Puanlarım", icon: Star },
+    { href: "/points", label: "Para Puanlarım", icon: Star },
   ];
 
   return (

@@ -81,7 +81,7 @@ export async function spendCashbackAction(
 
     return {
       success: true,
-      message: "Nakit iade kullanıldı",
+      message: "Para puan kullanıldı",
       totalCashback: currentCashback - amount,
     };
   } catch (err) {

@@ -50,7 +50,7 @@ const UserDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Toplam Cashback Kartı */}
         <div className="col-span-1 bg-gray-800 rounded-xl p-6 shadow">
-          <h2 className="text-xl font-semibold mb-2">💰 Toplam Bakiyeniz</h2>
+          <h2 className="text-xl font-semibold mb-2">💰 Toplam Para Puan</h2>
           <p className="text-4xl font-bold text-green-400">
             {data.totalCashback.toFixed(2)} ₺
           </p>
@@ -99,9 +99,7 @@ const UserDashboard = () => {
                   </span>
                   <span
                     className={`${
-                      p.cashbackEarned > 0
-                        ? "text-green-400"
-                        : "text-red-400"
+                      p.cashbackEarned > 0 ? "text-green-400" : "text-red-400"
                     }`}
                   >
                     {p.cashbackEarned > 0

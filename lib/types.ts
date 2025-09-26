@@ -29,8 +29,9 @@ export type PurchaseHistory = {
   product: string;
   quantity: number;
   totalPrice: number;
-  cashbackEarned: number; // ✅ ürünle kazanılan iade
+  cashbackEarned: number;
   date: Date;
+  company: string; // ✅ eklendi
 };
 
 /**
@@ -42,9 +43,10 @@ export type UsageHistory = {
   product: string;
   quantity: number;
   totalPrice: number;
-  amount: number; // kullanılan cashback miktarı
-  cashbackEarned: number; // negatif değer olarak tutulur
+  amount: number;
+  cashbackEarned: number;
   date: Date;
+  company: string; // ✅ eklendi
 };
 
 export type UserHistory = PurchaseHistory | UsageHistory;
@@ -105,19 +107,13 @@ export type MostActiveCompany = {
  * Kullanıcı paneli (dashboard)
  */
 export type UserDashboardData = {
-  totalCashback: number; // ✅ toplam nakit iade
+  totalCashback: number;
   companyCashback: {
     companyId: string;
     companyName: string;
     cashback: number;
   }[];
-  lastPurchases: {
-    id: number;
-    product: string;
-    company: string;
-    cashbackEarned: number;
-    date: Date;
-  }[];
+  lastPurchases: UserHistory[]; // ✅ artık hem purchase hem usage destekler
   campaigns: {
     id: number;
     title: string;

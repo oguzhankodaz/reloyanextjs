@@ -41,9 +41,9 @@ export default function CompanyProductsClient({
                 </p>
 
                 {/* Kazanılacak TL */}
-                <p className="text-green-400 font-medium">
-                  🎯 Kazanılacak iade:{" "}
-                  <span className="font-bold">
+                <p className="font-medium text-gray-300 mb-1">
+                  🎯 Kazanılacak Para Puan:{" "}
+                  <span className=" text-green-400 font-medium">
                     {product.cashback.toFixed(2)} ₺
                   </span>
                 </p>

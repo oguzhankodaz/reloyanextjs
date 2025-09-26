@@ -34,22 +34,36 @@ export async function addPurchaseAction(
   }
 }
 
+
 /**
- * Kullanıcının toplam cashback miktarını getir
+ * Kullanıcının net bakiye (kazanç - harcama) bilgisini getirir
  */
 export async function getUserCashbackAction(userId: string, companyId: string) {
   try {
-    const total = await prisma.purchase.aggregate({
+    // Kullanıcının toplam kazandığı cashback
+    const earnedAgg = await prisma.purchase.aggregate({
       where: { userId, companyId },
       _sum: { cashbackEarned: true },
     });
 
-    return { success: true, totalCashback: total._sum.cashbackEarned ?? 0 };
+    // Kullanıcının toplam harcadığı cashback
+    const spentAgg = await prisma.pointsUsage.aggregate({
+      where: { userId, companyId },
+      _sum: { amount: true },
+    });
+
+    const totalCashback =
+      (earnedAgg._sum.cashbackEarned ?? 0) - (spentAgg._sum.amount ?? 0);
+
+    return { success: true, totalCashback };
   } catch (error) {
     console.error("getUserCashbackAction error:", error);
     return { success: false, totalCashback: 0 };
   }
 }
+
+
+
 
 /**
  * Cashback harcama (kullanıcının bakiyesinden düş)
@@ -67,17 +81,25 @@ export async function spendCashbackAction(
   }
 
   try {
-    const total = await prisma.purchase.aggregate({
+    // Mevcut bakiyeyi hesapla (kazanç - harcama)
+    const earnedAgg = await prisma.purchase.aggregate({
       where: { userId, companyId },
       _sum: { cashbackEarned: true },
     });
 
-    const currentCashback = total._sum.cashbackEarned ?? 0;
+    const spentAgg = await prisma.pointsUsage.aggregate({
+      where: { userId, companyId },
+      _sum: { amount: true },
+    });
+
+    const currentCashback =
+      (earnedAgg._sum.cashbackEarned ?? 0) - (spentAgg._sum.amount ?? 0);
 
     if (currentCashback < amount) {
       return { success: false, message: "Yetersiz bakiye" };
     }
 
+    // Harcamayı kaydet
     await prisma.pointsUsage.create({
       data: {
         amount,
@@ -89,10 +111,13 @@ export async function spendCashbackAction(
       },
     });
 
+    // Güncel bakiye tekrar hesapla
+    const newCashback = currentCashback - amount;
+
     return {
       success: true,
       message: "Nakit iade kullanıldı",
-      totalCashback: currentCashback - amount,
+      totalCashback: newCashback,
     };
   } catch (err) {
     console.error("spendCashbackAction error:", err);
