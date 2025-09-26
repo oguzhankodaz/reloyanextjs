@@ -27,7 +27,7 @@ export default function HomePage() {
       {/* Slogan */}
       <h1 className="text-5xl font-extrabold text-center mb-4 tracking-tight">
         <Image
-          src="/homepage_logo.webp"
+          src="/logo_xl_white.webp"
           alt="ReloYa Logo"
           width={200} // istediğin boyuta göre ayarla
           height={66} // orantılı yükseklik

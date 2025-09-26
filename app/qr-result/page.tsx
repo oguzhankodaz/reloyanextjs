@@ -50,6 +50,8 @@ export default function QRResultPage() {
   const [totalSpendInput, setTotalSpendInput] = useState<string>("");
   const [percentageInput, setPercentageInput] = useState<string>("3");
 
+  const [pointsPreview, setPointsPreview] = useState<number>(0);
+
   // Kullanıcı + Puan + Ürünleri getir
   useEffect(() => {
     if (!userId || !company) {
@@ -93,6 +95,18 @@ export default function QRResultPage() {
       router.replace("/company/login");
     }
   }, [company, router]);
+
+  // Hesaplama için effect
+  useEffect(() => {
+    const spend = parseFloat(totalSpendInput);
+    const percent = parseFloat(percentageInput);
+
+    if (!isNaN(spend) && spend > 0 && !isNaN(percent) && percent > 0) {
+      setPointsPreview(Math.floor((spend * percent) / 100));
+    } else {
+      setPointsPreview(0);
+    }
+  }, [totalSpendInput, percentageInput]);
 
   // Sepete ekle
   const handleAddToCart = (item: {
@@ -257,6 +271,74 @@ export default function QRResultPage() {
           </p>
         </div>
 
+        {/* Ek İşlemler */}
+        <div className="bg-gray-900 rounded-lg shadow-md p-6 w-full max-w-3xl space-y-6">
+          <h2 className="text-lg font-semibold text-gray-100">
+            ⚙️ Ek İşlemler
+          </h2>
+
+          {/* Toplam Harcama */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-300 mb-2">
+              💰 Toplam Harcama ile Puan Ver
+            </h3>
+            <input
+              type="number"
+              value={totalSpendInput}
+              onChange={(e) => setTotalSpendInput(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
+              placeholder="Toplam harcama (₺)"
+            />
+            <h3 className="text-sm font-medium text-gray-300 mb-2">
+              Yüzde oranı %
+            </h3>
+
+            <input
+              type="number"
+              value={percentageInput}
+              onChange={(e) => setPercentageInput(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
+              placeholder="Yüzde (%)"
+            />
+
+            {/* 🔹 Önizleme alanı */}
+            <p className="text-gray-300 mb-3">
+              🎯 Verilecek Puan:{" "}
+              <span className="font-bold text-green-400">{pointsPreview}</span>
+            </p>
+
+            <button
+              onClick={handleGivePointsBySpend}
+              disabled={saving}
+              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {saving ? "İşlem yapılıyor..." : "Puan Ver"}
+            </button>
+          </div>
+
+          {/* Manuel Puan Kullan */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-300 mb-2">
+              🎯 Manuel Puan Kullan
+            </h3>
+            <input
+              type="number"
+              min={1}
+              max={totalPoints}
+              value={useAmountInput}
+              onChange={(e) => setUseAmountInput(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
+              placeholder="Kullanılacak puan"
+            />
+            <button
+              onClick={handleUsePoints}
+              disabled={saving || parseInt(useAmountInput, 10) <= 0}
+              className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
+            >
+              {saving ? "İşlem yapılıyor..." : "Puanı Kullan"}
+            </button>
+          </div>
+        </div>
         {/* Ürün işlemleri */}
         <div className="bg-gray-900 rounded-lg shadow-md p-6 w-full max-w-3xl space-y-6">
           <h2 className="text-lg font-semibold text-gray-100">
@@ -342,68 +424,6 @@ export default function QRResultPage() {
           >
             {saving ? "Kaydediliyor..." : "Kaydet ✅"}
           </button>
-        </div>
-
-        {/* Ek İşlemler */}
-        <div className="bg-gray-900 rounded-lg shadow-md p-6 w-full max-w-3xl space-y-6">
-          <h2 className="text-lg font-semibold text-gray-100">
-            ⚙️ Ek İşlemler
-          </h2>
-
-          {/* Toplam Harcama */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-300 mb-2">
-              💰 Toplam Harcama ile Puan Ver
-            </h3>
-            <input
-              type="number"
-              value={totalSpendInput}
-              onChange={(e) => setTotalSpendInput(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
-              placeholder="Toplam harcama (₺)"
-            />
-            <h3 className="text-sm font-medium text-gray-300 mb-2">
-              Yüzde oranı %
-            </h3>
-
-            <input
-              type="number"
-              value={percentageInput}
-              onChange={(e) => setPercentageInput(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
-              placeholder="Yüzde (%)"
-            />
-            <button
-              onClick={handleGivePointsBySpend}
-              disabled={saving}
-              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {saving ? "İşlem yapılıyor..." : "Puan Ver"}
-            </button>
-          </div>
-
-          {/* Manuel Puan Kullan */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-300 mb-2">
-              🎯 Manuel Puan Kullan
-            </h3>
-            <input
-              type="number"
-              min={1}
-              max={totalPoints}
-              value={useAmountInput}
-              onChange={(e) => setUseAmountInput(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
-              placeholder="Kullanılacak puan"
-            />
-            <button
-              onClick={handleUsePoints}
-              disabled={saving || parseInt(useAmountInput, 10) <= 0}
-              className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
-            >
-              {saving ? "İşlem yapılıyor..." : "Puanı Kullan"}
-            </button>
-          </div>
         </div>
       </div>
     </div>
