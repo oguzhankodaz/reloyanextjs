@@ -37,11 +37,13 @@ const UserDashboard = () => {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
       {/* Başlık */}
-      <h1 className="text-3xl font-bold mb-2">👋 Hoş Geldiniz, {user?.name}</h1>
+      <h1 className="text-3xl font-bold mb-2">
+        👋 Hoş Geldiniz,{" "}
+        <span className="text-yellow-400">{user?.name ?? "İşletme"}</span>
+      </h1>
       <p className="text-gray-400 mb-6">
         Buradan bakiyenizi, işlemlerinizi ve avantajlarınızı takip
         edebilirsiniz.
