@@ -36,7 +36,7 @@ const CashbackPage = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-300">
-        ⏳ Nakit iadeler yükleniyor...
+        ⏳ Para puanlar yükleniyor...
       </div>
     );
   }
@@ -44,7 +44,7 @@ const CashbackPage = () => {
   if (isError) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-500">
-        ❌ Nakit iadeler yüklenirken hata oluştu
+        ❌ Para puanlar yüklenirken hata oluştu
       </div>
     );
   }
@@ -55,10 +55,10 @@ const CashbackPage = () => {
       <div className="max-w-xl mx-auto text-center mb-8">
         <h1 className="text-3xl md:text-4xl font-extrabold text-green-400 flex items-center justify-center gap-2">
           <Banknote className="w-7 h-7" />
-          Kazandığınız Nakit İadeler
+          Kazandığınız Para Puanlar
         </h1>
         <p className="text-gray-400 text-sm md:text-base mt-2">
-          Aşağıda işletmelere göre kazandığınız nakit iadeleri görebilir ve
+          Aşağıda işletmelere göre kazandığınız para puanları görebilir ve
           ürünleri görüntüleyebilirsiniz.
         </p>
       </div>
@@ -67,7 +67,7 @@ const CashbackPage = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-4xl mx-auto">
         {!cashback || cashback.length === 0 ? (
           <p className="text-center text-gray-400 col-span-full">
-            Henüz hiç nakit iadeniz yok 🙁
+            Henüz hiç para puanınız yok 🙁
           </p>
         ) : (
           cashback.map((c) => (
@@ -86,7 +86,7 @@ const CashbackPage = () => {
                   {c.totalCashback.toFixed(2)} ₺
                 </p>
                 <p className="text-gray-400 text-sm">
-                  Bu işletmeden kazandığınız toplam nakit iade
+                  Bu işletmeden kazandığınız toplam para puan
                 </p>
               </div>
 

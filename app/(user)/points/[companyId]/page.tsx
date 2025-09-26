@@ -33,7 +33,7 @@ export default async function CompanyProductsPage({
         <h1 className="text-3xl font-bold text-green-400">Şirket Ürünleri</h1>
         <p className="text-gray-400 text-sm mt-1">
           Bu sayfada, seçtiğiniz işletmeye ait ürünlerin fiyatlarını ve
-          alışverişinizde kazanacağınız nakit iadeyi görebilirsiniz.
+          alışverişinizde kazanacağınız para puanları görebilirsiniz.
         </p>
       </div>
 

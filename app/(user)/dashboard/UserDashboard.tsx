@@ -57,14 +57,14 @@ const UserDashboard = () => {
             {data.totalCashback.toFixed(2)} ₺
           </p>
           <p className="text-sm text-gray-400 mt-2">
-            Biriken nakit iadelerinizi dilediğiniz zaman kullanabilirsiniz.
+            Biriken para puanlarınızı dilediğiniz zaman kullanabilirsiniz.
           </p>
         </div>
 
         {/* İşletmelere Göre Cashback */}
         <div className="col-span-2 bg-gray-800 rounded-xl p-6 shadow">
           <h2 className="text-xl font-semibold mb-4">
-            🏢 İşletmelere Göre Nakit İadem
+            🏢 İşletmelere Göre Para Puanlarım
           </h2>
           <div className="space-y-3">
             {data.companyCashback.map((c) => (

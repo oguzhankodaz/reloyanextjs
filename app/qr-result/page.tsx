@@ -169,7 +169,6 @@ export default function QRResultPage() {
   };
 
   // 🔹 Toplam harcama ile nakit iade verme
-  // 🔹 Toplam harcama ile nakit iade verme
   const handleGiveCashbackBySpend = async () => {
     if (!userId || !company) return;
 
@@ -262,13 +261,13 @@ export default function QRResultPage() {
         {/* Ek İşlemler */}
         <div className="bg-gray-900 rounded-lg shadow-md p-6 w-full max-w-3xl space-y-6">
           <h2 className="text-lg font-semibold text-gray-100">
-            ⚙️ Ek İşlemler
+            💳 Müşteri Para Puan İşlemleri
           </h2>
 
           {/* Toplam harcama ile iade */}
           <div>
             <h3 className="text-sm font-medium text-gray-300 mb-2">
-              💰 Toplam Harcama ile Nakit İade Ver
+              Toplam Harcama ile Nakit İade Ver
             </h3>
             <input
               type="number"
@@ -277,13 +276,32 @@ export default function QRResultPage() {
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
               placeholder="Toplam harcama (₺)"
             />
-            <input
-              type="number"
-              value={percentageInput}
-              onChange={(e) => setPercentageInput(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
-              placeholder="Yüzde (%)"
-            />
+            {/* Yüzde oranı ayarı */}
+            <div className="mb-4">
+              <label
+                htmlFor="percentageInput"
+                className="block text-sm font-medium text-gray-200 mb-2"
+              >
+                Nakit İade Oranı (%)
+              </label>
+              <input
+                id="percentageInput"
+                type="number"
+                min={1}
+                max={100}
+                value={percentageInput}
+                onChange={(e) => setPercentageInput(e.target.value)}
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-500 
+               focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                placeholder="Varsayılan: %3"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Varsayılan oran{" "}
+                <span className="font-semibold text-green-400">3%</span>’tür.
+                Dilerseniz bu değeri manuel olarak değiştirebilirsiniz.
+              </p>
+            </div>
+
             <p className="text-gray-300 mb-3">
               🎯 Verilecek Nakit İade:{" "}
               <span className="font-bold text-green-400">
@@ -302,7 +320,7 @@ export default function QRResultPage() {
           {/* Manuel bakiye kullan */}
           <div>
             <h3 className="text-sm font-medium text-gray-300 mb-2">
-              🎯 Manuel Bakiye Kullan
+              🎯 Manuel Para Puan Kullan
             </h3>
             <input
               type="number"

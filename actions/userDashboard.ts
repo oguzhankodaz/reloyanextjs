@@ -82,7 +82,7 @@ export async function getUserDashboard(userId: string): Promise<UserDashboardDat
       ...usages.map((u) => ({
         type: "usage" as const,
         id: u.id,
-        product: u.product?.name ?? "💳 Nakit İade Kullanımı",
+        product: u.product?.name ?? "Para Puan Kullanımı",
         company: u.company?.name ?? "-",  // ✅ eklendi
         quantity: u.quantity,
         totalPrice: u.price,
