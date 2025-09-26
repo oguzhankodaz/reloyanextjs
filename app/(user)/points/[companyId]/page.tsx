@@ -1,7 +1,7 @@
 /** @format */
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getCompanyProducts } from "@/actions/product";
+import { getProductsByCompanyAction } from "@/actions/product";
 import CompanyProductsClient from "./CompanyProductsClient";
 
 export default async function CompanyProductsPage({
@@ -10,7 +10,10 @@ export default async function CompanyProductsPage({
   params: Promise<{ companyId: string }>;
 }) {
   const { companyId } = await params;
-  const products = await getCompanyProducts(companyId);
+
+  // ✅ Şirket ürünlerini al
+  const res = await getProductsByCompanyAction(companyId);
+  const products = res.success ? res.products : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white px-4 py-6">
@@ -27,14 +30,18 @@ export default async function CompanyProductsPage({
 
       {/* Başlık */}
       <div className="max-w-3xl mx-auto mb-6">
-        <h1 className="text-3xl font-bold text-yellow-400">Şirket Ürünleri</h1>
+        <h1 className="text-3xl font-bold text-green-400">Şirket Ürünleri</h1>
         <p className="text-gray-400 text-sm mt-1">
-          Bu sayfada, seçtiğiniz işletmeye ait tüm ürünleri görebilirsiniz.
+          Bu sayfada, seçtiğiniz işletmeye ait ürünlerin fiyatlarını ve
+          alışverişinizde kazanacağınız nakit iadeyi görebilirsiniz.
         </p>
       </div>
 
       {/* Client component */}
-      <CompanyProductsClient companyId={companyId} initialProducts={products} />
+      <CompanyProductsClient
+        companyId={companyId}
+        initialProducts={products}
+      />
     </div>
   );
 }

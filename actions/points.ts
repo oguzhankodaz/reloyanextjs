@@ -5,59 +5,72 @@
 import prisma from "@/lib/prisma";
 import { UserHistory } from "@/lib/types";
 
-export async function getUserPointsAction(userId: string) {
+/**
+ * Kullanıcının toplam nakit iadesini getirir
+ */
+export async function getUserCashbackAction(userId: string) {
   try {
-    const points = await prisma.userPoints.findMany({
+    // Şirket bazlı grupla
+    const results = await prisma.purchase.groupBy({
+      by: ["companyId"],
       where: { userId },
-      include: {
-        company: {
-          select: { id: true, name: true }, // işletme bilgisi
-        },
-      },
-      orderBy: {
-        totalPoints: "desc", // en çok puanlı şirket üstte
-      },
+      _sum: { cashbackEarned: true },
     });
 
-    return { success: true, points };
+    // Şirket isimlerini ekle
+    const cashback = await Promise.all(
+      results.map(async (r) => {
+        const company = await prisma.company.findUnique({
+          where: { id: r.companyId },
+          select: { id: true, name: true },
+        });
+
+        return {
+          companyId: r.companyId,
+          companyName: company?.name ?? "Bilinmeyen Şirket",
+          totalCashback: r._sum.cashbackEarned ?? 0,
+        };
+      })
+    );
+
+    return { success: true, cashback };
   } catch (error) {
-    console.error("getUserPointsAction error:", error);
-    return { success: false, points: [] };
+    console.error("getUserCashbackAction error:", error);
+    return { success: false, cashback: [] };
   }
 }
-
-export async function spendPointsAction(
+/**
+ * Cashback harcama (müşteri TL bakiyesinden düşme)
+ */
+export async function spendCashbackAction(
   userId: string,
   companyId: string,
-  pointsToUse: number,
+  amount: number,
   productId?: number,
   quantity?: number,
   price?: number
 ) {
-  if (!userId || !companyId || pointsToUse <= 0) {
+  if (!userId || !companyId || amount <= 0) {
     return { success: false, message: "Geçersiz işlem" };
   }
 
   try {
-    const userPoints = await prisma.userPoints.findUnique({
-      where: { userId_companyId: { userId, companyId } },
+    // Kullanıcının mevcut toplam iadesini hesapla
+    const total = await prisma.purchase.aggregate({
+      where: { userId, companyId },
+      _sum: { cashbackEarned: true },
     });
 
-    if (!userPoints || userPoints.totalPoints < pointsToUse) {
-      return { success: false, message: "Yetersiz puan" };
+    const currentCashback = total._sum.cashbackEarned ?? 0;
+
+    if (currentCashback < amount) {
+      return { success: false, message: "Yetersiz bakiye" };
     }
 
-    const updated = await prisma.userPoints.update({
-      where: { userId_companyId: { userId, companyId } },
-      data: {
-        totalPoints: { decrement: pointsToUse },
-      },
-    });
-
-    // ✅ Kullanım kaydını ekle
+    // Cashback harcamasını kaydet (PointsUsage yerine ayrı tabloya taşınabilirdi)
     await prisma.pointsUsage.create({
       data: {
-        amount: pointsToUse,
+        amount,
         quantity: quantity ?? 1,
         price: price ?? 0,
         userId,
@@ -68,15 +81,18 @@ export async function spendPointsAction(
 
     return {
       success: true,
-      message: "Puan kullanıldı",
-      totalPoints: updated.totalPoints,
+      message: "Nakit iade kullanıldı",
+      totalCashback: currentCashback - amount,
     };
   } catch (err) {
-    console.error("usePointsAction error:", err);
+    console.error("spendCashbackAction error:", err);
     return { success: false, message: "Bir hata oluştu" };
   }
 }
 
+/**
+ * Kullanıcının geçmişini getir (alış + iade kullanımı)
+ */
 export async function getUserHistoryAction(userId: string, companyId: string) {
   try {
     const purchases = await prisma.purchase.findMany({
@@ -86,27 +102,27 @@ export async function getUserHistoryAction(userId: string, companyId: string) {
 
     const usages = await prisma.pointsUsage.findMany({
       where: { userId, companyId },
-      include: { product: true }, // ürün ismini gösterebilmek için
+      include: { product: true },
     });
 
     const history: UserHistory[] = [
       ...purchases.map((p) => ({
         type: "purchase" as const,
         id: p.id,
-        product: p.product?.name ?? "Toplam Harcama", // 🔥 null kontrolü eklendi
+        product: p.product?.name ?? "Toplam Harcama",
         quantity: p.quantity,
         totalPrice: p.totalPrice,
-        points: p.pointsEarned,
+        cashbackEarned: p.cashbackEarned, // ✅ artık TL iade
         date: p.purchaseDate,
       })),
       ...usages.map((u) => ({
         type: "usage" as const,
         id: u.id,
-        product: u.product?.name ?? "🎯 Puan Kullanımı",
+        product: u.product?.name ?? "💳 Nakit İade Kullanımı",
         quantity: u.quantity,
         totalPrice: u.price,
-        amount: u.amount, // ✅ burası önemliydi
-        points: -u.amount,
+        amount: u.amount, // ✅ eksik alan eklendi
+        cashbackEarned: -u.amount, // ✅ negatif TL
         date: u.usedAt,
       })),
     ].sort((a, b) => b.date.getTime() - a.date.getTime());

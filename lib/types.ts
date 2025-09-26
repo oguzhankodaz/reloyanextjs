@@ -1,63 +1,83 @@
 /** @format */
 
-import { User, UserPoints } from "@prisma/client";
+import { User } from "@prisma/client";
 
 export type ActionResponse = {
   success: boolean;
   message: string;
 };
 
-export type CompanyCustomer = UserPoints & {
-  user: Pick<User, "id" | "name" | "surname" | "email">;
+/**
+ * Şirket müşterisi (artık totalPoints yerine toplam cashback)
+ */
+export type CompanyCustomer = {
+  user: {
+    id: string;
+    name: string;
+    surname: string | null;
+    email: string;
+  };
+  totalCashback: number; // ✅ artık puan değil cashback
 };
 
+/**
+ * Satın alma geçmişi
+ */
 export type PurchaseHistory = {
   type: "purchase";
   id: number;
   product: string;
   quantity: number;
   totalPrice: number;
-  points: number;
+  cashbackEarned: number; // ✅ ürünle kazanılan iade
   date: Date;
 };
 
+/**
+ * Cashback harcama geçmişi
+ */
 export type UsageHistory = {
   type: "usage";
   id: number;
-  product: string; // 🎯 puanla alınan ürün ismi
-  quantity: number; // 🎯 kaç adet
-  totalPrice: number; // 🎯 fiyat
-  amount: number; // kullanılan puan miktarı
-  points: number; // negatif değer
+  product: string;
+  quantity: number;
+  totalPrice: number;
+  amount: number; // kullanılan cashback miktarı
+  cashbackEarned: number; // negatif değer olarak tutulur
   date: Date;
 };
 
 export type UserHistory = PurchaseHistory | UsageHistory;
 
+/**
+ * Sepette seçilen ürün
+ */
 export type SelectedItem = {
   id: number;
   quantity: number;
-  usePoints?: boolean; // ✅ ekstra alan (puanla alındı mı?)
+  useCashback?: boolean; // ✅ artık puan değil, nakit iade ile mi alındı?
 };
+
+/**
+ * Raporlar (puan yerine cashback üzerinden)
+ */
 export type ReportData = {
   success: boolean;
   totalCustomers: number;
-  totalPointsGiven: number;
+  totalCashbackGiven: number; // ✅ tüm müşterilere verilen toplam nakit iade
   mostActiveCompany: {
     id: string;
     name: string;
     _count: { purchases: number };
   } | null;
-  customerPoints: CustomerPoints[];
-  monthlyPoints: { month: string; points: number }[];
-  pointsUsageTotal: number;
+  customerCashback: CustomerCashback[];
+  monthlyCashback: { month: string; cashback: number }[];
+  cashbackUsageTotal: number; // ✅ toplam kullanılan cashback
 };
 
-
-
-export type CustomerPoints = {
-  id: number;
-  totalPoints: number;
+export type CustomerCashback = {
+  id: string; // prisma.groupBy → userId olduğu için string olmalı
+  totalCashback: number;
   userId: string;
   user: {
     name: string;
@@ -66,6 +86,9 @@ export type CustomerPoints = {
   lastAction?: string | null;
 };
 
+/**
+ * En aktif şirket bilgisi
+ */
 export type MostActiveCompany = {
   id: string;
   name: string;
@@ -78,18 +101,21 @@ export type MostActiveCompany = {
   };
 };
 
+/**
+ * Kullanıcı paneli (dashboard)
+ */
 export type UserDashboardData = {
-  totalPoints: number;
-  companyPoints: {
+  totalCashback: number; // ✅ toplam nakit iade
+  companyCashback: {
     companyId: string;
     companyName: string;
-    points: number;
+    cashback: number;
   }[];
   lastPurchases: {
     id: number;
     product: string;
     company: string;
-    points: number;
+    cashbackEarned: number;
     date: Date;
   }[];
   campaigns: {
@@ -103,4 +129,17 @@ export type UserDashboardData = {
     startDate: Date;
     endDate: Date;
   }[];
+};
+
+/**
+ * Ürün tipi
+ */
+export type Product = {
+  id: number;
+  name: string;
+  price: number;
+  cashback: number; // ✅ ürün başına verilecek iade
+  createdAt?: Date;
+  companyId?: string;
+  categoryId?: number | null;
 };

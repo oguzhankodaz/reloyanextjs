@@ -1,57 +1,80 @@
 /** @format */
-
 "use server";
 
 import prisma from "@/lib/prisma";
+import { UserDashboardData } from "@/lib/types";
 
-export async function getUserDashboard(userId: string) {
-  // ⭐ Toplam Puan
-  const userPoints = await prisma.userPoints.findMany({
-    where: { userId },
-    include: { company: true },
-  });
+/**
+ * Kullanıcı Dashboard verileri
+ */
+export async function getUserDashboard(userId: string): Promise<UserDashboardData> {
+  try {
+    // ✅ Toplam nakit iade
+    const totalAgg = await prisma.purchase.aggregate({
+      where: { userId },
+      _sum: { cashbackEarned: true },
+    });
 
-  const totalPoints = userPoints.reduce((sum, p) => sum + p.totalPoints, 0);
+    // ✅ Şirketlere göre nakit iade
+    const companyCashbackRaw = await prisma.purchase.groupBy({
+      by: ["companyId"],
+      where: { userId },
+      _sum: { cashbackEarned: true },
+    });
 
-  // 🏢 İşletmelere Göre Puan
-  const companyPoints = userPoints.map((p) => ({
-    companyId: p.companyId,
-    companyName: p.company.name,
-    points: p.totalPoints,
-  }));
+    const companyCashback = await Promise.all(
+      companyCashbackRaw.map(async (c) => {
+        const company = await prisma.company.findUnique({
+          where: { id: c.companyId },
+          select: { id: true, name: true },
+        });
 
-  // 📜 Son İşlemler
-  const purchases = await prisma.purchase.findMany({
-    where: { userId },
-    orderBy: { purchaseDate: "desc" },
-    include: { product: true, company: true },
-    take: 5,
-  });
+        return {
+          companyId: c.companyId,
+          companyName: company?.name ?? "Bilinmeyen",
+          cashback: c._sum.cashbackEarned ?? 0,
+        };
+      })
+    );
 
-  const lastPurchases = purchases.map((p) => ({
-    id: p.id,
-    product: p.product ? p.product.name : `${p.totalPrice}₺ Harcama`,
-    company: p.company.name,
-    points: p.pointsEarned,
-    date: p.purchaseDate,
-  }));
+    // ✅ Son alışverişler
+    const lastPurchasesRaw = await prisma.purchase.findMany({
+      where: { userId },
+      orderBy: { purchaseDate: "desc" },
+      take: 5,
+      include: { company: true, product: true },
+    });
 
-  // 🎁 Kampanyalar (kullanıcının bağlı olduğu şirketlerden aktif olanlar)
-  const now = new Date();
-  const campaigns = await prisma.campaign.findMany({
-    where: {
-      companyId: { in: companyPoints.map((c) => c.companyId) },
-      startDate: { lte: now },
-      endDate: { gte: now },
-    },
-    include: { company: true },
-    take: 5,
-  });
+    const lastPurchases = lastPurchasesRaw.map((p) => ({
+      id: p.id,
+      product: p.product?.name ?? "Toplam Harcama",
+      company: p.company.name,
+      cashbackEarned: p.cashbackEarned,
+      date: p.purchaseDate,
+    }));
 
-  return {
-    totalPoints,
-    companyPoints,
-    lastPurchases,
-    campaigns,
-  };
+    // ✅ Aktif kampanyalar
+    const campaigns = await prisma.campaign.findMany({
+      where: {
+        companyId: { in: companyCashbackRaw.map((c) => c.companyId) },
+        endDate: { gte: new Date() },
+      },
+      include: { company: true },
+    });
+
+    return {
+      totalCashback: totalAgg._sum.cashbackEarned ?? 0,
+      companyCashback,
+      lastPurchases,
+      campaigns,
+    };
+  } catch (err) {
+    console.error("getUserDashboard error:", err);
+    return {
+      totalCashback: 0,
+      companyCashback: [],
+      lastPurchases: [],
+      campaigns: [],
+    };
+  }
 }

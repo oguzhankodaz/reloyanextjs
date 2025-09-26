@@ -4,18 +4,12 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteProductAction } from "@/actions/product";
+import { Product } from "@/lib/types"; // ✅ Artık Product tipini buradan alıyoruz
 
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  pointsToBuy: number;
-  pointsOnSell: number;
-};
-
+// ✅ Props tanımı buraya
 type Props = {
   products: Product[];
-  companyId?: string | null; // ✅ hangi company için cache invalidate edilecek
+  companyId?: string | null;
   onAdd?: (item: { id: number; name: string; quantity: number }) => void;
 };
 
@@ -24,11 +18,10 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => 
   const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
   const queryClient = useQueryClient();
 
-  // ✅ React Query mutation for delete
+  // ✅ Silme işlemi
   const deleteMutation = useMutation({
     mutationFn: (productId: number) => deleteProductAction(productId),
     onSuccess: () => {
-      // Silindikten sonra cache yenilenir
       queryClient.invalidateQueries({ queryKey: ["products", companyId] });
     },
   });
@@ -39,7 +32,7 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => 
 
   return (
     <div>
-      {/* Search bar */}
+      {/* Arama kutusu */}
       <div className="mb-4">
         <input
           type="text"
@@ -64,8 +57,7 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => 
               <div>
                 <p className="font-medium">{product.name}</p>
                 <p className="text-sm text-gray-600">
-                  {product.price} ₺ • Alım: {product.pointsToBuy} puan • Satış:{" "}
-                  {product.pointsOnSell} puan
+                  {product.price} ₺ • Nakit iade: {product.cashback} ₺
                 </p>
               </div>
 

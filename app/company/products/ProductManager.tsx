@@ -1,5 +1,4 @@
 /** @format */
-
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,21 +7,16 @@ import ProductForm from "./ProductForm";
 import ProductSkeleton from "./ProductSkeleton";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import { ProductList } from "./ProductList";
+import { Product } from "@/lib/types";
 
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  pointsToBuy: number;
-  pointsOnSell: number;
-};
+
 
 const ProductManager = () => {
   const { company } = useCompanyAuth();
   const queryClient = useQueryClient();
 
   // ✅ Ürünleri cache'le
-  const { data: products, isLoading } = useQuery({
+  const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ["products", company?.companyId],
     queryFn: async () => {
       if (!company?.companyId) return [];
@@ -38,8 +32,9 @@ const ProductManager = () => {
     mutationFn: (newProduct: {
       name: string;
       price: number;
+      cashback: number;
       companyId: string;
-    }) => createProduct(newProduct), // ✅ helper fonksiyon
+    }) => createProduct(newProduct),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["products", company?.companyId],

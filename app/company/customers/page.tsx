@@ -7,9 +7,9 @@ import CustomersSkeleton from "./CustomersSkeleton";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { getCompanyCustomersAction } from "@/actions/customers";
-import { getUserHistoryAction } from "@/actions/points";
 import { CompanyCustomer, UserHistory } from "@/lib/types";
 import React, { useState } from "react";
+import { getUserHistoryAction } from "@/actions/points";
 
 const CustomersPage = () => {
   const { company } = useCompanyAuth();
@@ -28,10 +28,10 @@ const CustomersPage = () => {
       return res.success ? res.customers : [];
     },
     enabled: !!company?.companyId,
-    staleTime: 1000 * 60 * 5, // 5 dk cache
+    staleTime: 1000 * 60 * 5,
   });
 
-  // ✅ Kullanıcı detayları (userId değişince çalışır)
+  // ✅ Kullanıcı detayları
   const {
     data: purchases,
     isLoading: loadingPurchases,
@@ -42,16 +42,12 @@ const CustomersPage = () => {
       const res = await getUserHistoryAction(openUserId, company.companyId);
       return res.success ? res.history ?? [] : [];
     },
-    enabled: !!openUserId && !!company?.companyId, // sadece detay açıkken fetch et
-    staleTime: 1000 * 60 * 2, // 2 dk cache
+    enabled: !!openUserId && !!company?.companyId,
+    staleTime: 1000 * 60 * 2,
   });
 
   const handleShowDetails = (userId: string) => {
-    if (openUserId === userId) {
-      setOpenUserId(null); // tekrar tıklayınca kapat
-    } else {
-      setOpenUserId(userId);
-    }
+    setOpenUserId((prev) => (prev === userId ? null : userId));
   };
 
   return (
@@ -74,7 +70,9 @@ const CustomersPage = () => {
               <thead>
                 <tr className="bg-gray-800 text-gray-200">
                   <th className="px-4 py-3 text-left">Ad Soyad</th>
-                  <th className="px-4 py-3 text-center">Puan</th>
+                  <th className="px-4 py-3 text-center">
+                    Toplam Nakit İade (₺)
+                  </th>
                   <th className="px-4 py-3 text-center">Detay</th>
                 </tr>
               </thead>
@@ -90,7 +88,7 @@ const CustomersPage = () => {
                         {c.user.name} {c.user.surname}
                       </td>
                       <td className="px-4 py-3 text-center font-semibold text-green-400">
-                        {c.totalPoints}
+                        {c.totalCashback?.toFixed(2) ?? "0.00"} ₺
                       </td>
                       <td className="px-4 py-3 text-center">
                         <button
@@ -121,10 +119,10 @@ const CustomersPage = () => {
                                       Adet
                                     </th>
                                     <th className="px-3 py-2 text-center">
-                                      Fiyat
+                                      Fiyat (₺)
                                     </th>
                                     <th className="px-3 py-2 text-center">
-                                      Puan
+                                      Nakit İade (₺)
                                     </th>
                                     <th className="px-3 py-2 text-center">
                                       Tarih
@@ -143,19 +141,17 @@ const CustomersPage = () => {
                                       </td>
                                       <td className="px-3 py-2 text-center">
                                         {h.totalPrice > 0
-                                          ? `${h.totalPrice}₺`
+                                          ? `${h.totalPrice.toFixed(2)} ₺`
                                           : "-"}
                                       </td>
                                       <td
                                         className={`px-3 py-2 text-center font-semibold ${
-                                          h.points > 0
+                                          h.cashbackEarned > 0
                                             ? "text-green-400"
                                             : "text-red-400"
                                         }`}
                                       >
-                                        {h.points > 0
-                                          ? `+${h.points}`
-                                          : h.points}
+                                        {h.cashbackEarned.toFixed(2)} ₺
                                       </td>
                                       <td className="px-3 py-2 text-center">
                                         {new Date(h.date).toLocaleDateString(

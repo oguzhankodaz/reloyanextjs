@@ -7,8 +7,11 @@ import CompanyNavbar from "@/components/company/Navbar/Navbar";
 
 import { getUserByIdAction } from "@/actions/users";
 import { getProductsByCompanyAction } from "@/actions/product";
-import { addPurchaseAction } from "@/actions/purchases";
-import { getUserPointsAction, spendPointsAction } from "@/actions/points";
+import {
+  addPurchaseAction,
+  getUserCashbackAction,
+  spendCashbackAction,
+} from "@/actions/purchases";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import { ProductList } from "../company/products/ProductList";
 
@@ -23,8 +26,7 @@ type Product = {
   id: number;
   name: string;
   price: number;
-  pointsToBuy: number;
-  pointsOnSell: number;
+  cashback: number;
 };
 
 export default function QRResultPage() {
@@ -36,23 +38,24 @@ export default function QRResultPage() {
 
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [totalPoints, setTotalPoints] = useState<number>(0);
+  const [totalCashback, setTotalCashback] = useState<number>(0);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [useAmountInput, setUseAmountInput] = useState<string>("");
 
   const [cartItems, setCartItems] = useState<
-    { id: number; name: string; quantity: number; usePoints: boolean }[]
+    { id: number; name: string; quantity: number }[]
   >([]);
 
-  // 🔹 Yeni state (toplam harcama + yüzde)
+  // 🔹 Ek state (toplam harcama üzerinden %)
   const [totalSpendInput, setTotalSpendInput] = useState<string>("");
   const [percentageInput, setPercentageInput] = useState<string>("3");
+  const [cashbackPreview, setCashbackPreview] = useState<number>(0);
 
-  const [pointsPreview, setPointsPreview] = useState<number>(0);
+  // 🔹 Manuel cashback kullanma
+  const [useCashbackInput, setUseCashbackInput] = useState<string>("");
 
-  // Kullanıcı + Puan + Ürünleri getir
+  // Kullanıcı + Ürün + Cashback bilgisi
   useEffect(() => {
     if (!userId || !company) {
       setLoading(false);
@@ -64,12 +67,12 @@ export default function QRResultPage() {
       if (userRes.success) {
         setUser(userRes.user);
 
-        const pointsRes = await getUserPointsAction(userId);
-        if (pointsRes.success) {
-          const companyPoints = pointsRes.points.find(
-            (p) => p.company.id === company.companyId
-          );
-          setTotalPoints(companyPoints?.totalPoints ?? 0);
+        const cashbackRes = await getUserCashbackAction(
+          userId,
+          company.companyId
+        );
+        if (cashbackRes.success) {
+          setTotalCashback(cashbackRes.totalCashback);
         }
       }
 
@@ -96,19 +99,19 @@ export default function QRResultPage() {
     }
   }, [company, router]);
 
-  // Hesaplama için effect
+  // 🔹 Toplam harcama önizleme
   useEffect(() => {
     const spend = parseFloat(totalSpendInput);
     const percent = parseFloat(percentageInput);
 
     if (!isNaN(spend) && spend > 0 && !isNaN(percent) && percent > 0) {
-      setPointsPreview(Math.floor((spend * percent) / 100));
+      setCashbackPreview((spend * percent) / 100);
     } else {
-      setPointsPreview(0);
+      setCashbackPreview(0);
     }
   }, [totalSpendInput, percentageInput]);
 
-  // Sepete ekle
+  // Sepet yönetimi
   const handleAddToCart = (item: {
     id: number;
     name: string;
@@ -121,14 +124,8 @@ export default function QRResultPage() {
           i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
         );
       }
-      return [...prev, { ...item, usePoints: false }];
+      return [...prev, item];
     });
-  };
-
-  const toggleUsePoints = (id: number) => {
-    setCartItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, usePoints: !i.usePoints } : i))
-    );
   };
 
   const handleRemove = (id: number) => {
@@ -149,100 +146,89 @@ export default function QRResultPage() {
       const product = products.find((p) => p.id === item.id);
       if (!product) continue;
 
-      if (item.usePoints) {
-        const totalUse = product.pointsToBuy * item.quantity;
-
-        const res = await spendPointsAction(
-          userId,
-          company.companyId,
-          totalUse,
-          product.id,
-          item.quantity,
-          product.price
-        );
-
-        if (!res.success) {
-          alert(res.message);
-        }
-      } else {
-        await addPurchaseAction(userId, company.companyId, [
-          { productId: item.id, quantity: item.quantity },
-        ]);
-      }
+      await addPurchaseAction(userId, company.companyId, [
+        {
+          productId: product.id,
+          quantity: item.quantity,
+          totalPrice: product.price * item.quantity,
+          cashbackEarned: product.cashback * item.quantity,
+        },
+      ]);
     }
 
     setSaving(false);
     setCartItems([]);
 
-    // puanı güncelle
-    const pointsRes = await getUserPointsAction(userId);
-    if (pointsRes.success) {
-      const companyPoints = pointsRes.points.find(
-        (p) => p.company.id === company.companyId
-      );
-      setTotalPoints(companyPoints?.totalPoints ?? 0);
+    // cashback güncelle
+    const cashbackRes = await getUserCashbackAction(userId, company.companyId);
+    if (cashbackRes.success) {
+      setTotalCashback(cashbackRes.totalCashback);
     }
 
-    alert("İşlemler tamamlandı ✅");
+    alert("Satın alma işlemi tamamlandı ✅");
   };
 
-  // Manuel puan düşme
-  const handleUsePoints = async () => {
-    if (!userId || !company) return;
-
-    const amount = parseInt(useAmountInput, 10);
-    if (isNaN(amount) || amount <= 0) {
-      alert("Geçerli bir puan girin.");
-      return;
-    }
-
-    setSaving(true);
-    const res = await spendPointsAction(userId, company.companyId, amount);
-    setSaving(false);
-
-    if (res.success) {
-      alert(`-${amount} puan düşüldü ✅`);
-      setTotalPoints(res.totalPoints ?? 0);
-      setUseAmountInput("");
-    } else {
-      alert(res.message);
-    }
-  };
-
-  // 🔹 Toplam harcama üzerinden puan verme
-  const handleGivePointsBySpend = async () => {
+  // 🔹 Toplam harcama ile nakit iade verme
+  // 🔹 Toplam harcama ile nakit iade verme
+  const handleGiveCashbackBySpend = async () => {
     if (!userId || !company) return;
 
     const spend = parseFloat(totalSpendInput);
     const percent = parseFloat(percentageInput);
 
-    if (isNaN(spend) || isNaN(percent) || spend <= 0 || percent <= 0) {
+    if (isNaN(spend) || spend <= 0 || isNaN(percent) || percent <= 0) {
       alert("Geçerli değerler girin.");
       return;
     }
 
-    const pointsToGive = Math.floor((spend * percent) / 100);
+    const cashbackToGive = (spend * percent) / 100;
 
     setSaving(true);
     const res = await addPurchaseAction(userId, company.companyId, [
-      { totalSpend: spend, points: pointsToGive },
+      {
+        productId: undefined, // ürünle ilişkili değil
+        quantity: 1, // ✅ quantity zorunlu olduğu için 1
+        totalPrice: spend,
+        cashbackEarned: cashbackToGive,
+      },
     ]);
     setSaving(false);
 
     if (res.success) {
-      alert(`${pointsToGive} puan verildi ✅`);
+      alert(`${cashbackToGive.toFixed(2)} ₺ nakit iade verildi ✅`);
       setTotalSpendInput("");
-      setPercentageInput("");
-      // puanı güncelle
-      const pointsRes = await getUserPointsAction(userId);
-      if (pointsRes.success) {
-        const companyPoints = pointsRes.points.find(
-          (p) => p.company.id === company.companyId
-        );
-        setTotalPoints(companyPoints?.totalPoints ?? 0);
+      setPercentageInput("3");
+
+      const cashbackRes = await getUserCashbackAction(
+        userId,
+        company.companyId
+      );
+      if (cashbackRes.success) {
+        setTotalCashback(cashbackRes.totalCashback);
       }
+    }
+  };
+
+  // 🔹 Manuel bakiye kullanma
+  const handleUseCashback = async () => {
+    if (!userId || !company) return;
+
+    const amount = parseFloat(useCashbackInput);
+    if (isNaN(amount) || amount <= 0) {
+      alert("Geçerli bir tutar girin.");
+      return;
+    }
+
+    setSaving(true);
+    const res = await spendCashbackAction(userId, company.companyId, amount);
+    setSaving(false);
+
+    if (res.success) {
+      alert(`-${amount.toFixed(2)} ₺ bakiye kullanıldı ✅`);
+      setUseCashbackInput("");
+      setTotalCashback(res.totalCashback ?? totalCashback);
     } else {
-      alert(res.success);
+      alert(res.message);
     }
   };
 
@@ -266,8 +252,10 @@ export default function QRResultPage() {
             <strong className="text-gray-100">Email:</strong> {user.email}
           </p>
           <p className="text-gray-300 mt-2">
-            <strong className="text-gray-100">Toplam Puanı:</strong>{" "}
-            <span className="text-green-400 font-bold">{totalPoints}</span>
+            <strong className="text-gray-100">Toplam Bakiye (₺):</strong>{" "}
+            <span className="text-green-400 font-bold">
+              {totalCashback.toFixed(2)}
+            </span>
           </p>
         </div>
 
@@ -277,10 +265,10 @@ export default function QRResultPage() {
             ⚙️ Ek İşlemler
           </h2>
 
-          {/* Toplam Harcama */}
+          {/* Toplam harcama ile iade */}
           <div>
             <h3 className="text-sm font-medium text-gray-300 mb-2">
-              💰 Toplam Harcama ile Puan Ver
+              💰 Toplam Harcama ile Nakit İade Ver
             </h3>
             <input
               type="number"
@@ -289,10 +277,6 @@ export default function QRResultPage() {
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
               placeholder="Toplam harcama (₺)"
             />
-            <h3 className="text-sm font-medium text-gray-300 mb-2">
-              Yüzde oranı %
-            </h3>
-
             <input
               type="number"
               value={percentageInput}
@@ -300,45 +284,45 @@ export default function QRResultPage() {
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
               placeholder="Yüzde (%)"
             />
-
-            {/* 🔹 Önizleme alanı */}
             <p className="text-gray-300 mb-3">
-              🎯 Verilecek Puan:{" "}
-              <span className="font-bold text-green-400">{pointsPreview}</span>
+              🎯 Verilecek Nakit İade:{" "}
+              <span className="font-bold text-green-400">
+                {cashbackPreview.toFixed(2)} ₺
+              </span>
             </p>
-
             <button
-              onClick={handleGivePointsBySpend}
+              onClick={handleGiveCashbackBySpend}
               disabled={saving}
               className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {saving ? "İşlem yapılıyor..." : "Puan Ver"}
+              {saving ? "İşlem yapılıyor..." : "İade Ver"}
             </button>
           </div>
 
-          {/* Manuel Puan Kullan */}
+          {/* Manuel bakiye kullan */}
           <div>
             <h3 className="text-sm font-medium text-gray-300 mb-2">
-              🎯 Manuel Puan Kullan
+              🎯 Manuel Bakiye Kullan
             </h3>
             <input
               type="number"
               min={1}
-              max={totalPoints}
-              value={useAmountInput}
-              onChange={(e) => setUseAmountInput(e.target.value)}
+              max={totalCashback}
+              value={useCashbackInput}
+              onChange={(e) => setUseCashbackInput(e.target.value)}
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
-              placeholder="Kullanılacak puan"
+              placeholder="Kullanılacak tutar (₺)"
             />
             <button
-              onClick={handleUsePoints}
-              disabled={saving || parseInt(useAmountInput, 10) <= 0}
+              onClick={handleUseCashback}
+              disabled={saving || parseFloat(useCashbackInput) <= 0}
               className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
             >
-              {saving ? "İşlem yapılıyor..." : "Puanı Kullan"}
+              {saving ? "İşlem yapılıyor..." : "Bakiyeyi Kullan"}
             </button>
           </div>
         </div>
+
         {/* Ürün işlemleri */}
         <div className="bg-gray-900 rounded-lg shadow-md p-6 w-full max-w-3xl space-y-6">
           <h2 className="text-lg font-semibold text-gray-100">
@@ -367,23 +351,12 @@ export default function QRResultPage() {
                       <span>
                         {item.name} × {item.quantity}
                       </span>
-                      <div className="flex items-center gap-3">
-                        <label className="flex items-center gap-1 text-sm text-gray-300">
-                          <input
-                            type="checkbox"
-                            checked={item.usePoints}
-                            onChange={() => toggleUsePoints(item.id)}
-                            className="w-4 h-4 accent-green-500"
-                          />
-                          Puan
-                        </label>
-                        <button
-                          onClick={() => handleRemove(item.id)}
-                          className="text-red-400 hover:text-red-500 text-sm"
-                        >
-                          ❌ Sil
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleRemove(item.id)}
+                        className="text-red-400 hover:text-red-500 text-sm"
+                      >
+                        ❌ Sil
+                      </button>
                     </div>
                   );
                 })}
@@ -391,25 +364,26 @@ export default function QRResultPage() {
                 {/* Toplamlar */}
                 <div className="border-t border-gray-700 pt-3 text-sm">
                   <p>
-                    🎯{" "}
+                    💵{" "}
                     <span className="font-semibold text-gray-100">
-                      Verilecek Puan:
+                      Toplam Fiyat:
                     </span>{" "}
                     {cartItems.reduce((sum, item) => {
                       const product = products.find((p) => p.id === item.id);
-                      return sum + (product?.pointsOnSell || 0) * item.quantity;
-                    }, 0)}
+                      return sum + (product?.price || 0) * item.quantity;
+                    }, 0)}{" "}
+                    ₺
                   </p>
                   <p>
-                    💳{" "}
+                    🎯{" "}
                     <span className="font-semibold text-gray-100">
-                      Gerekli Puan:
+                      Kazanılacak Nakit İade:
                     </span>{" "}
                     {cartItems.reduce((sum, item) => {
-                      if (!item.usePoints) return sum;
                       const product = products.find((p) => p.id === item.id);
-                      return sum + (product?.pointsToBuy || 0) * item.quantity;
-                    }, 0)}
+                      return sum + (product?.cashback || 0) * item.quantity;
+                    }, 0)}{" "}
+                    ₺
                   </p>
                 </div>
               </div>

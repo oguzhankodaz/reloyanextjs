@@ -1,89 +1,97 @@
+/** @format */
 "use client";
-import React, { useState } from "react";
+
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createProduct } from "@/actions/product"; // ✅ helper fonksiyon
+import { createProduct } from "@/actions/product";
 
 type Props = {
-  companyId: string | null;
-
+  companyId: string;
 };
 
-const ProductForm: React.FC<Props> = ({ companyId }) => {
+export default function ProductForm({ companyId }: Props) {
   const queryClient = useQueryClient();
-  const [loading, setLoading] = useState(false);
+
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState<string>(""); 
+  const [cashback, setCashback] = useState<string>(""); 
 
   const mutation = useMutation({
     mutationFn: (newProduct: {
       name: string;
       price: number;
-      pointsToBuy?: number;
-      pointsOnSell?: number;
+      cashback: number;
       companyId: string;
     }) => createProduct(newProduct),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products", companyId] });
-      setLoading(false);
-    },
-    onError: () => {
-      setLoading(false);
+      setName("");
+      setPrice("");
+      setCashback("");
     },
   });
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyId) return;
 
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const price = parseFloat(formData.get("price") as string);
-    const pointsToBuy = parseInt(formData.get("pointsToBuy") as string) || 0;
-    const pointsOnSell = parseInt(formData.get("pointsOnSell") as string) || 0;
+    const priceValue = parseFloat(price);
+    const cashbackValue = parseFloat(cashback);
 
-    setLoading(true);
-    mutation.mutate({ name, price, pointsToBuy, pointsOnSell, companyId });
-    e.currentTarget.reset();
+    if (!name || isNaN(priceValue) || priceValue <= 0) {
+      alert("Lütfen ürün adı ve fiyat giriniz.");
+      return;
+    }
+
+    mutation.mutate({
+      name,
+      price: priceValue,
+      cashback: isNaN(cashbackValue) ? 0 : cashbackValue,
+      companyId,
+    });
+  };
+
+  // ✅ Fiyat değiştiğinde %3 hesapla
+  const handlePriceChange = (value: string) => {
+    setPrice(value);
+
+    const num = parseFloat(value);
+    if (!isNaN(num) && num > 0) {
+      setCashback((num * 0.03).toFixed(2)); // %3
+    } else {
+      setCashback("");
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 mb-6">
       <input
         type="text"
-        name="name"
         placeholder="Ürün adı"
-        className="w-full px-3 py-2 border rounded"
-        required
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="w-full border rounded px-3 py-2"
       />
       <input
         type="number"
-        name="price"
-        placeholder="Fiyat"
-        className="w-full px-3 py-2 border rounded"
-        required
+        placeholder="Fiyat (₺)"
+        value={price}
+        onChange={(e) => handlePriceChange(e.target.value)}
+        className="w-full border rounded px-3 py-2"
       />
-      <div className="grid grid-cols-2 gap-3">
-        <input
-          type="number"
-          name="pointsToBuy"
-          placeholder="Satın alma puanı"
-          className="w-full px-3 py-2 border rounded"
-        />
-        <input
-          type="number"
-          name="pointsOnSell"
-          placeholder="Satış puanı"
-          className="w-full px-3 py-2 border rounded"
-        />
-      </div>
-
+      <input
+        type="number"
+        placeholder="Nakit İade (₺)"
+        value={cashback}
+        onChange={(e) => setCashback(e.target.value)} // kullanıcı isterse değiştirir
+        className="w-full border rounded px-3 py-2"
+      />
       <button
         type="submit"
-        disabled={loading}
-        className="w-full bg-black text-white py-2 rounded hover:bg-gray-800"
+        disabled={mutation.isPending}
+        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
       >
-        {loading ? "Ekleniyor..." : "+ Ürün Ekle"}
+        {mutation.isPending ? "Ekleniyor..." : "➕ Ürün Ekle"}
       </button>
     </form>
   );
-};
-
-export default ProductForm;
+}

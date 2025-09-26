@@ -10,6 +10,7 @@ import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import SummaryCards from "./SummaryCards";
 import CustomerPointsTable from "./CustomerPointsTable";
 import MonthlyPointsChart from "./MonthlyPointsChart";
+import ReportsSkeleton from "./ReportsSkeleton";
 
 const ReportsPage = () => {
   const { company } = useCompanyAuth();
@@ -26,12 +27,12 @@ const ReportsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex items-center justify-center">
-        Yükleniyor ⏳
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white">
+        <ReportsSkeleton />
       </div>
     );
   }
-
+  
 
   if (isError || !data) {
     return (
@@ -47,9 +48,12 @@ const ReportsPage = () => {
         <BackButton />
         <h1 className="text-2xl font-bold mb-6 mt-4">📊 Raporlar</h1>
 
+        {/* Özet kartlar */}
         <SummaryCards data={data} />
-        <CustomerPointsTable points={data.customerPoints} />
-        <MonthlyPointsChart data={data.monthlyPoints} />
+        {/* Müşteri cashback tablosu */}
+        <CustomerPointsTable cashback={data.customerCashback} />
+        {/* Aylık iade grafiği */}
+        <MonthlyPointsChart data={data.monthlyCashback} />
       </div>
     </div>
   );

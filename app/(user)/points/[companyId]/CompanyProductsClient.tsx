@@ -1,61 +1,52 @@
+/** @format */
 "use client";
 
-import { getCompanyProducts } from "@/actions/product";
-import { useQuery } from "@tanstack/react-query";
+import React from "react";
+import { Product } from "@/lib/types";
 
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  pointsOnSell: number;
-  pointsToBuy: number;
+type Props = {
+  companyId: string;
+  initialProducts: Product[];
 };
 
 export default function CompanyProductsClient({
   companyId,
   initialProducts,
-}: {
-  companyId: string;
-  initialProducts: Product[];
-}) {
-  // ✅ React Query ile cache’e alıyoruz
-  const { data: products } = useQuery({
-    queryKey: ["company-products", companyId],
-    queryFn: async () => await getCompanyProducts(companyId),
-    initialData: initialProducts, // 👈 Server’dan gelen veriyi kullan
-    staleTime: 1000 * 60 * 5,
-  });
-
+}: Props) {
   return (
-    <div className="max-w-3xl mx-auto">
-      {products.length === 0 ? (
-        <p className="text-gray-500">Bu şirkete ait ürün bulunamadı.</p>
+    <div className="max-w-5xl mx-auto">
+      {initialProducts.length === 0 ? (
+        <p className="text-gray-400 text-center mt-10">
+          Bu şirkete ait ürün bulunamadı 🙁
+        </p>
       ) : (
-        <div className="h-[70vh] overflow-y-auto pr-2">
-          <div className="grid gap-5 sm:grid-cols-2">
-            {products.map((product) => (
+        <div className="h-[75vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 rounded-xl p-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {initialProducts.map((product) => (
               <div
                 key={product.id}
-                className="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-lg hover:shadow-yellow-400/10 transition-shadow"
+                className="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-lg hover:shadow-yellow-400/10 transition-all duration-200 flex flex-col justify-between"
               >
-                <h2 className="text-xl font-semibold text-white mb-2">
+                {/* Ürün adı */}
+                <h2 className="text-lg font-semibold text-white mb-2 truncate">
                   {product.name}
                 </h2>
 
-                <div className="text-sm space-y-1">
-                  <p className="text-gray-400">
-                    💰 Fiyat:{" "}
-                    <span className="text-white">
-                      {product.price.toFixed(2)} ₺
-                    </span>
-                  </p>
-                  <p className="text-green-400">
-                    🎯 Kazanılacak Puan: {product.pointsOnSell}
-                  </p>
-                  <p className="text-yellow-400">
-                    🛒 Puanla Almak İçin: {product.pointsToBuy}
-                  </p>
-                </div>
+                {/* Ürün Fiyatı */}
+                <p className="text-gray-300 mb-1">
+                  💵 <span className="font-semibold">Ürün Fiyatı:</span>{" "}
+                  <span className="font-bold text-yellow-400">
+                    {product.price} ₺
+                  </span>
+                </p>
+
+                {/* Kazanılacak TL */}
+                <p className="text-green-400 font-medium">
+                  🎯 Kazanılacak iade:{" "}
+                  <span className="font-bold">
+                    {product.cashback.toFixed(2)} ₺
+                  </span>
+                </p>
               </div>
             ))}
           </div>

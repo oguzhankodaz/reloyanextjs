@@ -4,55 +4,56 @@
 import prisma from "@/lib/prisma";
 import { ReportData } from "@/lib/types";
 
+
 export async function getCompanyStatsAction(companyId: string) {
   try {
-    const totalCustomers = await prisma.userPoints.count({
+    const totalCustomers = await prisma.purchase.groupBy({
+      by: ["userId"],
       where: { companyId },
     });
 
-    const todaySales = await prisma.purchase.count({
+    const todaySales = await prisma.purchase.aggregate({
       where: {
         companyId,
         purchaseDate: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)), // Bugünün başı
-          lt: new Date(new Date().setHours(23, 59, 59, 999)), // Bugünün sonu
+          gte: new Date(new Date().setHours(0, 0, 0, 0)), // gün başı
         },
       },
+      _sum: { totalPrice: true },
     });
 
-    const totalPoints = await prisma.userPoints.aggregate({
+    const totalCashback = await prisma.purchase.aggregate({
       where: { companyId },
-      _sum: { totalPoints: true },
+      _sum: { cashbackEarned: true },
     });
 
-    const productCount = await prisma.product.count({
-      where: { companyId },
-    });
+    const productCount = await prisma.product.count({ where: { companyId } });
 
     return {
       success: true,
       stats: {
-        totalCustomers,
-        todaySales,
-        totalPoints: totalPoints._sum.totalPoints ?? 0,
+        totalCustomers: totalCustomers.length,
+        todaySales: todaySales._sum.totalPrice ?? 0,
+        totalCashback: totalCashback._sum.cashbackEarned ?? 0,
         productCount,
       },
     };
   } catch (err) {
     console.error("getCompanyStatsAction error:", err);
-    throw new Error("Şirket istatistikleri alınamadı.");
+    return { success: false, stats: null };
   }
 }
 
 export async function getReportData(companyId: string): Promise<ReportData> {
   try {
-    const totalCustomers = await prisma.userPoints.count({
+    const totalCustomers = await prisma.purchase.groupBy({
+      by: ["userId"],
       where: { companyId },
     });
 
-    const pointsAgg = await prisma.purchase.aggregate({
+    const cashbackAgg = await prisma.purchase.aggregate({
       where: { companyId },
-      _sum: { pointsEarned: true },
+      _sum: { cashbackEarned: true },
     });
 
     const mostActiveCompany = await prisma.company.findUnique({
@@ -62,58 +63,66 @@ export async function getReportData(companyId: string): Promise<ReportData> {
       },
     });
 
-    const customerPoints = await prisma.userPoints.findMany({
+    const customerCashback = await prisma.purchase.groupBy({
+      by: ["userId"],
       where: { companyId },
-      include: { user: true },
-      orderBy: { totalPoints: "desc" },
+      _sum: { cashbackEarned: true },
+      orderBy: { _sum: { cashbackEarned: "desc" } },
       take: 10,
     });
 
-    const purchases = await prisma.purchase.findMany({
-      where: { companyId },
-      orderBy: { purchaseDate: "desc" },
-      include: { user: true, product: true },
-    });
+    // ✅ User objesini tipine uygun şekilde map et
+    const customerCashbackWithUser = await Promise.all(
+      customerCashback.map(async (c) => {
+        const user = await prisma.user.findUnique({
+          where: { id: c.userId },
+          select: { name: true, surname: true }, // sadece gerekli alanlar
+        });
 
-    const customerPointsWithLast = customerPoints.map((cp) => {
-      const lastPurchase = purchases.find((p) => p.userId === cp.userId);
-      return {
-        id: cp.id,
-        userId: cp.userId,
-        totalPoints: cp.totalPoints,
-        user: cp.user,
-        lastAction: lastPurchase
-          ? `${lastPurchase.product?.name ?? "Toplam Harcama"} (+${lastPurchase.pointsEarned})`
-          : null,
-      };
-    });
+        const lastPurchase = await prisma.purchase.findFirst({
+          where: { userId: c.userId, companyId },
+          orderBy: { purchaseDate: "desc" },
+          include: { product: true },
+        });
+
+        return {
+          id: c.userId,
+          userId: c.userId,
+          totalCashback: c._sum.cashbackEarned ?? 0,
+          user: user ?? { name: "Bilinmiyor", surname: null }, // null kontrolü
+          lastAction: lastPurchase
+            ? `${lastPurchase.product?.name ?? "Toplam Harcama"} (+${lastPurchase.cashbackEarned}₺)`
+            : null,
+        };
+      })
+    );
 
     const monthlyRaw = await prisma.$queryRaw<{ month: string; total: any }[]>`
-      SELECT TO_CHAR("purchaseDate", 'YYYY-MM') as month, SUM("pointsEarned") as total
+      SELECT TO_CHAR("purchaseDate", 'YYYY-MM') as month, SUM("cashbackEarned") as total
       FROM "Purchase"
       WHERE "companyId" = ${companyId}
       GROUP BY 1
       ORDER BY 1
     `;
 
-    const monthlyPoints = monthlyRaw.map((m) => ({
+    const monthlyCashback = monthlyRaw.map((m) => ({
       month: m.month,
-      points: Number(m.total),
+      cashback: Number(m.total),
     }));
 
-    const pointsUsageAgg = await prisma.pointsUsage.aggregate({
+    const cashbackUsageAgg = await prisma.pointsUsage.aggregate({
       where: { companyId },
-      _sum: { price: true },
+      _sum: { amount: true },
     });
 
     return {
-      success: true,  // ✅ burayı ekledim
-      totalCustomers,
-      totalPointsGiven: pointsAgg._sum.pointsEarned ?? 0,
+      success: true,
+      totalCustomers: totalCustomers.length,
+      totalCashbackGiven: cashbackAgg._sum.cashbackEarned ?? 0,
       mostActiveCompany,
-      customerPoints: customerPointsWithLast,
-      monthlyPoints,
-      pointsUsageTotal: pointsUsageAgg._sum.price ?? 0,
+      customerCashback: customerCashbackWithUser,
+      monthlyCashback,
+      cashbackUsageTotal: cashbackUsageAgg._sum.amount ?? 0,
     };
   } catch (err) {
     console.error("getReportData error:", err);

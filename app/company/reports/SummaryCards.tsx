@@ -19,19 +19,19 @@ export default function SummaryCards({ data }: Props) {
 
       <div className="bg-gray-800 rounded-xl p-6 shadow flex flex-col items-center">
         <BarChart className="w-10 h-10 text-green-400 mb-3" />
-        <h2 className="text-lg font-semibold">Dağıtılan Puan</h2>
+        <h2 className="text-lg font-semibold">Dağıtılan Nakit İade</h2>
         <p className="text-3xl font-bold mt-2">
-          {data.totalPointsGiven.toLocaleString()}
+          {data.totalCashbackGiven.toLocaleString()} ₺
         </p>
       </div>
 
       <div className="bg-gray-800 rounded-xl p-6 shadow flex flex-col items-center">
         <BarChart className="w-10 h-10 text-purple-400 mb-3" />
-        <h2 className="text-lg font-semibold">Puanla Alınan Ürünler</h2>
+        <h2 className="text-lg font-semibold">Kullanılan İade</h2>
         <p className="text-3xl font-bold mt-2">
-          {data.pointsUsageTotal.toLocaleString()} ₺
+          {data.cashbackUsageTotal.toLocaleString()} ₺
         </p>
-        <p className="text-sm text-gray-400 mt-1">Toplam ürün değeri</p>
+        <p className="text-sm text-gray-400 mt-1">Toplam harcanan bakiye</p>
       </div>
 
       <div className="bg-gray-800 rounded-xl p-6 shadow flex flex-col items-center">
