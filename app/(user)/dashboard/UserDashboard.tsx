@@ -99,16 +99,19 @@ const UserDashboard = () => {
                   key={p.id}
                   className="flex justify-between border-b border-gray-700 pb-2"
                 >
-                  <span>
-                    {p.product}{" "}
-                    <span className="text-yellow-400 font-bold">
-                      {formatCurrency(p.totalPrice)}
-                    </span>{" "}
-                    <span className="text-blue-400 font-medium">
-                      ({p.company})
+                  <div>
+                    {/* Ürün + fiyat */}
+                    <span>
+                      {p.product}{" "}
+                      <span className="text-yellow-400 font-bold">
+                        {formatCurrency(p.totalPrice)}
+                      </span>
                     </span>
-                    <br />
-                  </span>
+                    {/* İşletme adı ayrı satırda */}
+                    <div className="text-blue-400 text-xs">{p.company}</div>
+                  </div>
+
+                  {/* Kazanılan / Harcanan Cashback */}
                   <span
                     className={`${
                       p.cashbackEarned > 0 ? "text-green-400" : "text-red-400"
