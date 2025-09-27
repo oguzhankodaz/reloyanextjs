@@ -3,14 +3,17 @@
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 const LogoutButton = () => {
   const router = useRouter();
   const { setUser } = useAuth(); // 👈 context user’ı sıfırlamak için
+  const queryClient = useQueryClient();
 
   const handleLogout = async () => {
     await fetch("/api/logout", { method: "POST", credentials: "include" });
     setUser(null); // context temizlendi
+    queryClient.clear();
     router.replace("/"); // anasayfaya yönlendir
   };
 
