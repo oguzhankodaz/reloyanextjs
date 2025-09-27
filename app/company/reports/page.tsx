@@ -83,8 +83,8 @@ const ReportsPage = () => {
         <CustomerPointsTable cashback={data.customerCashback} />
 
         {/* Aylık iade grafiği (ALL-TIME) */}
-        <MonthlyPointsChart data={data.monthlyCashback} />
-      </div>
+        <MonthlyPointsChart data={data.chartData} filter={filter} />
+        </div>
     </div>
   );
 };
