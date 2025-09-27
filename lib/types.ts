@@ -134,3 +134,4 @@ export type Product = {
   companyId?: string;
   categoryId?: number | null;
 };
+export type ReportFilter = "day" | "month" | "year" | "all";

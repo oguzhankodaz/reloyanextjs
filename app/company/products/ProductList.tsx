@@ -104,7 +104,7 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => 
                   disabled={deleteMutation.isPending}
                   className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 disabled:opacity-50"
                 >
-                  {deleteMutation.isPending ? "Siliniyor..." : "❌ Sil"}
+                  {deleteMutation.isPending ? "Siliniyor..." : "Sil"}
                 </button>
               )}
             </li>

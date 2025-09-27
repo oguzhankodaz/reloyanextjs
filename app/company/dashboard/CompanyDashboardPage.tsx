@@ -22,13 +22,13 @@ const CompanyDashboard = () => {
           👋 Hoş geldiniz,{" "}
           <span className="text-yellow-400">{company?.name ?? "İşletme"}</span>
         </h1>
-        <p className="text-gray-400 mt-1">
-          Şirket panelinizi buradan yönetebilirsiniz.
-        </p>
       </section>
+
+      <span className="h-px w-full bg-gray-700 block"></span>
 
       {/* Üstte hızlı istatistikler */}
       <CompanyDashboardReport></CompanyDashboardReport>
+      <span className="h-px w-full bg-gray-700 block"></span>
 
       {/* Ana Menü */}
       <main className="flex-1 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -56,6 +56,7 @@ const CompanyDashboard = () => {
           <span className="font-medium text-base">Raporlar</span>
         </div>
       </main>
+      <span className="h-px w-full bg-gray-700 block"></span>
 
       {/* Duyurular */}
       <section className="p-6">

@@ -2,7 +2,8 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { ReportData } from "@/lib/types";
+import { ReportData, ReportFilter } from "@/lib/types";
+import { startOfDay, startOfMonth, startOfYear } from "date-fns";
 
 
 export async function getCompanyStatsAction(companyId: string) {
@@ -44,28 +45,56 @@ export async function getCompanyStatsAction(companyId: string) {
   }
 }
 
-export async function getReportData(companyId: string): Promise<ReportData> {
+export async function getReportData(
+  companyId: string,
+  filter: ReportFilter = "all"
+): Promise<ReportData> {
   try {
-    const totalCustomers = await prisma.purchase.groupBy({
+    // ---- 1) Tarih filtresi (SADECE özetler için) ---------------------------
+    const now = new Date();
+    let since: Date | null = null;
+
+    if (filter === "day") since = startOfDay(now);
+    else if (filter === "month") since = startOfMonth(now);
+    else if (filter === "year") since = startOfYear(now);
+
+    // Purchase ve Usage için ayrı where koşulları (alan adları farklı)
+    const purchaseWhere: any = { companyId };
+    const usageWhere: any = { companyId };
+
+    if (since) {
+      purchaseWhere.purchaseDate = { gte: since };
+      usageWhere.usedAt = { gte: since };
+    }
+
+    // ---- 2) Özet (filtreli) ------------------------------------------------
+    // Toplam müşteri = bu periyotta alışveriş yapan distinct user sayısı
+    const distinctCustomers = await prisma.purchase.groupBy({
       by: ["userId"],
-      where: { companyId },
+      where: purchaseWhere,
     });
 
     const cashbackAgg = await prisma.purchase.aggregate({
-      where: { companyId },
+      where: purchaseWhere,
       _sum: { cashbackEarned: true },
     });
 
-    const customerCashback = await prisma.purchase.groupBy({
+    const cashbackUsageAgg = await prisma.pointsUsage.aggregate({
+      where: usageWhere,
+      _sum: { amount: true },
+    });
+
+    // ---- 3) Tablo: En çok cashback alan müşteriler (ALL-TIME) --------------
+    const topAllTime = await prisma.purchase.groupBy({
       by: ["userId"],
-      where: { companyId },
+      where: { companyId }, // ❗️filtre YOK
       _sum: { cashbackEarned: true },
       orderBy: { _sum: { cashbackEarned: "desc" } },
       take: 10,
     });
 
-    const customerCashbackWithUser = await Promise.all(
-      customerCashback.map(async (c) => {
+    const customerCashback = await Promise.all(
+      topAllTime.map(async (c) => {
         const user = await prisma.user.findUnique({
           where: { id: c.userId },
           select: { name: true, surname: true },
@@ -83,12 +112,15 @@ export async function getReportData(companyId: string): Promise<ReportData> {
           totalCashback: c._sum.cashbackEarned ?? 0,
           user: user ?? { name: "Bilinmiyor", surname: null },
           lastAction: lastPurchase
-            ? `${lastPurchase.product?.name ?? "Toplam Harcama"} (+${lastPurchase.cashbackEarned}₺)`
+            ? `${lastPurchase.product?.name ?? "Toplam Harcama"} (+${
+                lastPurchase.cashbackEarned
+              }₺)`
             : null,
         };
       })
     );
 
+    // ---- 4) Grafik: Aylık cashback serisi (ALL-TIME) -----------------------
     const monthlyRaw = await prisma.$queryRaw<{ month: string; total: any }[]>`
       SELECT TO_CHAR("purchaseDate", 'YYYY-MM') as month, SUM("cashbackEarned") as total
       FROM "Purchase"
@@ -102,25 +134,20 @@ export async function getReportData(companyId: string): Promise<ReportData> {
       cashback: Number(m.total),
     }));
 
-    const cashbackUsageAgg = await prisma.pointsUsage.aggregate({
-      where: { companyId },
-      _sum: { amount: true },
-    });
-
+    // ---- 5) Dönüş -----------------------------------------------------------
     return {
       success: true,
-      totalCustomers: totalCustomers.length,
+      totalCustomers: distinctCustomers.length,
       totalCashbackGiven: cashbackAgg._sum.cashbackEarned ?? 0,
-      customerCashback: customerCashbackWithUser,
-      monthlyCashback,
       cashbackUsageTotal: cashbackUsageAgg._sum.amount ?? 0,
+      customerCashback, // ALL-TIME
+      monthlyCashback,  // ALL-TIME
     };
   } catch (err) {
     console.error("getReportData error:", err);
     throw new Error("Rapor verileri alınamadı.");
   }
 }
-
 
 
 export async function getCompanyMiniStatsAction(companyId: string) {

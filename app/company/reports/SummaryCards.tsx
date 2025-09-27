@@ -1,7 +1,7 @@
 /** @format */
 "use client";
 
-import { Activity, BarChart, PieChart } from "lucide-react";
+import { Activity, BarChart } from "lucide-react";
 import { ReportData } from "@/lib/types";
 import { formatCurrency } from "@/lib/helpers";
 
@@ -34,7 +34,6 @@ export default function SummaryCards({ data }: Props) {
         </p>
         <p className="text-sm text-gray-400 mt-1">Toplam harcanan bakiye</p>
       </div>
-
     </div>
   );
 }

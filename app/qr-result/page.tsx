@@ -14,6 +14,7 @@ import {
 } from "@/actions/purchases";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import { ProductList } from "../company/products/ProductList";
+import { formatCurrency } from "@/lib/helpers";
 
 type User = {
   id: string;
@@ -194,7 +195,7 @@ export default function QRResultPage() {
     setSaving(false);
 
     if (res.success) {
-      alert(`${cashbackToGive.toFixed(2)} ₺ nakit iade verildi ✅`);
+      alert(`${formatCurrency(cashbackToGive)} nakit iade verildi ✅`);
       setTotalSpendInput("");
       setPercentageInput("3");
 
@@ -223,7 +224,7 @@ export default function QRResultPage() {
     setSaving(false);
 
     if (res.success) {
-      alert(`-${amount.toFixed(2)} ₺ bakiye kullanıldı ✅`);
+      alert(`-${formatCurrency(amount)} bakiye kullanıldı ✅`);
       setUseCashbackInput("");
       setTotalCashback(res.totalCashback ?? totalCashback);
     } else {
@@ -251,9 +252,9 @@ export default function QRResultPage() {
             <strong className="text-gray-100">Email:</strong> {user.email}
           </p>
           <p className="text-gray-300 mt-2">
-            <strong className="text-gray-100">Toplam Bakiye (₺):</strong>{" "}
+            <strong className="text-gray-100">Toplam Bakiye:</strong>{" "}
             <span className="text-green-400 font-bold">
-              {totalCashback.toFixed(2)}
+              {formatCurrency(totalCashback)}
             </span>
           </p>
         </div>
@@ -305,7 +306,7 @@ export default function QRResultPage() {
             <p className="text-gray-300 mb-3">
               🎯 Verilecek Nakit İade:{" "}
               <span className="font-bold text-green-400">
-                {cashbackPreview.toFixed(2)} ₺
+                {formatCurrency(cashbackPreview)}
               </span>
             </p>
             <button
@@ -386,22 +387,24 @@ export default function QRResultPage() {
                     <span className="font-semibold text-gray-100">
                       Toplam Fiyat:
                     </span>{" "}
-                    {cartItems.reduce((sum, item) => {
-                      const product = products.find((p) => p.id === item.id);
-                      return sum + (product?.price || 0) * item.quantity;
-                    }, 0)}{" "}
-                    ₺
+                    {formatCurrency(
+                      cartItems.reduce((sum, item) => {
+                        const product = products.find((p) => p.id === item.id);
+                        return sum + (product?.price || 0) * item.quantity;
+                      }, 0)
+                    )}
                   </p>
                   <p>
                     🎯{" "}
                     <span className="font-semibold text-gray-100">
                       Kazanılacak Nakit İade:
                     </span>{" "}
-                    {cartItems.reduce((sum, item) => {
-                      const product = products.find((p) => p.id === item.id);
-                      return sum + (product?.cashback || 0) * item.quantity;
-                    }, 0)}{" "}
-                    ₺
+                    {formatCurrency(
+                      cartItems.reduce((sum, item) => {
+                        const product = products.find((p) => p.id === item.id);
+                        return sum + (product?.cashback || 0) * item.quantity;
+                      }, 0)
+                    )}
                   </p>
                 </div>
               </div>
