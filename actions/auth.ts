@@ -53,7 +53,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 
   return {
     success: true,
-    message: "Giriş başarılı",
+    message: "Giriş Yapılıyor...",
     user: {
       id: user.id,
       name: user.name,
@@ -153,7 +153,7 @@ export async function loginCompanyAction(prevState: any, formData: FormData) {
 
   return {
     success: true,
-    message: "Giriş başarılı",
+    message: "Giriş Yapılıyor...",
     company: {
       companyId: company.id, // 👈 id yer
       name: company.name,

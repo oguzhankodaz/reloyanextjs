@@ -5,17 +5,19 @@
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
+import { useQueryClient } from "@tanstack/react-query";
+
 
 const CompanyLogoutButton = () => {
   const router = useRouter();
   const { setCompany } = useCompanyAuth();
-
+  const queryClient = useQueryClient();
   const handleLogout = async () => {
     await fetch("/api/logout", { method: "POST", credentials: "include" });
 
     // Context sıfırla
     setCompany(null);
-
+    queryClient.clear();
     // Ana sayfaya yönlendir
     router.replace("/");
   };
