@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { formatCurrency } from "@/lib/helpers"; // ✅ helper import
 
 type Props = {
   data: { month: string; cashback: number }[];
@@ -23,13 +24,19 @@ export default function MonthlyPointsChart({ data }: Props) {
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#444" />
           <XAxis dataKey="month" stroke="#aaa" />
-          <YAxis stroke="#aaa" />
-          <Tooltip />
+          <YAxis
+            stroke="#aaa"
+            tickFormatter={(value) => formatCurrency(value)} // ✅ eksen format
+          />
+          <Tooltip
+            formatter={(value: number) => formatCurrency(value)} // ✅ tooltip format
+          />
           <Line
             type="monotone"
             dataKey="cashback"
             stroke="#4ade80"
             strokeWidth={2}
+            dot={{ r: 4 }} // ✅ nokta boyutunu sabitle (istersen kaldırabilirsin)
           />
         </LineChart>
       </ResponsiveContainer>

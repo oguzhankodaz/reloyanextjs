@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getUserDashboard } from "@/actions/userDashboard";
 import { UserDashboardData } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
+import { formatCurrency } from "@/lib/helpers"; // ✅ currency helper import
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -37,6 +38,7 @@ const UserDashboard = () => {
       </div>
     );
   }
+
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
       {/* Başlık */}
@@ -54,7 +56,7 @@ const UserDashboard = () => {
         <div className="col-span-1 bg-gray-800 rounded-xl p-6 shadow">
           <h2 className="text-xl font-semibold mb-2">💰 Toplam Para Puan</h2>
           <p className="text-4xl font-bold text-green-400">
-            {data.totalCashback.toFixed(2)} ₺
+            {formatCurrency(data.totalCashback)} {/* ✅ formatlı */}
           </p>
           <p className="text-sm text-gray-400 mt-2">
             Biriken para puanlarınızı dilediğiniz zaman kullanabilirsiniz.
@@ -74,7 +76,7 @@ const UserDashboard = () => {
               >
                 <span>{c.companyName}</span>
                 <span className="font-semibold text-green-400">
-                  {c.cashback.toFixed(2)} ₺
+                  {formatCurrency(c.cashback)} {/* ✅ formatlı */}
                 </span>
               </div>
             ))}
@@ -84,6 +86,7 @@ const UserDashboard = () => {
 
       {/* Alt kısım: Son İşlemler & Kampanyalar */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {/* Son İşlemler */}
         {/* Son İşlemler */}
         <div className="bg-gray-800 rounded-xl p-6 shadow">
           <h2 className="text-xl font-semibold mb-4">📜 Son İşlemler</h2>
@@ -97,7 +100,14 @@ const UserDashboard = () => {
                   className="flex justify-between border-b border-gray-700 pb-2"
                 >
                   <span>
-                    {p.product} ({p.company})
+                    {p.product}{" "}
+                    <span className="text-yellow-400 font-bold">
+                      {formatCurrency(p.totalPrice)}
+                    </span>{" "}
+                    <span className="text-blue-400 font-medium">
+                      ({p.company})
+                    </span>
+                    <br />
                   </span>
                   <span
                     className={`${
@@ -105,8 +115,8 @@ const UserDashboard = () => {
                     }`}
                   >
                     {p.cashbackEarned > 0
-                      ? `+${p.cashbackEarned.toFixed(2)} ₺`
-                      : `${p.cashbackEarned.toFixed(2)} ₺`}
+                      ? `+${formatCurrency(p.cashbackEarned)}`
+                      : formatCurrency(p.cashbackEarned)}
                   </span>
                 </li>
               ))

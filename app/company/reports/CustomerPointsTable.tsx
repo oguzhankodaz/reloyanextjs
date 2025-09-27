@@ -1,6 +1,7 @@
 /** @format */
 "use client";
 
+import { formatCurrency } from "@/lib/helpers";
 import { CustomerCashback } from "@/lib/types";
 
 type Props = {
@@ -30,7 +31,7 @@ export default function CustomerPointsTable({ cashback }: Props) {
                   {c.user.name} {c.user.surname}
                 </td>
                 <td className="px-4 py-3 text-center font-semibold text-green-400">
-                  {c.totalCashback.toFixed(2)} ₺
+                  {formatCurrency(c.totalCashback)}
                 </td>
                 <td className="px-4 py-3 text-center text-gray-300">
                   {c.lastAction ?? "-"}

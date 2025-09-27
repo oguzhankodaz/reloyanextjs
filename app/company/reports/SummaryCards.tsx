@@ -3,6 +3,7 @@
 
 import { Activity, BarChart, PieChart } from "lucide-react";
 import { ReportData } from "@/lib/types";
+import { formatCurrency } from "@/lib/helpers";
 
 type Props = {
   data: ReportData;
@@ -21,7 +22,7 @@ export default function SummaryCards({ data }: Props) {
         <BarChart className="w-10 h-10 text-green-400 mb-3" />
         <h2 className="text-lg font-semibold">Dağıtılan Nakit İade</h2>
         <p className="text-3xl font-bold mt-2">
-          {data.totalCashbackGiven.toLocaleString()} ₺
+          {formatCurrency(data.totalCashbackGiven)}
         </p>
       </div>
 
@@ -29,7 +30,7 @@ export default function SummaryCards({ data }: Props) {
         <BarChart className="w-10 h-10 text-purple-400 mb-3" />
         <h2 className="text-lg font-semibold">Kullanılan İade</h2>
         <p className="text-3xl font-bold mt-2">
-          {data.cashbackUsageTotal.toLocaleString()} ₺
+          {formatCurrency(data.cashbackUsageTotal)}
         </p>
         <p className="text-sm text-gray-400 mt-1">Toplam harcanan bakiye</p>
       </div>
