@@ -67,11 +67,6 @@ export type ReportData = {
   success: boolean;
   totalCustomers: number;
   totalCashbackGiven: number; // ✅ tüm müşterilere verilen toplam nakit iade
-  mostActiveCompany: {
-    id: string;
-    name: string;
-    _count: { purchases: number };
-  } | null;
   customerCashback: CustomerCashback[];
   monthlyCashback: { month: string; cashback: number }[];
   cashbackUsageTotal: number; // ✅ toplam kullanılan cashback

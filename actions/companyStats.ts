@@ -56,13 +56,6 @@ export async function getReportData(companyId: string): Promise<ReportData> {
       _sum: { cashbackEarned: true },
     });
 
-    const mostActiveCompany = await prisma.company.findUnique({
-      where: { id: companyId },
-      include: {
-        _count: { select: { purchases: true } },
-      },
-    });
-
     const customerCashback = await prisma.purchase.groupBy({
       by: ["userId"],
       where: { companyId },
@@ -71,12 +64,11 @@ export async function getReportData(companyId: string): Promise<ReportData> {
       take: 10,
     });
 
-    // ✅ User objesini tipine uygun şekilde map et
     const customerCashbackWithUser = await Promise.all(
       customerCashback.map(async (c) => {
         const user = await prisma.user.findUnique({
           where: { id: c.userId },
-          select: { name: true, surname: true }, // sadece gerekli alanlar
+          select: { name: true, surname: true },
         });
 
         const lastPurchase = await prisma.purchase.findFirst({
@@ -89,7 +81,7 @@ export async function getReportData(companyId: string): Promise<ReportData> {
           id: c.userId,
           userId: c.userId,
           totalCashback: c._sum.cashbackEarned ?? 0,
-          user: user ?? { name: "Bilinmiyor", surname: null }, // null kontrolü
+          user: user ?? { name: "Bilinmiyor", surname: null },
           lastAction: lastPurchase
             ? `${lastPurchase.product?.name ?? "Toplam Harcama"} (+${lastPurchase.cashbackEarned}₺)`
             : null,
@@ -119,7 +111,6 @@ export async function getReportData(companyId: string): Promise<ReportData> {
       success: true,
       totalCustomers: totalCustomers.length,
       totalCashbackGiven: cashbackAgg._sum.cashbackEarned ?? 0,
-      mostActiveCompany,
       customerCashback: customerCashbackWithUser,
       monthlyCashback,
       cashbackUsageTotal: cashbackUsageAgg._sum.amount ?? 0,
@@ -127,5 +118,82 @@ export async function getReportData(companyId: string): Promise<ReportData> {
   } catch (err) {
     console.error("getReportData error:", err);
     throw new Error("Rapor verileri alınamadı.");
+  }
+}
+
+
+
+export async function getCompanyMiniStatsAction(companyId: string) {
+  try {
+    if (!companyId) {
+      return { success: false, stats: null };
+    }
+
+    // Bugün tarih aralığı
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // Bugünkü müşteri sayısı (benzersiz userId)
+    const todayCustomers = await prisma.purchase.groupBy({
+      by: ["userId"],
+      where: {
+        companyId,
+        purchaseDate: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+    });
+
+    // Bugünkü satış toplamı
+    const todaySalesAgg = await prisma.purchase.aggregate({
+      where: {
+        companyId,
+        purchaseDate: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+      _sum: { totalPrice: true },
+    });
+    const todayUsedCashbackAgg = await prisma.pointsUsage.aggregate({
+      where: {
+        companyId,
+        usedAt: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+      _sum: { amount: true },
+    });
+
+    // Bugünkü nakit iade toplamı
+    const todayCashbackAgg = await prisma.purchase.aggregate({
+      where: {
+        companyId,
+        purchaseDate: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+      _sum: { cashbackEarned: true },
+    });
+
+    return {
+      success: true,
+      stats: {
+        todayCustomers: todayCustomers.length,
+        todaySales: todaySalesAgg._sum.totalPrice ?? 0,
+        todayCashback: todayCashbackAgg._sum.cashbackEarned ?? 0,
+        todayUsedCashback: todayUsedCashbackAgg._sum.amount ?? 0, // ✅ yeni eklendi
+
+      },
+    };
+  } catch (err) {
+    console.error("getCompanyMiniStatsAction error:", err);
+    return { success: false, stats: null };
   }
 }

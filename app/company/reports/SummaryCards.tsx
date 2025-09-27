@@ -35,16 +35,6 @@ export default function SummaryCards({ data }: Props) {
         <p className="text-sm text-gray-400 mt-1">Toplam harcanan bakiye</p>
       </div>
 
-      <div className="bg-gray-800 rounded-xl p-6 shadow flex flex-col items-center">
-        <PieChart className="w-10 h-10 text-blue-400 mb-3" />
-        <h2 className="text-lg font-semibold">En Aktif İşletme</h2>
-        <p className="text-xl font-bold mt-2">
-          {data.mostActiveCompany?.name ?? "-"}
-        </p>
-        <p className="text-sm text-gray-400 mt-1">
-          {data.mostActiveCompany?._count?.purchases ?? 0} işlem yaptı
-        </p>
-      </div>
     </div>
   );
 }

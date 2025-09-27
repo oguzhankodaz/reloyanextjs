@@ -10,6 +10,7 @@ import { getCompanyCustomersAction } from "@/actions/customers";
 import { CompanyCustomer, UserHistory } from "@/lib/types";
 import React, { useState } from "react";
 import { getUserHistoryAction } from "@/actions/points";
+import { formatCurrency } from "@/lib/helpers"; // ✅ formatCurrency eklendi
 
 const CustomersPage = () => {
   const { company } = useCompanyAuth();
@@ -88,7 +89,7 @@ const CustomersPage = () => {
                         {c.user.name} {c.user.surname}
                       </td>
                       <td className="px-4 py-3 text-center font-semibold text-green-400">
-                        {c.totalCashback?.toFixed(2) ?? "0.00"} ₺
+                        {formatCurrency(c.totalCashback ?? 0)}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <button
@@ -141,7 +142,7 @@ const CustomersPage = () => {
                                       </td>
                                       <td className="px-3 py-2 text-center">
                                         {h.totalPrice > 0
-                                          ? `${h.totalPrice.toFixed(2)} ₺`
+                                          ? formatCurrency(h.totalPrice)
                                           : "-"}
                                       </td>
                                       <td
@@ -151,7 +152,7 @@ const CustomersPage = () => {
                                             : "text-red-400"
                                         }`}
                                       >
-                                        {h.cashbackEarned.toFixed(2)} ₺
+                                        {formatCurrency(h.cashbackEarned)}
                                       </td>
                                       <td className="px-3 py-2 text-center">
                                         {new Date(h.date).toLocaleDateString(
