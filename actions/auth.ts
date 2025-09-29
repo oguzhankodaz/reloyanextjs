@@ -6,6 +6,8 @@
 import prisma from "@/lib/prisma";
 import { toTitleCase } from "@/lib/helpers";
 import bcrypt from "bcryptjs";
+import { sendVerificationEmail } from "@/lib/mailer";
+
 import { isValidEmail, isValidPassword, isValidName, isValidCompanyName } from "@/lib/helpers";
 
 import jwt from "jsonwebtoken";
@@ -74,12 +76,9 @@ export async function registerAction(prevState: any, formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
+  // ✅ Validasyonlar
   if (!email || !password || !name || !surname) {
-    return {
-      success: false,
-      message: "Tüm Alanları doldurun",
-      user: null,
-    };
+    return { success: false, message: "Tüm alanları doldurun", user: null };
   }
   if (!isValidName(name) || !isValidName(surname)) {
     return { success: false, message: "Ad ve soyad en az 2 karakter olmalı", user: null };
@@ -91,23 +90,45 @@ export async function registerAction(prevState: any, formData: FormData) {
     return { success: false, message: "Şifre en az 8 karakter, harf ve rakam içermeli", user: null };
   }
 
+  // ✅ E-posta zaten var mı?
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    return { success: false, message: "Bu eposta zaten kayıtlı", user: null };
+    return { success: false, message: "Bu e-posta zaten kayıtlı", user: null };
   }
+
+  // ✅ Şifre hash
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // ✅ Kullanıcı kaydı
   const user = await prisma.user.create({
     data: {
       name: toTitleCase(name),
       surname: toTitleCase(surname),
       email: email.trim().toLowerCase(),
       password: hashedPassword,
+      verified: false, // kullanıcı başta doğrulanmamış
       qrCode: crypto.randomUUID(),
     },
   });
 
-  return { success: true, message: "Kayıt Başarılı" };
+  // ✅ Doğrulama token üret
+  const token = crypto.randomUUID();
+  await prisma.verificationToken.create({
+    data: {
+      token,
+      userId: user.id,
+      expires: new Date(Date.now() + 1000 * 60 * 60), // 1 saat geçerli
+    },
+  });
+
+  // ✅ Mail gönder
+  await sendVerificationEmail(user.email, token, "user");
+
+  return {
+    success: true,
+    message: "Kayıt başarılı! Lütfen e-postanızı doğrulayın.",
+    user,
+  };
 }
 
 export async function loginCompanyAction(prevState: any, formData: FormData) {
@@ -192,32 +213,54 @@ export async function registerCompanyAction(
   const password = formData.get("password") as string;
 
   if (!isValidCompanyName(name)) {
-    return { success: false, message: "Geçerli bir şirket adı girin", user: null };
+    return { success: false, message: "Geçerli bir şirket adı girin", company: null };
   }
   if (!isValidEmail(email)) {
-    return { success: false, message: "Geçersiz e-posta formatı", user: null };
+    return { success: false, message: "Geçersiz e-posta formatı", company: null };
   }
   if (!isValidPassword(password)) {
-    return { success: false, message: "Şifre en az 8 karakter, harf ve rakam içermeli", user: null };
+    return { success: false, message: "Şifre en az 8 karakter, harf ve rakam içermeli", company: null };
   }
+
+  // ✅ E-posta kontrol
   const existing = await prisma.company.findUnique({ where: { email } });
-
   if (existing) {
-    return { success: false, message: "Bu eposta zaten kayıtlı", user: null };
+    return { success: false, message: "Bu e-posta zaten kayıtlı", company: null };
   }
 
+  // ✅ Şifre hash
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // ✅ Şirket kaydı (başta verified = false)
   const company = await prisma.company.create({
     data: {
       name: toTitleCase(name),
       email: email.trim().toLowerCase(),
       password: hashedPassword,
+      verified: false,
     },
   });
 
-  return { success: true, message: "Kayıt Başarılı" };
+  // ✅ Doğrulama token oluştur
+  const token = crypto.randomUUID();
+  await prisma.companyVerificationToken.create({
+    data: {
+      token,
+      companyId: company.id,
+      expires: new Date(Date.now() + 1000 * 60 * 60), // 1 saat geçerli
+    },
+  });
+
+  // ✅ Doğrulama maili gönder
+  await sendVerificationEmail(company.email, token, "company");
+
+  return {
+    success: true,
+    message: "Kayıt başarılı! Lütfen e-postanızı doğrulayın.",
+    company,
+  };
 }
+
 
 export async function checkSession() {
   const store = await cookies();

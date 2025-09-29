@@ -22,14 +22,12 @@ export function middleware(req: NextRequest) {
 
   // Public path kontrolü
   if (publicPaths.includes(pathname)) {
-    // User login/register engeli
     if (pathname.startsWith("/login") || pathname.startsWith("/register")) {
       if (userToken) {
         return NextResponse.redirect(new URL("/dashboard", req.url));
       }
     }
 
-    // Company login/register engeli
     if (
       pathname.startsWith("/company/login") ||
       pathname.startsWith("/company/register")
@@ -39,7 +37,6 @@ export function middleware(req: NextRequest) {
       }
     }
 
-    // Staff login engeli
     if (pathname.startsWith("/company/staff/login")) {
       if (staffToken) {
         return NextResponse.redirect(
@@ -59,8 +56,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // ✅ Staff dashboard kontrolü (sadece personel paneli)
-  // Şirket tarafındaki personel yönetimi sayfası (/company/staff) şirket token'ı ile korunur.
+  // ✅ Staff dashboard kontrolü
   if (pathname.startsWith("/company/staff/dashboard")) {
     if (!staffToken) {
       return NextResponse.redirect(new URL("/company/staff/login", req.url));
@@ -86,13 +82,9 @@ export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
+// ✅ Burada api/verify hariç tutuluyor
 export const config = {
   matcher: [
-    "/",
-    "/login",
-    "/register",
-    "/dashboard/:path*",
-    "/company/:path*",
-    "/qr-result/:path*",
+    "/((?!api/verify|_next/static|_next/image|favicon.ico).*)",
   ],
 };
