@@ -1,0 +1,114 @@
+// components/CashbackActions.tsx
+"use client";
+
+import { formatCurrency } from "@/lib/helpers";
+
+type Props = {
+  totalSpendInput: string;
+  setTotalSpendInput: (v: string) => void;
+  percentageInput: string;
+  setPercentageInput: (v: string) => void;
+  cashbackPreview: number;
+  handleGiveCashbackBySpend: () => void;
+  useCashbackInput: string;
+  setUseCashbackInput: (v: string) => void;
+  handleUseCashback: () => void;
+  totalCashback: number;
+  saving: boolean;
+};
+
+export function CashbackActions({
+  totalSpendInput,
+  setTotalSpendInput,
+  percentageInput,
+  setPercentageInput,
+  cashbackPreview,
+  handleGiveCashbackBySpend,
+  useCashbackInput,
+  setUseCashbackInput,
+  handleUseCashback,
+  totalCashback,
+  saving,
+}: Props) {
+  return (
+    <div className="bg-gray-900 rounded-lg shadow-md p-6 w-full max-w-3xl space-y-6">
+      <h2 className="text-lg font-semibold text-gray-100">
+        💳 Müşteri Para Puan İşlemleri
+      </h2>
+
+      {/* Toplam harcama ile iade */}
+      <div>
+        <h3 className="text-sm font-medium text-gray-300 mb-2">
+          Toplam Harcama ile Nakit İade Ver
+        </h3>
+        <input
+          type="number"
+          value={totalSpendInput}
+          onChange={(e) => setTotalSpendInput(e.target.value)}
+          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
+          placeholder="Toplam harcama (₺)"
+        />
+
+        <div className="mb-4">
+          <label
+            htmlFor="percentageInput"
+            className="block text-sm font-medium text-gray-200 mb-2"
+          >
+            Nakit İade Oranı (%)
+          </label>
+          <input
+            id="percentageInput"
+            type="number"
+            min={1}
+            max={100}
+            value={percentageInput}
+            onChange={(e) => setPercentageInput(e.target.value)}
+            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-100"
+            placeholder="Varsayılan: %3"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Varsayılan oran{" "}
+            <span className="font-semibold text-green-400">3%</span>’tür.
+          </p>
+        </div>
+
+        <p className="text-gray-300 mb-3">
+          🎯 Verilecek Nakit İade:{" "}
+          <span className="font-bold text-green-400">
+            {formatCurrency(cashbackPreview)}
+          </span>
+        </p>
+        <button
+          onClick={handleGiveCashbackBySpend}
+          disabled={saving}
+          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+        >
+          {saving ? "İşlem yapılıyor..." : "İade Ver"}
+        </button>
+      </div>
+
+      {/* Manuel bakiye kullan */}
+      <div>
+        <h3 className="text-sm font-medium text-gray-300 mb-2">
+          🎯 Manuel Para Puan Kullan
+        </h3>
+        <input
+          type="number"
+          min={1}
+          max={totalCashback}
+          value={useCashbackInput}
+          onChange={(e) => setUseCashbackInput(e.target.value)}
+          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
+          placeholder="Kullanılacak tutar (₺)"
+        />
+        <button
+          onClick={handleUseCashback}
+          disabled={saving || parseFloat(useCashbackInput) <= 0}
+          className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
+        >
+          {saving ? "İşlem yapılıyor..." : "Bakiyeyi Kullan"}
+        </button>
+      </div>
+    </div>
+  );
+}
