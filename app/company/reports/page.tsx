@@ -13,7 +13,6 @@ import CustomerPointsTable from "./CustomerPointsTable";
 import MonthlyPointsChart from "./MonthlyPointsChart";
 import ReportsSkeleton from "./ReportsSkeleton";
 
-
 const ReportsPage = () => {
   const { company } = useCompanyAuth();
 
@@ -34,7 +33,7 @@ const ReportsPage = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white">
-       <CompanyNavbar />
+        <CompanyNavbar />
         <ReportsSkeleton />
       </div>
     );
@@ -79,13 +78,11 @@ const ReportsPage = () => {
 
         {/* Özet kartlar (filtreli) */}
         <SummaryCards data={data} />
-
-        {/* Müşteri cashback tablosu (ALL-TIME) */}
-        <CustomerPointsTable cashback={data.customerCashback} />
-
         {/* Aylık iade grafiği (ALL-TIME) */}
         <MonthlyPointsChart data={data.chartData} filter={filter} />
-        </div>
+        {/* Müşteri cashback tablosu (ALL-TIME) */}
+        <CustomerPointsTable cashback={data.customerCashback} />
+      </div>
     </div>
   );
 };

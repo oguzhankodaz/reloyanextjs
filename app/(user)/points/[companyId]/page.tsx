@@ -38,10 +38,7 @@ export default async function CompanyProductsPage({
       </div>
 
       {/* Client component */}
-      <CompanyProductsClient
-        companyId={companyId}
-        initialProducts={products}
-      />
+      <CompanyProductsClient initialProducts={products} />
     </div>
   );
 }

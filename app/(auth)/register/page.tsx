@@ -61,12 +61,18 @@ export default function RegisterPage() {
             name="name"
             placeholder="Adınız"
             required
+            minLength={2}
+            pattern="[A-Za-zÇĞİÖŞÜçğıöşü' -]{2,}"
+            title="Ad yalnızca harf, boşluk, kesme işareti ve tire içerebilir."
             className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
           />
           <input
             type="text"
             name="surname"
             placeholder="Soyadınız"
+            minLength={2}
+            pattern="[A-Za-zÇĞİÖŞÜçğıöşü' -]{2,}"
+            title="Soyad yalnızca harf, boşluk, kesme işareti ve tire içerebilir."
             className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
           />
           <input
@@ -74,6 +80,8 @@ export default function RegisterPage() {
             name="email"
             placeholder="E-posta adresiniz"
             required
+            inputMode="email"
+            autoComplete="email"
             className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
           />
           <input
@@ -81,6 +89,9 @@ export default function RegisterPage() {
             name="password"
             placeholder="Şifreniz"
             required
+            minLength={8}
+            pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}"
+            title="En az 8 karakter, en az bir harf ve bir rakam içermeli."
             className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
           />
           <button

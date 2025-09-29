@@ -29,7 +29,7 @@ export async function GET() {
         name: decoded.name,
       },
     });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ company: null });
   }
 }

@@ -3,7 +3,7 @@
 
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
 import QRReader from "@/components/company/QrReader";
-import { Package, Users, BarChart2 } from "lucide-react";
+import { Package, Users, BarChart2, UserCog } from "lucide-react"; // 👈 UserCog eklendi
 import { useRouter } from "next/navigation";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import CompanyDashboardReport from "./CompanyDashboardReport";
@@ -27,11 +27,12 @@ const CompanyDashboard = () => {
       <span className="h-px w-full bg-gray-700 block"></span>
 
       {/* Üstte hızlı istatistikler */}
-      <CompanyDashboardReport></CompanyDashboardReport>
+      <CompanyDashboardReport />
       <span className="h-px w-full bg-gray-700 block"></span>
 
       {/* Ana Menü */}
       <main className="flex-1 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Ürünler */}
         <div
           onClick={() => router.push("/company/products")}
           className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
@@ -40,6 +41,7 @@ const CompanyDashboard = () => {
           <span className="font-medium text-base">Ürün İşlemleri</span>
         </div>
 
+        {/* Müşteriler */}
         <div
           onClick={() => router.push("/company/customers")}
           className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
@@ -48,6 +50,7 @@ const CompanyDashboard = () => {
           <span className="font-medium text-base">Müşterilerim</span>
         </div>
 
+        {/* Raporlar */}
         <div
           onClick={() => router.push("/company/reports")}
           className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
@@ -55,7 +58,17 @@ const CompanyDashboard = () => {
           <BarChart2 className="w-10 h-10 mb-3 text-blue-500" />
           <span className="font-medium text-base">Raporlar</span>
         </div>
+
+        {/* Personel İşlemleri */}
+        <div
+          onClick={() => router.push("/company/staff")}
+          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
+        >
+          <UserCog className="w-10 h-10 mb-3 text-purple-500" />
+          <span className="font-medium text-base">Personel İşlemleri</span>
+        </div>
       </main>
+
       <span className="h-px w-full bg-gray-700 block"></span>
 
       {/* Duyurular */}

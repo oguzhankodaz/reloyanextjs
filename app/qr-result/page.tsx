@@ -12,7 +12,9 @@ import {
   getUserCashbackAction,
   spendCashbackAction,
 } from "@/actions/purchases";
+
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
+import { useStaffAuth } from "@/context/StaffAuthContext"; // ✅ staff context eklendi
 import { ProductList } from "../company/products/ProductList";
 import { formatCurrency } from "@/lib/helpers";
 
@@ -36,6 +38,11 @@ export default function QRResultPage() {
   const userId = searchParams.get("userId");
 
   const { company } = useCompanyAuth();
+  const { staff } = useStaffAuth(); // ✅ staff bilgisi çekildi
+
+  // ✅ CompanyId: company’den ya da staff’in bağlı olduğu şirketten alınıyor
+  const derivedCompanyId = company?.companyId || staff?.companyId || null;
+  const [companyId, setCompanyId] = useState<string | null>(derivedCompanyId);
 
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -48,59 +55,77 @@ export default function QRResultPage() {
     { id: number; name: string; quantity: number }[]
   >([]);
 
-  // 🔹 Ek state (toplam harcama üzerinden %)
+  // Ek state (toplam harcama üzerinden %)
   const [totalSpendInput, setTotalSpendInput] = useState<string>("");
   const [percentageInput, setPercentageInput] = useState<string>("3");
   const [cashbackPreview, setCashbackPreview] = useState<number>(0);
 
-  // 🔹 Manuel cashback kullanma
+  // Manuel cashback kullanma
   const [useCashbackInput, setUseCashbackInput] = useState<string>("");
+
+  // Context hazır değilse local olarak companyId çöz
+  useEffect(() => {
+    if (derivedCompanyId && derivedCompanyId !== companyId) {
+      setCompanyId(derivedCompanyId);
+      return;
+    }
+    if (!derivedCompanyId && !companyId) {
+      let cancelled = false;
+      (async () => {
+        try {
+          const [staffRes, cmpRes] = await Promise.all([
+            fetch("/api/staff/me", { credentials: "include" }).then((r) => r.json()).catch(() => null),
+            fetch("/api/company/me", { credentials: "include" }).then((r) => r.json()).catch(() => null),
+          ]);
+          const cid = staffRes?.staff?.companyId || cmpRes?.company?.companyId || null;
+          if (!cancelled && cid) setCompanyId(cid);
+        } catch {}
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [derivedCompanyId, companyId]);
 
   // Kullanıcı + Ürün + Cashback bilgisi
   useEffect(() => {
-    if (!userId || !company) {
-      setLoading(false);
-      return;
-    }
+    // Auth middleware bu sayfaya yalnızca company/staff erişimine izin veriyor.
+    // Context henüz yüklenmeden companyId null olabilir; bu durumda beklemeye devam et.
+    if (!userId || !companyId) return;
 
     (async () => {
       const userRes = await getUserByIdAction(userId);
       if (userRes.success) {
         setUser(userRes.user);
 
-        const cashbackRes = await getUserCashbackAction(
-          userId,
-          company.companyId
-        );
+        // ✅ puanlar doğru şirketten geliyor
+        const cashbackRes = await getUserCashbackAction(userId, companyId);
         if (cashbackRes.success) {
           setTotalCashback(cashbackRes.totalCashback);
         }
-      }
 
-      const prodRes = await getProductsByCompanyAction(company.companyId);
-      if (prodRes.success) {
-        setProducts(prodRes.products);
+        const prodRes = await getProductsByCompanyAction(companyId);
+        if (prodRes.success) {
+          setProducts(prodRes.products);
+        }
       }
-
       setLoading(false);
     })();
-  }, [userId, company]);
+  }, [userId, companyId]);
 
-  // Kullanıcı bulunamazsa dashboard’a yönlendir
+  // Kullanıcı bulunamazsa → redirect (yalnızca context yüklendiyse)
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/company/dashboard");
+      if (staff) {
+        router.replace("/company/staff/dashboard");
+      } else if (company) {
+        router.replace("/company/dashboard");
+      }
+      // company ve staff her ikisi de null ise (context henüz hazır değil) beklemeye devam et
     }
-  }, [loading, user, router]);
+  }, [loading, user, staff, company, router]);
 
-  // Eğer şirket yoksa login'e yönlendir
-  useEffect(() => {
-    if (!company) {
-      router.replace("/company/login");
-    }
-  }, [company, router]);
-
-  // 🔹 Toplam harcama önizleme
+  // Toplam harcama önizleme
   useEffect(() => {
     const spend = parseFloat(totalSpendInput);
     const percent = parseFloat(percentageInput);
@@ -135,7 +160,7 @@ export default function QRResultPage() {
 
   // Kaydetme (ürün bazlı işlemler)
   const handleSave = async () => {
-    if (!userId || !company) return;
+    if (!userId || !companyId) return;
     if (cartItems.length === 0) {
       alert("Sepet boş.");
       return;
@@ -147,7 +172,7 @@ export default function QRResultPage() {
       const product = products.find((p) => p.id === item.id);
       if (!product) continue;
 
-      await addPurchaseAction(userId, company.companyId, [
+      await addPurchaseAction(userId, companyId, [
         {
           productId: product.id,
           quantity: item.quantity,
@@ -161,7 +186,7 @@ export default function QRResultPage() {
     setCartItems([]);
 
     // cashback güncelle
-    const cashbackRes = await getUserCashbackAction(userId, company.companyId);
+    const cashbackRes = await getUserCashbackAction(userId, companyId);
     if (cashbackRes.success) {
       setTotalCashback(cashbackRes.totalCashback);
     }
@@ -169,9 +194,9 @@ export default function QRResultPage() {
     alert("Satın alma işlemi tamamlandı ✅");
   };
 
-  // 🔹 Toplam harcama ile nakit iade verme
+  // Toplam harcama ile nakit iade verme
   const handleGiveCashbackBySpend = async () => {
-    if (!userId || !company) return;
+    if (!userId || !companyId) return;
 
     const spend = parseFloat(totalSpendInput);
     const percent = parseFloat(percentageInput);
@@ -184,10 +209,10 @@ export default function QRResultPage() {
     const cashbackToGive = (spend * percent) / 100;
 
     setSaving(true);
-    const res = await addPurchaseAction(userId, company.companyId, [
+    const res = await addPurchaseAction(userId, companyId, [
       {
-        productId: undefined, // ürünle ilişkili değil
-        quantity: 1, // ✅ quantity zorunlu olduğu için 1
+        productId: undefined,
+        quantity: 1,
         totalPrice: spend,
         cashbackEarned: cashbackToGive,
       },
@@ -199,19 +224,16 @@ export default function QRResultPage() {
       setTotalSpendInput("");
       setPercentageInput("3");
 
-      const cashbackRes = await getUserCashbackAction(
-        userId,
-        company.companyId
-      );
+      const cashbackRes = await getUserCashbackAction(userId, companyId);
       if (cashbackRes.success) {
         setTotalCashback(cashbackRes.totalCashback);
       }
     }
   };
 
-  // 🔹 Manuel bakiye kullanma
+  // Manuel bakiye kullanma
   const handleUseCashback = async () => {
-    if (!userId || !company) return;
+    if (!userId || !companyId) return;
 
     const amount = parseFloat(useCashbackInput);
     if (isNaN(amount) || amount <= 0) {
@@ -220,7 +242,7 @@ export default function QRResultPage() {
     }
 
     setSaving(true);
-    const res = await spendCashbackAction(userId, company.companyId, amount);
+    const res = await spendCashbackAction(userId, companyId, amount);
     setSaving(false);
 
     if (res.success) {
@@ -232,6 +254,7 @@ export default function QRResultPage() {
     }
   };
 
+  // Yüklenme: veriler çekilirken göster
   if (loading) return <p className="text-center mt-10">⏳ Yükleniyor...</p>;
   if (!user) return null;
 
@@ -361,7 +384,7 @@ export default function QRResultPage() {
             ) : (
               <div className="space-y-3">
                 {cartItems.map((item) => {
-                  const product = products.find((p) => p.id === item.id);
+                  const p = products.find((prod) => prod.id === item.id);
                   return (
                     <div
                       key={item.id}
@@ -389,8 +412,8 @@ export default function QRResultPage() {
                     </span>{" "}
                     {formatCurrency(
                       cartItems.reduce((sum, item) => {
-                        const product = products.find((p) => p.id === item.id);
-                        return sum + (product?.price || 0) * item.quantity;
+                        const prod = products.find((p) => p.id === item.id);
+                        return sum + (prod?.price || 0) * item.quantity;
                       }, 0)
                     )}
                   </p>
@@ -401,8 +424,8 @@ export default function QRResultPage() {
                     </span>{" "}
                     {formatCurrency(
                       cartItems.reduce((sum, item) => {
-                        const product = products.find((p) => p.id === item.id);
-                        return sum + (product?.cashback || 0) * item.quantity;
+                        const prod = products.find((p) => p.id === item.id);
+                        return sum + (prod?.cashback || 0) * item.quantity;
                       }, 0)
                     )}
                   </p>

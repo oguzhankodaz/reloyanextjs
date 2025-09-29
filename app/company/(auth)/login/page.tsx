@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useActionState, useTransition, useEffect } from "react";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function CompanyLoginPage() {
   const [state, formAction] = useActionState(loginCompanyAction, {
@@ -47,7 +48,9 @@ export default function CompanyLoginPage() {
         <h1 className="text-3xl font-extrabold text-center text-gray-900 mb-6">
           ReloYa Business
         </h1>
-        <p className="text-center text-gray-500 mb-8">İşletme Paneli • Giriş Yap</p>
+        <p className="text-center text-gray-500 mb-8">
+          İşletme Paneli • Giriş Yap
+        </p>
 
         <form
           className="space-y-5"
@@ -98,9 +101,22 @@ export default function CompanyLoginPage() {
 
         <div className="mt-6 text-center text-sm text-gray-600">
           Şirket hesabınız yok mu?{" "}
-          <a href="/company/register" className="text-black font-semibold hover:underline">
+          <Link
+            href="/company/register"
+            className="text-black font-semibold hover:underline"
+          >
             Kayıt Ol
-          </a>
+          </Link>
+        </div>
+        {/* ... CompanyLoginPage alt kısmına ek */}
+        <div className="mt-4 text-center text-sm text-gray-600">
+          Personel misiniz?{" "}
+          <Link
+            href="/company/staff/login"
+            className="text-black font-semibold hover:underline"
+          >
+            Buradan giriş yapın
+          </Link>
         </div>
       </div>
     </div>
