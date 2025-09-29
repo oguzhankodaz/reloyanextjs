@@ -12,6 +12,7 @@ export default function CompanyRegisterPage() {
   const [state, formAction] = useActionState(registerCompanyAction, {
     success: false,
     message: "",
+    company: null,
   });
 
   const [isPending, startTransition] = useTransition();
