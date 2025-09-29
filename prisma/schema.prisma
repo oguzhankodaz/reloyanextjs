@@ -9,18 +9,19 @@ datasource db {
 
 /// Kullanıcılar (müşteriler)
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  surname   String?
-  email     String   @unique
-  phone     String?  @unique
-  qrCode    String   @unique
-  createdAt DateTime @default(now())
-  password  String
-
-  purchases    Purchase[]
-  userPoints   UserPoints[]
-  pointsUsages PointsUsage[]
+  id                 String              @id @default(uuid())
+  name               String
+  surname            String?
+  email              String              @unique
+  phone              String?             @unique
+  qrCode             String              @unique
+  createdAt          DateTime            @default(now())
+  password           String
+  verified           Boolean             @default(false) // 👈 ekledik
+  purchases          Purchase[]
+  userPoints         UserPoints[]
+  pointsUsages       PointsUsage[]
+  verificationTokens VerificationToken[] // 👈 ilişki
 }
 
 model Company {
@@ -31,27 +32,27 @@ model Company {
   address   String?
   createdAt DateTime @default(now())
 
-  categories   Category[]
-  products     Product[]
-  purchases    Purchase[]
-  userPoints   UserPoints[]
-  pointsUsages PointsUsage[]
-  campaigns    Campaign[]
-
+  categories         Category[]
+  products           Product[]
+  purchases          Purchase[]
+  userPoints         UserPoints[]
+  pointsUsages       PointsUsage[]
+  campaigns          Campaign[]
+  verified           Boolean                    @default(false)
+  verificationTokens CompanyVerificationToken[]
   // 👇 burası eksikti
-  staff        CompanyStaff[]
+  staff              CompanyStaff[]
 }
 
-
 model CompanyStaff {
-  id        String   @id @default(uuid())
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  id        String  @id @default(uuid())
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
 
-  name      String
-  email     String   @unique
-  password  String
-  isActive  Boolean  @default(true)
+  name     String
+  email    String  @unique
+  password String
+  isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
 
@@ -96,17 +97,17 @@ model Purchase {
   cashbackEarned Float    @default(0)
   purchaseDate   DateTime @default(now())
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
-  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
 
-  product   Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   productId Int?
 
   // 👇 personeli izlemek için (opsiyonel, bozulma yok)
-  createdByStaff     CompanyStaff? @relation(fields: [createdByStaffId], references: [id], onDelete: SetNull)
-  createdByStaffId   String?
+  createdByStaff   CompanyStaff? @relation(fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  createdByStaffId String?
 }
 
 /// Müşteri puanları
@@ -131,17 +132,17 @@ model PointsUsage {
   price    Float    @default(0)
   usedAt   DateTime @default(now())
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
-  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
 
-  product   Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   productId Int?
 
   // 👇 personeli izlemek için (opsiyonel, bozulma yok)
-  createdByStaff     CompanyStaff? @relation(fields: [createdByStaffId], references: [id], onDelete: SetNull)
-  createdByStaffId   String?
+  createdByStaff   CompanyStaff? @relation(fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  createdByStaffId String?
 }
 
 model Campaign {
@@ -154,4 +155,24 @@ model Campaign {
 
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
+}
+
+model VerificationToken {
+  id      Int      @id @default(autoincrement())
+  token   String   @unique
+  expires DateTime
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  createdAt DateTime @default(now())
+}
+
+model CompanyVerificationToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+  expires   DateTime
+  createdAt DateTime @default(now())
 }
