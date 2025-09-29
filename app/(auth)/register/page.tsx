@@ -1,3 +1,5 @@
+/** @format */
+
 "use client";
 
 import { registerAction } from "@/actions/auth";
@@ -62,7 +64,7 @@ export default function RegisterPage() {
             placeholder="Adınız"
             required
             minLength={2}
-            pattern="[A-Za-zÇĞİÖŞÜçğıöşü' -]{2,}"
+            pattern="[A-Za-zÇĞİÖŞÜçğıöşü'\- ]{2,}"
             title="Ad yalnızca harf, boşluk, kesme işareti ve tire içerebilir."
             className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
           />
@@ -71,7 +73,7 @@ export default function RegisterPage() {
             name="surname"
             placeholder="Soyadınız"
             minLength={2}
-            pattern="[A-Za-zÇĞİÖŞÜçğıöşü' -]{2,}"
+            pattern="[A-Za-zÇĞİÖŞÜçğıöşü'\- ]{2,}"
             title="Soyad yalnızca harf, boşluk, kesme işareti ve tire içerebilir."
             className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
           />

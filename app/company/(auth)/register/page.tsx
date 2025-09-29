@@ -63,7 +63,7 @@ export default function CompanyRegisterPage() {
               placeholder="Şirket Adı"
               required
               minLength={2}
-              pattern="[A-Za-zÇĞİÖŞÜçğıöşü0-9&()\/.,' -]{2,}"
+              pattern="[A-Za-zÇĞİÖŞÜçğıöşü0-9&()\/.,'\- ]{2,}"
               title="Geçerli bir şirket adı girin."
               className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
             />
