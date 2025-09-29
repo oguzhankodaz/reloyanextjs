@@ -2,6 +2,21 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
+
+async function getCurrentStaffId(): Promise<string | null> {
+  try {
+    const store = await cookies();
+    const token = store.get("stf_sess_91kd2")?.value;
+    if (!token) return null;
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    if (decoded?.type !== "staff") return null;
+    return decoded.staffId as string;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Satın alma kaydı ekle
@@ -12,6 +27,7 @@ export async function addPurchaseAction(
   items: { productId?: number; quantity: number; totalPrice: number; cashbackEarned: number }[]
 ) {
   try {
+    const staffId = await getCurrentStaffId();
     await prisma.$transaction(async (tx) => {
       for (const item of items) {
         await tx.purchase.create({
@@ -22,6 +38,8 @@ export async function addPurchaseAction(
             quantity: item.quantity,
             totalPrice: item.totalPrice,
             cashbackEarned: item.cashbackEarned,
+            // Eğer personel oturumu varsa kaydı ona ata
+            createdByStaffId: staffId ?? undefined,
           },
         });
       }
@@ -81,6 +99,7 @@ export async function spendCashbackAction(
   }
 
   try {
+    const staffId = await getCurrentStaffId();
     // Mevcut bakiyeyi hesapla (kazanç - harcama)
     const earnedAgg = await prisma.purchase.aggregate({
       where: { userId, companyId },
@@ -108,6 +127,7 @@ export async function spendCashbackAction(
         userId,
         companyId,
         productId: productId ?? null,
+        createdByStaffId: staffId ?? undefined,
       },
     });
 

@@ -5,12 +5,10 @@ import React from "react";
 import { Product } from "@/lib/types";
 
 type Props = {
-  companyId: string;
   initialProducts: Product[];
 };
 
 export default function CompanyProductsClient({
-  companyId,
   initialProducts,
 }: Props) {
   return (

@@ -61,6 +61,9 @@ export default function CompanyRegisterPage() {
               name="name"
               placeholder="Şirket Adı"
               required
+              minLength={2}
+              pattern="[A-Za-zÇĞİÖŞÜçğıöşü0-9&()\/.,' -]{2,}"
+              title="Geçerli bir şirket adı girin."
               className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
             />
           </div>
@@ -70,6 +73,8 @@ export default function CompanyRegisterPage() {
               name="email"
               placeholder="Şirket E-posta"
               required
+              inputMode="email"
+              autoComplete="email"
               className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
             />
           </div>
@@ -79,6 +84,9 @@ export default function CompanyRegisterPage() {
               name="password"
               placeholder="Şifre"
               required
+              minLength={8}
+              pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}"
+              title="En az 8 karakter, en az bir harf ve bir rakam içermeli."
               className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
             />
           </div>

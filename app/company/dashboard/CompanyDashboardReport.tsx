@@ -3,10 +3,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  getCompanyMiniStatsAction,
-  getCompanyStatsAction,
-} from "@/actions/companyStats";
+import { getCompanyMiniStatsAction } from "@/actions/companyStats";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import { formatCurrency } from "@/lib/helpers";
 

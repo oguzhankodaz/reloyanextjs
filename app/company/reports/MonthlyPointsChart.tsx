@@ -18,14 +18,6 @@ type Props = {
 };
 
 export default function PointsChart({ data, filter }: Props) {
-  const xLabel =
-    filter === "day"
-      ? "Gün"
-      : filter === "month"
-      ? "Tarih"
-      : filter === "year"
-      ? "Ay"
-      : "Yıl";
 
   return (
     <div className="bg-gray-800 rounded-xl p-6 shadow mt-8">

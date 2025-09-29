@@ -94,9 +94,9 @@ const UserDashboard = () => {
             {data.lastPurchases.length === 0 ? (
               <li className="text-gray-400">Henüz işlem yok.</li>
             ) : (
-              data.lastPurchases.map((p) => (
+              data.lastPurchases.map((p, i) => (
                 <li
-                  key={p.id}
+                  key={`${p.id}-${i}`}
                   className="flex justify-between border-b border-gray-700 pb-2"
                 >
                   <div>

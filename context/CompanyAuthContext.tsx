@@ -2,6 +2,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
+import { toTitleCase } from "@/lib/helpers";
 
 type Company = {
   companyId: string;
@@ -31,7 +32,7 @@ export const CompanyAuthProvider = ({
 
         if (data.company) {
           const { companyId, email, name } = data.company;
-          const cleanCompany = { companyId, email, name };
+          const cleanCompany = { companyId, email, name: toTitleCase(name) };
           setCompany(cleanCompany);
         } else {
           setCompany(null);

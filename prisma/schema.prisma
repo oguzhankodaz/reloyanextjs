@@ -37,6 +37,26 @@ model Company {
   userPoints   UserPoints[]
   pointsUsages PointsUsage[]
   campaigns    Campaign[]
+
+  // 👇 burası eksikti
+  staff        CompanyStaff[]
+}
+
+
+model CompanyStaff {
+  id        String   @id @default(uuid())
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+
+  name      String
+  email     String   @unique
+  password  String
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+
+  purchases    Purchase[]
+  pointsUsages PointsUsage[]
 }
 
 /// Ürün kategorileri
@@ -73,17 +93,20 @@ model Purchase {
   id             Int      @id @default(autoincrement())
   quantity       Int      @default(1)
   totalPrice     Float
-  cashbackEarned Float    @default(0) // ✅ artık TL iade
+  cashbackEarned Float    @default(0)
   purchaseDate   DateTime @default(now())
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
-
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
 
-  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product   Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
   productId Int?
+
+  // 👇 personeli izlemek için (opsiyonel, bozulma yok)
+  createdByStaff     CompanyStaff? @relation(fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  createdByStaffId   String?
 }
 
 /// Müşteri puanları
@@ -108,14 +131,17 @@ model PointsUsage {
   price    Float    @default(0)
   usedAt   DateTime @default(now())
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
-
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
 
-  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product   Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
   productId Int?
+
+  // 👇 personeli izlemek için (opsiyonel, bozulma yok)
+  createdByStaff     CompanyStaff? @relation(fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  createdByStaffId   String?
 }
 
 model Campaign {
