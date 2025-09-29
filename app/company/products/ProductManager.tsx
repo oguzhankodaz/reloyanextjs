@@ -1,7 +1,7 @@
 /** @format */
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getProductsByCompanyAction } from "@/actions/product";
 import ProductForm from "./ProductForm";
 import ProductSkeleton from "./ProductSkeleton";

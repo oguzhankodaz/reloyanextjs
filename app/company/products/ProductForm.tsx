@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createProduct } from "@/actions/product";
+import { useRadixToast } from "@/components/notifications/ToastProvider";
 
 type Props = {
   companyId: string;
@@ -13,8 +14,9 @@ export default function ProductForm({ companyId }: Props) {
   const queryClient = useQueryClient();
 
   const [name, setName] = useState("");
-  const [price, setPrice] = useState<string>(""); 
-  const [cashback, setCashback] = useState<string>(""); 
+  const [price, setPrice] = useState<string>("");
+  const [cashback, setCashback] = useState<string>("");
+  const toast = useRadixToast();
 
   const mutation = useMutation({
     mutationFn: (newProduct: {
@@ -38,7 +40,11 @@ export default function ProductForm({ companyId }: Props) {
     const cashbackValue = parseFloat(cashback);
 
     if (!name || isNaN(priceValue) || priceValue <= 0) {
-      alert("Lütfen ürün adı ve fiyat giriniz.");
+      toast({
+        title: "Eksik bilgi",
+        description: "Lütfen ürün adı ve fiyat giriniz.",
+        variant: "error",
+      });
       return;
     }
 

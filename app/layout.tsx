@@ -7,6 +7,7 @@ import { CompanyAuthProvider } from "@/context/CompanyAuthContext";
 import { StaffAuthProvider } from "@/context/StaffAuthContext"; // ✅ staff context eklendi
 import Footer from "@/components/Footer";
 import ReactQueryProvider from "./ReactQueryProvider";
+import { RadixToastProvider } from "@/components/notifications/ToastProvider";
 
 export const metadata: Metadata = {
   title: "Reloya",
@@ -24,7 +25,9 @@ export default function RootLayout({
         <AuthProvider>
           <CompanyAuthProvider>
             <StaffAuthProvider>
-              <ReactQueryProvider>{children}</ReactQueryProvider>
+              <ReactQueryProvider>
+                <RadixToastProvider>{children}</RadixToastProvider>
+              </ReactQueryProvider>
             </StaffAuthProvider>
           </CompanyAuthProvider>
         </AuthProvider>

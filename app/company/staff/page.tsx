@@ -1,4 +1,3 @@
-/** @format */
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
@@ -9,9 +8,10 @@ import {
   deleteStaffAction,
   toggleStaffActiveAction,
 } from "@/actions/staff-admin";
-// QRReaderModal kaldırıldı (kullanılmıyor)
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
 import BackButton from "@/components/company/BackButton";
+import { useRadixToast } from "@/components/notifications/ToastProvider";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 type Staff = {
   id: string;
@@ -24,6 +24,7 @@ export default function StaffPage() {
   const { company } = useCompanyAuth();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [isPending, startTransition] = useTransition();
+  const toast = useRadixToast();
 
   useEffect(() => {
     if (!company?.companyId) return;
@@ -34,7 +35,7 @@ export default function StaffPage() {
 
   const handleAdd = async (formData: FormData) => {
     if (!company) {
-      alert("Şirket oturumu bulunamadı.");
+      toast({ title: "Şirket bulunamadı", variant: "error" });
       return;
     }
 
@@ -46,19 +47,20 @@ export default function StaffPage() {
           ...prev,
           { ...res.staff, name: toTitleCase(res.staff.name) },
         ]);
+        toast({ title: "Başarılı", description: "Personel eklendi ✅", variant: "success" });
       } else {
-        alert(res.message);
+        toast({ title: "Hata", description: res.message, variant: "error" });
       }
     });
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Bu personeli silmek istediğinize emin misiniz?")) return;
     const res = await deleteStaffAction(id);
     if (res.success) {
       setStaff((prev) => prev.filter((s) => s.id !== id));
+      toast({ title: "Silindi", description: "Personel başarıyla silindi", variant: "success" });
     } else {
-      alert(res.message);
+      toast({ title: "Hata", description: res.message, variant: "error" });
     }
   };
 
@@ -68,14 +70,19 @@ export default function StaffPage() {
       setStaff((prev) =>
         prev.map((s) => (s.id === id ? { ...s, isActive: !isActive } : s))
       );
+      toast({
+        title: "Durum güncellendi",
+        description: isActive ? "Personel pasifleştirildi" : "Personel aktifleştirildi",
+        variant: "success",
+      });
     } else {
-      alert(res.message);
+      toast({ title: "Hata", description: res.message, variant: "error" });
     }
   };
 
   return (
     <div>
-      <CompanyNavbar></CompanyNavbar>
+      <CompanyNavbar />
       <BackButton />
       <div className="mb-6"></div>
 
@@ -94,9 +101,6 @@ export default function StaffPage() {
             placeholder="Ad Soyad"
             className="border p-2 rounded text-gray-800 placeholder-gray-400"
             required
-            minLength={2}
-            pattern="[A-Za-zÇĞİÖŞÜçğıöşü' -]{2,}"
-            title="Ad Soyad yalnızca harf, boşluk, kesme işareti ve tire içerebilir."
           />
           <input
             type="email"
@@ -104,8 +108,6 @@ export default function StaffPage() {
             placeholder="E-posta"
             className="border p-2 rounded text-gray-800 placeholder-gray-400"
             required
-            inputMode="email"
-            autoComplete="email"
           />
           <input
             type="password"
@@ -113,9 +115,6 @@ export default function StaffPage() {
             placeholder="Şifre"
             className="border p-2 rounded text-gray-800 placeholder-gray-400"
             required
-            minLength={8}
-            pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}"
-            title="En az 8 karakter, en az bir harf ve bir rakam içermeli."
           />
           <button
             type="submit"
@@ -155,12 +154,17 @@ export default function StaffPage() {
                   >
                     {s.isActive ? "Pasifleştir" : "Aktifleştir"}
                   </button>
-                  <button
-                    onClick={() => handleDelete(s.id)}
-                    className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                  >
-                    Sil
-                  </button>
+
+                  <ConfirmDialog
+                    title="Personeli sil?"
+                    description={`${s.name} adlı personeli silmek istediğinize emin misiniz?`}
+                    onConfirm={() => handleDelete(s.id)}
+                    trigger={
+                      <button className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                        Sil
+                      </button>
+                    }
+                  />
                 </td>
               </tr>
             ))}
