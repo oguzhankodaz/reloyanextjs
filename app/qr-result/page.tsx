@@ -13,6 +13,7 @@ import { ProductSelector } from "@/components/ProductSelector";
 import { useCompanyOrStaffCompanyId } from "@/hooks/useCompanyOrStaffCompanyId";
 import { useUserData } from "@/hooks/useUserData";
 import { useCart } from "@/hooks/useCart";
+import { useRadixToast } from "@/components/notifications/ToastProvider";
 
 import {
   addPurchase,
@@ -25,6 +26,7 @@ export default function QRResultPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const userId = searchParams.get("userId");
+  const toast = useRadixToast();
 
   // companyId çöz
   const companyId = useCompanyOrStaffCompanyId();
@@ -64,7 +66,11 @@ export default function QRResultPage() {
   const handleSave = async () => {
     if (!userId || !companyId) return;
     if (cartItems.length === 0) {
-      alert("Sepet boş.");
+      toast({
+        title: "Sepet boş",
+        description: "Lütfen ürün ekleyin.",
+        variant: "error",
+      });
       return;
     }
     setSaving(true);
@@ -84,7 +90,11 @@ export default function QRResultPage() {
     setCartItems([]);
     const cashbackRes = await fetchUserCashback(userId, companyId);
     if (cashbackRes.success) setTotalCashback(cashbackRes.totalCashback);
-    alert("Satın alma işlemi tamamlandı ✅");
+    toast({
+      title: "Başarılı",
+      description: "Satın alma işlemi tamamlandı ✅",
+      variant: "success",
+    });
   };
 
   // toplam harcama ile cashback ver
@@ -93,7 +103,11 @@ export default function QRResultPage() {
     const spend = parseFloat(totalSpendInput);
     const percent = parseFloat(percentageInput);
     if (isNaN(spend) || spend <= 0 || isNaN(percent) || percent <= 0) {
-      alert("Geçerli değerler girin.");
+      toast({
+        title: "Hatalı giriş",
+        description: "Lütfen geçerli değerler girin.",
+        variant: "error",
+      });
       return;
     }
     const cashbackToGive = (spend * percent) / 100;
@@ -108,7 +122,11 @@ export default function QRResultPage() {
     ]);
     setSaving(false);
     if (res.success) {
-      alert(`${formatCurrency(cashbackToGive)} nakit iade verildi ✅`);
+      toast({
+        title: "Nakit iade",
+        description: `${formatCurrency(cashbackToGive)} iade verildi ✅`,
+        variant: "success",
+      });
       setTotalSpendInput("");
       setPercentageInput("3");
       const cashbackRes = await fetchUserCashback(userId, companyId);
@@ -121,18 +139,26 @@ export default function QRResultPage() {
     if (!userId || !companyId) return;
     const amount = parseFloat(useCashbackInput);
     if (isNaN(amount) || amount <= 0) {
-      alert("Geçerli bir tutar girin.");
+      toast({
+        title: "Hatalı giriş",
+        description: "Geçerli bir tutar girin.",
+        variant: "error",
+      });
       return;
     }
     setSaving(true);
     const res = await spendCashback(userId, companyId, amount);
     setSaving(false);
     if (res.success) {
-      alert(`-${formatCurrency(amount)} bakiye kullanıldı ✅`);
+      toast({
+        title: "Bakiye kullanıldı",
+        description: `-${formatCurrency(amount)} bakiye düşüldü ✅`,
+        variant: "success",
+      });
       setUseCashbackInput("");
       setTotalCashback(res.totalCashback ?? totalCashback);
     } else {
-      alert(res.message);
+      toast({ title: "Hata", description: res.message, variant: "error" });
     }
   };
 

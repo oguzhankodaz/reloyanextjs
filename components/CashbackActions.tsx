@@ -1,7 +1,7 @@
-// components/CashbackActions.tsx
 "use client";
 
 import { formatCurrency } from "@/lib/helpers";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 type Props = {
   totalSpendInput: string;
@@ -78,13 +78,22 @@ export function CashbackActions({
             {formatCurrency(cashbackPreview)}
           </span>
         </p>
-        <button
-          onClick={handleGiveCashbackBySpend}
-          disabled={saving}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-        >
-          {saving ? "İşlem yapılıyor..." : "İade Ver"}
-        </button>
+
+        <ConfirmDialog
+          title="Nakit iade onayı"
+          description={`${formatCurrency(
+            cashbackPreview
+          )} iade verilecektir. Onaylıyor musunuz?`}
+          onConfirm={handleGiveCashbackBySpend}
+          trigger={
+            <button
+              disabled={saving || cashbackPreview <= 0}
+              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {saving ? "İşlem yapılıyor..." : "İade Ver"}
+            </button>
+          }
+        />
       </div>
 
       {/* Manuel bakiye kullan */}
@@ -101,13 +110,22 @@ export function CashbackActions({
           className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 mb-3 text-gray-100"
           placeholder="Kullanılacak tutar (₺)"
         />
-        <button
-          onClick={handleUseCashback}
-          disabled={saving || parseFloat(useCashbackInput) <= 0}
-          className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
-        >
-          {saving ? "İşlem yapılıyor..." : "Bakiyeyi Kullan"}
-        </button>
+
+        <ConfirmDialog
+          title="Bakiye kullanım onayı"
+          description={`${formatCurrency(
+            parseFloat(useCashbackInput) || 0
+          )} bakiye kullanılacaktır. Onaylıyor musunuz?`}
+          onConfirm={handleUseCashback}
+          trigger={
+            <button
+              disabled={saving || parseFloat(useCashbackInput) <= 0}
+              className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
+            >
+              {saving ? "İşlem yapılıyor..." : "Bakiyeyi Kullan"}
+            </button>
+          }
+        />
       </div>
     </div>
   );
