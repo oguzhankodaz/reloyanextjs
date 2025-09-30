@@ -35,6 +35,15 @@ export async function loginAction(prevState: any, formData: FormData) {
     return { success: false, message: "Geçersiz bilgiler", user: null };
   }
 
+  // ✅ Email doğrulaması kontrolü
+  if (!user.verified) {
+    return {
+      success: false,
+      message: "E-posta doğrulanmamış. Lütfen e-posta kutunuzu kontrol edin.",
+      user: null,
+    };
+  }
+
   // ✅ JWT oluştur
   const token = jwt.sign(
     {
@@ -182,6 +191,15 @@ export async function loginCompanyAction(prevState: any, formData: FormData) {
     return {
       success: false,
       message: "Geçersiz bilgiler",
+      company: null,
+    };
+  }
+
+  // ✅ Email doğrulaması kontrolü (company)
+  if (!company.verified) {
+    return {
+      success: false,
+      message: "E-posta doğrulanmamış. Lütfen e-posta kutunuzu kontrol edin.",
       company: null,
     };
   }
