@@ -1,5 +1,6 @@
 /** @format */
-import nodemailer from "nodemailer";
+import nodemailer, { Transporter } from "nodemailer";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
 
 export async function sendVerificationEmail(
   to: string,
@@ -13,23 +14,28 @@ export async function sendVerificationEmail(
     const envPort = Number(process.env.SMTP_PORT) || 587;
     const firstIsSsl465 = envPort === 465;
 
-    async function trySend(host: string, port: number, secure: boolean) {
-      const transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure, // 465 → SSL, 587 → STARTTLS
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-        family: 4, // IPv6 sorunlarında IPv4'e zorla
-        tls: {
-          rejectUnauthorized: false,
-          servername: host,
-        },
-        connectionTimeout: 10000,
-        socketTimeout: 10000,
-      });
+    async function trySend(
+      host: string,
+      port: number,
+      secure: boolean
+    ): Promise<{ success: boolean; messageId?: string }> {
+      const transporter: Transporter<SMTPTransport.SentMessageInfo> =
+        nodemailer.createTransport({
+          host,
+          port,
+          secure, // 465 → SSL, 587 → STARTTLS
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+          family: 4, // IPv6 sorunlarında IPv4'e zorla
+          tls: {
+            rejectUnauthorized: false,
+            servername: host,
+          },
+          connectionTimeout: 10000,
+          socketTimeout: 10000,
+        } as SMTPTransport.Options);
 
       console.log("📧 Mail gönderim denemesi", {
         to,
@@ -43,13 +49,10 @@ export async function sendVerificationEmail(
       try {
         await transporter.verify();
         console.log("🔌 SMTP verify başarılı", { host, port, secure });
-      } catch (verifyErr: any) {
-        console.error("⚠️ SMTP verify hatası", {
-          host,
-          port,
-          secure,
-          error: verifyErr?.message || String(verifyErr),
-        });
+      } catch (verifyErr) {
+        const errMsg =
+          verifyErr instanceof Error ? verifyErr.message : String(verifyErr);
+        console.error("⚠️ SMTP verify hatası", { host, port, secure, error: errMsg });
       }
 
       const info = await transporter.sendMail({
@@ -77,19 +80,19 @@ export async function sendVerificationEmail(
     }
 
     try {
-      // İlk deneme: ENV'deki ayarlar
+      // İlk deneme: ENV ayarları
       return await trySend(envHost, envPort, firstIsSsl465);
-    } catch (firstErr: any) {
+    } catch (firstErr) {
+      const errMsg =
+        firstErr instanceof Error ? firstErr.message : String(firstErr);
       console.error("❌ İlk deneme başarısız", {
-        error: firstErr?.message || String(firstErr),
-        code: firstErr?.code,
-        command: firstErr?.command,
+        error: errMsg,
         host: envHost,
         port: envPort,
         secure: firstIsSsl465,
       });
 
-      // Zaman aşımı veya bağlantı problemi varsa 465 ↔ 587 fallback dene
+      // Fallback 465 ↔ 587
       const fallbackPort = firstIsSsl465 ? 587 : 465;
       const fallbackSecure = !firstIsSsl465;
       try {
@@ -99,11 +102,13 @@ export async function sendVerificationEmail(
           secure: fallbackSecure,
         });
         return await trySend(envHost, fallbackPort, fallbackSecure);
-      } catch (fallbackErr: any) {
+      } catch (fallbackErr) {
+        const fallbackMsg =
+          fallbackErr instanceof Error
+            ? fallbackErr.message
+            : String(fallbackErr);
         console.error("❌ Fallback denemesi de başarısız", {
-          error: fallbackErr?.message || String(fallbackErr),
-          code: fallbackErr?.code,
-          command: fallbackErr?.command,
+          error: fallbackMsg,
           host: envHost,
           port: fallbackPort,
           secure: fallbackSecure,
@@ -111,12 +116,9 @@ export async function sendVerificationEmail(
         throw fallbackErr;
       }
     }
-  } catch (err: any) {
-    console.error("❌ Mail gönderim hatası", {
-      error: err?.message || String(err),
-      code: err?.code,
-      command: err?.command,
-    });
-    return { success: false, error: err.message };
+  } catch (err) {
+    const finalMsg = err instanceof Error ? err.message : String(err);
+    console.error("❌ Mail gönderim hatası", { error: finalMsg });
+    return { success: false, error: finalMsg };
   }
 }
