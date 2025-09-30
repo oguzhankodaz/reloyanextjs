@@ -28,7 +28,8 @@ export async function GET(req: Request) {
 
       await prisma.verificationToken.delete({ where: { id: record.id } });
 
-      return NextResponse.json({ success: true, message: "Kullanıcı doğrulandı" });
+      const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-success?type=user`;
+      return NextResponse.redirect(redirectUrl);
     }
 
     if (type === "company") {
@@ -48,7 +49,8 @@ export async function GET(req: Request) {
 
       await prisma.companyVerificationToken.delete({ where: { id: record.id } });
 
-      return NextResponse.json({ success: true, message: "Şirket doğrulandı" });
+      const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-success?type=company`;
+      return NextResponse.redirect(redirectUrl);
     }
 
     return NextResponse.json({ success: false, message: "Geçersiz tip" }, { status: 400 });

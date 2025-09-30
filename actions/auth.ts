@@ -121,8 +121,23 @@ export async function registerAction(prevState: any, formData: FormData) {
     },
   });
 
-  // ✅ Mail gönder
-  await sendVerificationEmail(user.email, token, "user");
+  // ✅ Mail gönder (sonucu logla)
+  try {
+    const emailResult = await sendVerificationEmail(user.email, token, "user");
+    console.log("registerAction → sendVerificationEmail(user)", {
+      success: (emailResult as any)?.success,
+      messageId: (emailResult as any)?.messageId,
+      error: (emailResult as any)?.error,
+      to: user.email,
+      type: "user",
+    });
+  } catch (e: any) {
+    console.error("registerAction → sendVerificationEmail(user) throw:", {
+      to: user.email,
+      type: "user",
+      error: e?.message || String(e),
+    });
+  }
 
   return {
     success: true,
@@ -251,8 +266,23 @@ export async function registerCompanyAction(
     },
   });
 
-  // ✅ Doğrulama maili gönder
-  await sendVerificationEmail(company.email, token, "company");
+  // ✅ Doğrulama maili gönder (sonucu logla)
+  try {
+    const emailResult = await sendVerificationEmail(company.email, token, "company");
+    console.log("registerCompanyAction → sendVerificationEmail(company)", {
+      success: (emailResult as any)?.success,
+      messageId: (emailResult as any)?.messageId,
+      error: (emailResult as any)?.error,
+      to: company.email,
+      type: "company",
+    });
+  } catch (e: any) {
+    console.error("registerCompanyAction → sendVerificationEmail(company) throw:", {
+      to: company.email,
+      type: "company",
+      error: e?.message || String(e),
+    });
+  }
 
   return {
     success: true,
