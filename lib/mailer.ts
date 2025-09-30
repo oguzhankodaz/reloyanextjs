@@ -9,34 +9,50 @@ export async function sendVerificationEmail(
 ) {
   const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/verify?token=${token}&type=${type}`;
 
+  // Vercel'de environment variables kontrolü
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.error("❌ SMTP environment variables eksik");
+    return { success: false, error: "SMTP configuration missing" };
+  }
+
   try {
     const transporter: Transporter<SMTPTransport.SentMessageInfo> =
       nodemailer.createTransport({
-        host: process.env.SMTP_HOST || "mail.reloya.com",
-        port: Number(process.env.SMTP_PORT) || 587, // 587 → STARTTLS
-        secure: false, // STARTTLS için secure:false
+        host: process.env.SMTP_HOST,
+        port: 587,
+        secure: false, // STARTTLS için false
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
         },
-        family: 4, // IPv6 sorunlarına karşı IPv4
+        // Vercel optimizasyonu
         tls: {
-          rejectUnauthorized: false,
-          servername: process.env.SMTP_HOST,
+          rejectUnauthorized: false, // Vercel'de gerekli
+          minVersion: "TLSv1.2"
         },
+        socketTimeout: 10000, // 10 saniye
         connectionTimeout: 10000,
-        socketTimeout: 10000,
+        greetingTimeout: 10000,
+        dnsTimeout: 10000,
+        // IPv4 kullanımı
+        family: 4,
       } as SMTPTransport.Options);
 
     console.log("📧 Mail gönderim denemesi", {
       to,
       host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
       user: process.env.SMTP_USER,
       type,
     });
 
-    await transporter.verify();
+    // Bağlantı testi (timeout ile)
+    await Promise.race([
+      transporter.verify(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("SMTP verify timeout")), 8000)
+      )
+    ]);
+    
     console.log("🔌 SMTP bağlantısı başarılı");
 
     const info = await transporter.sendMail({
@@ -49,19 +65,24 @@ export async function sendVerificationEmail(
         <p><a href="${verifyUrl}" target="_blank">${verifyUrl}</a></p>
         <p><small>Bu bağlantı 1 saat içinde geçerlidir.</small></p>
       `,
+      // Encoding ayarı
+      encoding: 'utf-8',
     });
 
     console.log("✅ Mail gönderildi", {
       messageId: info.messageId,
       accepted: info.accepted,
       rejected: info.rejected,
-      response: info.response,
     });
 
     return { success: true, messageId: info.messageId };
   } catch (err) {
     const finalMsg = err instanceof Error ? err.message : String(err);
-    console.error("❌ Mail gönderim hatası", { error: finalMsg });
+    console.error("❌ Mail gönderim hatası", { 
+      error: finalMsg,
+      host: process.env.SMTP_HOST,
+      user: process.env.SMTP_USER 
+    });
     return { success: false, error: finalMsg };
   }
 }
