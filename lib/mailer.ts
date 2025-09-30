@@ -29,7 +29,7 @@ export async function sendVerificationEmail(
   const html = `
   <div style="font-family: Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:auto; border:1px solid #e5e5e5; border-radius:8px; padding:24px;">
     <div style="text-align:center; margin-bottom:24px;">
-      <h1 style="color:#111;">ReloYa</h1>
+      <h1 style="color:#111;">Reloya</h1>
     </div>
     <h2 style="color:#111;">Merhaba,</h2>
     <p>Hesabınızı aktifleştirmek için aşağıdaki butona tıklayın. Bu bağlantı yalnızca <strong>1 saat</strong> boyunca geçerlidir.</p>
@@ -41,7 +41,7 @@ export async function sendVerificationEmail(
     <p>Eğer bu işlemi siz başlatmadıysanız, bu e-postayı görmezden gelebilirsiniz.</p>
     <hr style="margin:30px 0; border:none; border-top:1px solid #ddd;" />
     <p style="font-size:12px; color:#666; text-align:center;">
-      Bu e-posta ReloYa sistemi tarafından otomatik olarak gönderilmiştir.<br/>
+      Bu e-posta Reloya sistemi tarafından otomatik olarak gönderilmiştir.<br/>
       © ${new Date().getFullYear()} ReloYa. Tüm hakları saklıdır.
     </p>
   </div>
