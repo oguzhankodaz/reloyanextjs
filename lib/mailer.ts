@@ -9,6 +9,7 @@ export async function sendVerificationEmail(
 ) {
   const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/verify?token=${token}&type=${type}`;
 
+  // ✅ Environment değişkenleri kontrolü
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.error("❌ SMTP environment variables eksik");
     return { success: false, error: "SMTP configuration missing" };
@@ -29,7 +30,7 @@ export async function sendVerificationEmail(
           pass: process.env.SMTP_PASS,
         },
         tls: {
-          rejectUnauthorized: false,
+          rejectUnauthorized: false, // self-signed sertifika hatalarını engelle
           minVersion: "TLSv1.2",
         },
         connectionTimeout: 10000,
@@ -48,6 +49,7 @@ export async function sendVerificationEmail(
       type,
     });
 
+    // ✅ SMTP bağlantısı kontrolü (timeout ile)
     await Promise.race([
       transporter.verify(),
       new Promise((_, reject) =>
@@ -57,6 +59,7 @@ export async function sendVerificationEmail(
 
     console.log("🔌 SMTP bağlantısı başarılı", { port, secure });
 
+    // ✅ Mail gönder
     const info = await transporter.sendMail({
       from: `"Reloya" <${process.env.SMTP_USER}>`,
       to,
@@ -74,20 +77,21 @@ export async function sendVerificationEmail(
       messageId: info.messageId,
       accepted: info.accepted,
       rejected: info.rejected,
+      response: info.response,
     });
 
     return { success: true, messageId: info.messageId };
   }
 
   try {
-    // Öncelik 465
+    // 🔹 Öncelik 465 (SSL)
     return await trySend(process.env.SMTP_HOST, 465, true);
   } catch (err465) {
     console.error("⚠️ 465 ile gönderim başarısız", {
       error: err465 instanceof Error ? err465.message : String(err465),
     });
 
-    // Fallback 587
+    // 🔹 Fallback 587 (STARTTLS)
     try {
       return await trySend(process.env.SMTP_HOST, 587, false);
     } catch (err587) {
