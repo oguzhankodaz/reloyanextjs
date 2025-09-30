@@ -1,3 +1,5 @@
+/** @format */
+
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
@@ -47,7 +49,11 @@ export default function StaffPage() {
           ...prev,
           { ...res.staff, name: toTitleCase(res.staff.name) },
         ]);
-        toast({ title: "Başarılı", description: "Personel eklendi ✅", variant: "success" });
+        toast({
+          title: "Başarılı",
+          description: "Personel eklendi ✅",
+          variant: "success",
+        });
       } else {
         toast({ title: "Hata", description: res.message, variant: "error" });
       }
@@ -58,7 +64,11 @@ export default function StaffPage() {
     const res = await deleteStaffAction(id);
     if (res.success) {
       setStaff((prev) => prev.filter((s) => s.id !== id));
-      toast({ title: "Silindi", description: "Personel başarıyla silindi", variant: "success" });
+      toast({
+        title: "Silindi",
+        description: "Personel başarıyla silindi",
+        variant: "success",
+      });
     } else {
       toast({ title: "Hata", description: res.message, variant: "error" });
     }
@@ -72,7 +82,9 @@ export default function StaffPage() {
       );
       toast({
         title: "Durum güncellendi",
-        description: isActive ? "Personel pasifleştirildi" : "Personel aktifleştirildi",
+        description: isActive
+          ? "Personel pasifleştirildi"
+          : "Personel aktifleştirildi",
         variant: "success",
       });
     } else {
@@ -126,60 +138,64 @@ export default function StaffPage() {
         </form>
 
         {/* Personel Listesi */}
-        <table className="w-full border text-sm">
-          <thead>
-            <tr className="bg-gray-100 text-gray-900">
-              <th className="p-2 border">Ad</th>
-              <th className="p-2 border">E-posta</th>
-              <th className="p-2 border">Durum</th>
-              <th className="p-2 border">İşlemler</th>
-            </tr>
-          </thead>
-          <tbody>
-            {staff.map((s) => (
-              <tr key={s.id} className="text-gray-700">
-                <td className="p-2 border">{s.name}</td>
-                <td className="p-2 border">{s.email}</td>
-                <td className="p-2 border">
-                  {s.isActive ? (
-                    <span className="text-green-600">✅ Aktif</span>
-                  ) : (
-                    <span className="text-red-600">❌ Pasif</span>
-                  )}
-                </td>
-                <td className="p-2 border flex gap-2">
-                  <button
-                    onClick={() => handleToggle(s.id, s.isActive)}
-                    className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  >
-                    {s.isActive ? "Pasifleştir" : "Aktifleştir"}
-                  </button>
+        {/* Personel Listesi */}
+        {/* Personel Listesi */}
+        <div className="overflow-x-auto">
+          <table className="w-full border text-sm min-w-[500px]">
+            <thead>
+              <tr className="bg-gray-100 text-gray-900">
+                <th className="p-2 border whitespace-nowrap">Ad</th>
+                <th className="p-2 border whitespace-nowrap">Durum</th>
+                <th className="p-2 border whitespace-nowrap">İşlemler</th>
+                <th className="p-2 border whitespace-nowrap">E-posta</th>
+              </tr>
+            </thead>
+            <tbody>
+              {staff.map((s) => (
+                <tr key={s.id} className="text-gray-700">
+                  <td className="p-2 border">{s.name}</td>
+                  <td className="p-2 border">
+                    {s.isActive ? (
+                      <span className="text-green-600">✅ Aktif</span>
+                    ) : (
+                      <span className="text-red-600">❌ Pasif</span>
+                    )}
+                  </td>
+                  <td className="p-2 border flex flex-wrap gap-2">
+                    <button
+                      onClick={() => handleToggle(s.id, s.isActive)}
+                      className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      {s.isActive ? "Pasifleştir" : "Aktifleştir"}
+                    </button>
 
-                  <ConfirmDialog
-                    title="Personeli sil?"
-                    description={`${s.name} adlı personeli silmek istediğinize emin misiniz?`}
-                    onConfirm={() => handleDelete(s.id)}
-                    trigger={
-                      <button className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
-                        Sil
-                      </button>
-                    }
-                  />
-                </td>
-              </tr>
-            ))}
-            {staff.length === 0 && (
-              <tr>
-                <td
-                  colSpan={4}
-                  className="p-4 text-center text-gray-500 bg-gray-50"
-                >
-                  Henüz personel yok
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                    <ConfirmDialog
+                      title="Personeli sil?"
+                      description={`${s.name} adlı personeli silmek istediğinize emin misiniz?`}
+                      onConfirm={() => handleDelete(s.id)}
+                      trigger={
+                        <button className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                          Sil
+                        </button>
+                      }
+                    />
+                  </td>
+                  <td className="p-2 border">{s.email}</td>
+                </tr>
+              ))}
+              {staff.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="p-4 text-center text-gray-500 bg-gray-50"
+                  >
+                    Henüz personel yok
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
