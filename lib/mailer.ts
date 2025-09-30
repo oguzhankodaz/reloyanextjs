@@ -9,51 +9,53 @@ export async function sendVerificationEmail(
 ) {
   const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/verify?token=${token}&type=${type}`;
 
-  // Vercel'de environment variables kontrolü
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.error("❌ SMTP environment variables eksik");
     return { success: false, error: "SMTP configuration missing" };
   }
 
-  try {
+  async function trySend(
+    host: string,
+    port: number,
+    secure: boolean
+  ): Promise<{ success: boolean; messageId?: string }> {
     const transporter: Transporter<SMTPTransport.SentMessageInfo> =
       nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: 587,
-        secure: false, // STARTTLS için false
+        host,
+        port,
+        secure, // 465 → SSL, 587 → STARTTLS
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
         },
-        // Vercel optimizasyonu
         tls: {
-          rejectUnauthorized: false, // Vercel'de gerekli
-          minVersion: "TLSv1.2"
+          rejectUnauthorized: false,
+          minVersion: "TLSv1.2",
         },
-        socketTimeout: 10000, // 10 saniye
         connectionTimeout: 10000,
+        socketTimeout: 10000,
         greetingTimeout: 10000,
         dnsTimeout: 10000,
-        // IPv4 kullanımı
-        family: 4,
+        family: 4, // IPv6 sorunlarında IPv4'e zorla
       } as SMTPTransport.Options);
 
     console.log("📧 Mail gönderim denemesi", {
       to,
-      host: process.env.SMTP_HOST,
+      host,
+      port,
+      secure,
       user: process.env.SMTP_USER,
       type,
     });
 
-    // Bağlantı testi (timeout ile)
     await Promise.race([
       transporter.verify(),
-      new Promise((_, reject) => 
+      new Promise((_, reject) =>
         setTimeout(() => reject(new Error("SMTP verify timeout")), 8000)
-      )
+      ),
     ]);
-    
-    console.log("🔌 SMTP bağlantısı başarılı");
+
+    console.log("🔌 SMTP bağlantısı başarılı", { port, secure });
 
     const info = await transporter.sendMail({
       from: `"Reloya" <${process.env.SMTP_USER}>`,
@@ -65,8 +67,7 @@ export async function sendVerificationEmail(
         <p><a href="${verifyUrl}" target="_blank">${verifyUrl}</a></p>
         <p><small>Bu bağlantı 1 saat içinde geçerlidir.</small></p>
       `,
-      // Encoding ayarı
-      encoding: 'utf-8',
+      encoding: "utf-8",
     });
 
     console.log("✅ Mail gönderildi", {
@@ -76,13 +77,27 @@ export async function sendVerificationEmail(
     });
 
     return { success: true, messageId: info.messageId };
-  } catch (err) {
-    const finalMsg = err instanceof Error ? err.message : String(err);
-    console.error("❌ Mail gönderim hatası", { 
-      error: finalMsg,
-      host: process.env.SMTP_HOST,
-      user: process.env.SMTP_USER 
+  }
+
+  try {
+    // Öncelik 465
+    return await trySend(process.env.SMTP_HOST, 465, true);
+  } catch (err465) {
+    console.error("⚠️ 465 ile gönderim başarısız", {
+      error: err465 instanceof Error ? err465.message : String(err465),
     });
-    return { success: false, error: finalMsg };
+
+    // Fallback 587
+    try {
+      return await trySend(process.env.SMTP_HOST, 587, false);
+    } catch (err587) {
+      console.error("❌ 587 ile gönderim de başarısız", {
+        error: err587 instanceof Error ? err587.message : String(err587),
+      });
+      return {
+        success: false,
+        error: err587 instanceof Error ? err587.message : String(err587),
+      };
+    }
   }
 }
