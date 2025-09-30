@@ -34,3 +34,19 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## SendGrid Kurulumu
+
+Aşağıdaki ortam değişkenlerini Vercel (Production/Preview) ve lokal `.env` dosyanıza ekleyin:
+
+- SENDGRID_API_KEY=<SendGrid API anahtarınız>
+- SENDGRID_FROM=noreply@reloya.com
+- NEXT_PUBLIC_APP_URL=https://www.reloya.com
+
+Kurulum adımları:
+- SendGrid Dashboard → API Keys → Full Access (veya Mail Send yetkisi) → Key oluşturun.
+- Sender Authentication: Domain Authentication veya Verified Single Sender yapılandırın.
+- Vercel → Project Settings → Environment Variables → yukarıdaki değişkenleri ekleyin → Redeploy.
+
+Test:
+- Register akışını çalıştırın. Loglarda “✅ SendGrid ile mail gönderildi” ve statusCode 202 görmelisiniz.
