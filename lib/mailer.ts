@@ -9,6 +9,27 @@ type SendVerificationResult = {
   error?: string;
 };
 
+// Type-safe header okuma yardımcıları
+function getHeader(res: unknown, name: string): string | undefined {
+  // @sendgrid/mail send() -> [ClientResponse, any]
+  // ClientResponse.headers Node tarzı olabilir: Record<string, string | string[]>
+  const headers =
+    (res as { headers?: Record<string, unknown> } | undefined)?.headers;
+  const raw = headers?.[name];
+  if (!raw) return undefined;
+  return Array.isArray(raw) ? raw[0] : (raw as string);
+}
+
+function errorToMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
+
 export async function sendVerificationEmail(
   to: string,
   token: string,
@@ -66,13 +87,11 @@ export async function sendVerificationEmail(
   try {
     const [res] = await sgMail.send(msg);
     const messageId =
-      res.headers?.get?.("x-message-id") ||
-      res.headers?.get?.("x-sendgrid-message-id") ||
-      undefined;
+      getHeader(res, "x-message-id") || getHeader(res, "x-sendgrid-message-id");
     return { success: true, messageId };
-  } catch (e: any) {
-    // İstersen burada HTTP fallback de eklenebilir
-    console.error("❌ SendGrid send error:", e?.message || e);
-    return { success: false, error: e?.message ?? String(e) };
+  } catch (e: unknown) {
+    const message = errorToMessage(e);
+    console.error("❌ SendGrid send error:", message);
+    return { success: false, error: message };
   }
 }
