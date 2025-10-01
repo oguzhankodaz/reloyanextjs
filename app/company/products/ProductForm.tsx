@@ -111,7 +111,7 @@ export default function ProductForm({ companyId }: Props) {
         <p className="text-xs text-gray-500 mt-1">
           Otomatik hesaplanan oran:{" "}
           <span className="font-semibold text-green-600">%{cashbackPercentage}</span>
-          {" "}(İsterseniz manuel değiştirebilirsiniz)
+          {" "}(İsterseniz ayarlar sekmesinden değiştirebilirsiniz)
         </p>
       </div>
       <button

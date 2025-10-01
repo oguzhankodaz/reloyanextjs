@@ -20,9 +20,10 @@ model User {
   purchases          Purchase[]
   userPoints         UserPoints[]
   pointsUsages       PointsUsage[]
-  verificationTokens VerificationToken[] // 👈 ilişki
-  consents           UserConsent[]       // KVKK rıza kayıtları
-  dsarRequests       DsarRequest[]       // KVKK veri talepleri
+  verificationTokens   VerificationToken[]   // 👈 ilişki
+  passwordResetTokens  PasswordResetToken[]  // Şifre sıfırlama
+  consents             UserConsent[]         // KVKK rıza kayıtları
+  dsarRequests         DsarRequest[]         // KVKK veri talepleri
 }
 
 model Company {
@@ -38,10 +39,11 @@ model Company {
   purchases          Purchase[]
   userPoints         UserPoints[]
   pointsUsages       PointsUsage[]
-  campaigns          Campaign[]
-  verified           Boolean                    @default(false)
-  verificationTokens CompanyVerificationToken[]
-  staff              CompanyStaff[]
+  campaigns              Campaign[]
+  verified               Boolean                       @default(false)
+  verificationTokens     CompanyVerificationToken[]
+  passwordResetTokens    CompanyPasswordResetToken[]   // Şifre sıfırlama
+  staff                  CompanyStaff[]
 }
 
 model CompanyStaff {
@@ -158,6 +160,24 @@ model VerificationToken {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
+  createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  expires   DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+}
+
+model CompanyPasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  expires   DateTime
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
   createdAt DateTime @default(now())
 }
 

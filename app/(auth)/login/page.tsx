@@ -78,6 +78,18 @@ export default function LoginPage() {
             className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
             required
           />
+          
+          {/* Şifremi Unuttum */}
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => router.push("/forgot-password")}
+              className="text-sm text-gray-600 hover:text-black font-medium hover:underline"
+            >
+              Şifremi Unuttum
+            </button>
+          </div>
+
           <button
             type="submit"
             disabled={isPending}

@@ -76,6 +76,18 @@ export default function CompanyLoginPage() {
               required
             />
           </div>
+          
+          {/* Şifremi Unuttum */}
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => router.push("/company/forgot-password")}
+              className="text-sm text-gray-600 hover:text-black font-medium hover:underline"
+            >
+              Şifremi Unuttum
+            </button>
+          </div>
+
           <button
             type="submit"
             disabled={isPending}

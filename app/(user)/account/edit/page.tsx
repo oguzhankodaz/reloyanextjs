@@ -64,7 +64,7 @@ export default function EditProfilePage() {
     setMessage(null);
 
     try {
-      // For name/surname - direct update
+      // Email değişikliğine izin verilmiyor, sadece ad/soyad ve telefon
       const response = await fetch("/api/dsar/rectify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,9 +72,8 @@ export default function EditProfilePage() {
         body: JSON.stringify({
           name: formData.name,
           surname: formData.surname,
-          email: formData.email !== user.email ? formData.email : undefined,
           phone: formData.phone,
-          requestType: formData.email === user.email ? "direct" : "request",
+          requestType: "direct",
         }),
       });
 
@@ -92,26 +91,18 @@ export default function EditProfilePage() {
         throw new Error(data.error || "Güncelleme başarısız");
       }
 
-      if (data.requestId) {
-        // Email change - requires approval
-        setMessage({
-          type: "success",
-          text: "E-posta değişiklik talebiniz alındı. İşlem 30 gün içinde tamamlanacaktır.",
-        });
-      } else {
-        // Direct update
-        setMessage({
-          type: "success",
-          text: "Bilgileriniz başarıyla güncellendi!",
-        });
+      // Direct update
+      setMessage({
+        type: "success",
+        text: "Bilgileriniz başarıyla güncellendi!",
+      });
 
-        // Update auth context
-        setUser({
-          ...user,
-          name: formData.name,
-          surname: formData.surname,
-        });
-      }
+      // Update auth context
+      setUser({
+        ...user,
+        name: formData.name,
+        surname: formData.surname,
+      });
     } catch (error) {
       console.error("Update error:", error);
       setMessage({
@@ -227,14 +218,13 @@ export default function EditProfilePage() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 bg-gray-900/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              disabled
+              className="w-full px-4 py-2 bg-gray-900/30 border border-gray-700 rounded-lg text-gray-500 cursor-not-allowed"
               placeholder="ornek@email.com"
             />
-            {formData.email !== user.email && (
-              <p className="mt-2 text-xs text-amber-400">
-                ⚠️ E-posta değişikliği için onay gerekir. Talep oluşturulacaktır.
-              </p>
-            )}
+            <p className="mt-1 text-xs text-gray-500">
+              E-posta değiştirmek için destek ile iletişime geçin
+            </p>
           </div>
 
           {/* Phone */}
@@ -259,9 +249,8 @@ export default function EditProfilePage() {
           {/* Info */}
           <div className="bg-cyan-900/20 border border-cyan-800 rounded-lg p-4">
             <p className="text-sm text-cyan-300">
-              <strong>Bilgilendirme:</strong> Ad ve soyad değişiklikleri
-              anında uygulanır. E-posta ve telefon gibi hassas bilgilerin
-              değiştirilmesi için güvenlik doğrulaması gerekebilir.
+              <strong>Bilgilendirme:</strong> Ad, soyad ve telefon değişiklikleri
+              anında uygulanır. E-posta gibi kritik bilgiler için destek ekibi ile iletişime geçin.
             </p>
           </div>
 
