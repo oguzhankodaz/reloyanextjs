@@ -44,7 +44,7 @@ export async function sendVerificationEmail(
     <hr style="margin:30px 0; border:none; border-top:1px solid #ddd;" />
     <p style="font-size:12px; color:#666; text-align:center;">
       Bu e-posta Reloya sistemi tarafından otomatik olarak gönderilmiştir.<br/>
-      © ${new Date().getFullYear()} ReloYa. Tüm hakları saklıdır.
+      © ${new Date().getFullYear()} Reloya. Tüm hakları saklıdır.
     </p>
   </div>
   `;
@@ -53,9 +53,9 @@ export async function sendVerificationEmail(
     to,
     from: {
       email: process.env.SENDGRID_FROM as string,
-      name: "ReloYa",
+      name: "Reloya",
     },
-    subject: "Hesabınızı Doğrulayın - ReloYa",
+    subject: "Hesabınızı Doğrulayın - Reloya",
     html,
   };
 
