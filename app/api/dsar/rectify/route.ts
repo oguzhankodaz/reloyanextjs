@@ -13,21 +13,46 @@ import { LEGAL_CONFIG } from "@/legal/config";
 import { isValidEmail, isValidName } from "@/lib/helpers";
 
 /**
+ * İstek gövdesi tipi
+ */
+type RectifyBody = {
+  name?: string;
+  surname?: string;
+  email?: string;
+  phone?: string;
+  /**
+   * "direct": isim/soyisim gibi düşük riskli alanlar doğrudan güncellensin
+   * "request": e-posta/telefon gibi hassas alanlar talep olarak kalsın
+   */
+  requestType?: "direct" | "request";
+};
+
+/**
+ * Kullanıcı güncelleme seti (lint için any yok)
+ */
+type UserChangeSet = Partial<{
+  name: string;
+  surname: string;
+  email: string;
+  phone: string;
+}>;
+
+/**
  * DSAR Rectify - Kullanıcının yanlış/eksik verilerini düzeltme talebi
  * KVKK m.11 - Kişisel verilerin düzeltilmesini isteme hakkı
  */
 export async function POST(request: NextRequest) {
   try {
-    // 1. Authentication check
+    // 1) Authentication check
     const user = await getUserFromCookie();
     if (!user) {
-      return new Response(
-        JSON.stringify({ error: "Oturum açmanız gerekiyor" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Oturum açmanız gerekiyor" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // 2. Rate limiting
+    // 2) Rate limiting
     const clientIp = getClientIp(request);
     const identifier = createDsarIdentifier(clientIp, user.userId);
     const rateLimit = checkRateLimit(identifier, "dsar");
@@ -36,21 +61,19 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse(rateLimit.retryAfter || 60);
     }
 
-    // 3. Parse and validate request body
-    const body = await request.json();
+    // 3) Parse and validate request body
+    const body: RectifyBody = await request.json();
     const { name, surname, email, phone, requestType } = body;
 
-    // Determine if this is a direct update or a request
+    // Direct update mi, talep mi?
     const isDirect = requestType === "direct"; // Bazı alanlar direkt güncellenebilir
-    const changes: Record<string, any> = {};
+    const changes: UserChangeSet = {};
 
-    // Validate and collect changes
+    // Validate & collect changes
     if (name !== undefined) {
       if (!isValidName(name)) {
         return new Response(
-          JSON.stringify({
-            error: "Geçersiz ad formatı (min. 2 karakter)",
-          }),
+          JSON.stringify({ error: "Geçersiz ad formatı (min. 2 karakter)" }),
           { status: 400, headers: { "Content-Type": "application/json" } }
         );
       }
@@ -60,9 +83,7 @@ export async function POST(request: NextRequest) {
     if (surname !== undefined) {
       if (!isValidName(surname)) {
         return new Response(
-          JSON.stringify({
-            error: "Geçersiz soyad formatı (min. 2 karakter)",
-          }),
+          JSON.stringify({ error: "Geçersiz soyad formatı (min. 2 karakter)" }),
           { status: 400, headers: { "Content-Type": "application/json" } }
         );
       }
@@ -72,54 +93,54 @@ export async function POST(request: NextRequest) {
     if (email !== undefined) {
       // Email değişikliği daha hassas - talep olarak kaydedilir
       if (!isValidEmail(email)) {
-        return new Response(
-          JSON.stringify({ error: "Geçersiz e-posta formatı" }),
-          { status: 400, headers: { "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ error: "Geçersiz e-posta formatı" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
       }
 
-      // Check if email already exists
+      // Farklı bir kullanıcıda bu e-posta var mı?
       const existingUser = await prisma.user.findUnique({
         where: { email: email.toLowerCase() },
+        select: { id: true },
       });
 
       if (existingUser && existingUser.id !== user.userId) {
-        return new Response(
-          JSON.stringify({ error: "Bu e-posta zaten kullanımda" }),
-          { status: 409, headers: { "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ error: "Bu e-posta zaten kullanımda" }), {
+          status: 409,
+          headers: { "Content-Type": "application/json" },
+        });
       }
 
       changes.email = email.toLowerCase();
     }
 
     if (phone !== undefined) {
+      // Eğer phone için format doğrulaması yapıyorsan burada ekleyebilirsin
       changes.phone = phone;
     }
 
     if (Object.keys(changes).length === 0) {
-      return new Response(
-        JSON.stringify({
-          error: "Düzeltilecek bir alan belirtilmedi",
-        }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Düzeltilecek bir alan belirtilmedi" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // 4. Get current user data for audit
+    // 4) Mevcut kullanıcı verisini audit için al
     const currentUser = await prisma.user.findUnique({
       where: { id: user.userId },
       select: { name: true, surname: true, email: true, phone: true },
     });
 
     if (!currentUser) {
-      return new Response(
-        JSON.stringify({ error: "Kullanıcı bulunamadı" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Kullanıcı bulunamadı" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // 5. For direct updates (name, surname) - update immediately
+    // 5) Direkt güncelleme (e-posta hariç düşük riskli alanlar)
     if (isDirect && !changes.email) {
       // Update user
       await prisma.user.update({
@@ -127,7 +148,7 @@ export async function POST(request: NextRequest) {
         data: changes,
       });
 
-      // Create audit log
+      // Audit log
       await prisma.auditLog.create({
         data: {
           userId: user.userId,
@@ -136,7 +157,7 @@ export async function POST(request: NextRequest) {
           entityId: user.userId,
           changes: JSON.stringify({
             before: currentUser,
-            after: changes,
+            after: { ...currentUser, ...changes },
           }),
           ipAddress: clientIp,
           userAgent: request.headers.get("user-agent") || undefined,
@@ -160,7 +181,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 6. For sensitive changes (email, phone) - create a request
+    // 6) Hassas değişiklikler (email/phone) için talep oluştur
     const rectifyRequest = await prisma.dsarRequest.create({
       data: {
         userId: user.userId,
@@ -175,9 +196,13 @@ export async function POST(request: NextRequest) {
         }),
         requestedAt: new Date(),
       },
+      select: {
+        id: true,
+        requestedAt: true,
+      },
     });
 
-    // 7. Create audit log
+    // 7) Audit log
     await prisma.auditLog.create({
       data: {
         userId: user.userId,
@@ -193,7 +218,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 8. Return response
+    // 8) Yanıt
+    const slaDays = LEGAL_CONFIG.data.dsarSla;
+    const expected = new Date(Date.now() + slaDays * 24 * 60 * 60 * 1000);
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -202,10 +230,8 @@ export async function POST(request: NextRequest) {
         requestedAt: rectifyRequest.requestedAt,
         requestedChanges: changes,
         sla: {
-          processingDays: LEGAL_CONFIG.data.dsarSla,
-          expectedCompletionDate: new Date(
-            Date.now() + LEGAL_CONFIG.data.dsarSla * 24 * 60 * 60 * 1000
-          ).toISOString(),
+          processingDays: slaDays,
+          expectedCompletionDate: expected.toISOString(),
         },
         notice:
           "E-posta gibi hassas bilgilerin değiştirilmesi için kimlik doğrulama gerekebilir. Talebiniz en geç 30 gün içinde değerlendirilecektir.",
@@ -237,10 +263,10 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getUserFromCookie();
     if (!user) {
-      return new Response(
-        JSON.stringify({ error: "Oturum açmanız gerekiyor" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Oturum açmanız gerekiyor" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const rectifyRequests = await prisma.dsarRequest.findMany({
@@ -273,4 +299,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
