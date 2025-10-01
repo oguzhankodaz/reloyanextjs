@@ -16,20 +16,27 @@ export default function ProductForm({ companyId }: Props) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState<string>("");
   const [cashback, setCashback] = useState<string>("");
-  const [cashbackPercentage, setCashbackPercentage] = useState<number>(3); // Varsayılan %3
+  const [cashbackPercentage, setCashbackPercentage] = useState<number | null>(null); // Başlangıçta null
+  const [loadingPercentage, setLoadingPercentage] = useState(true);
   const toast = useRadixToast();
 
   // Şirketin cashback oranını yükle
   useEffect(() => {
+    setLoadingPercentage(true);
     fetch("/api/company/settings")
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.settings) {
           setCashbackPercentage(data.settings.cashbackPercentage);
+        } else {
+          setCashbackPercentage(3); // Fallback
         }
       })
       .catch(() => {
-        // Hata durumunda varsayılan %3 kullan
+        setCashbackPercentage(3); // Hata durumunda varsayılan %3
+      })
+      .finally(() => {
+        setLoadingPercentage(false);
       });
   }, []);
 
@@ -76,7 +83,7 @@ export default function ProductForm({ companyId }: Props) {
     setPrice(value);
 
     const num = parseFloat(value);
-    if (!isNaN(num) && num > 0) {
+    if (!isNaN(num) && num > 0 && cashbackPercentage !== null) {
       const calculatedCashback = (num * cashbackPercentage) / 100;
       setCashback(calculatedCashback.toFixed(2));
     } else {
@@ -109,9 +116,15 @@ export default function ProductForm({ companyId }: Props) {
           className="w-full border rounded px-3 py-2"
         />
         <p className="text-xs text-gray-500 mt-1">
-          Otomatik hesaplanan oran:{" "}
-          <span className="font-semibold text-green-600">%{cashbackPercentage}</span>
-          {" "}(İsterseniz ayarlar sekmesinden değiştirebilirsiniz)
+          {loadingPercentage ? (
+            <span className="text-gray-400">Oran yükleniyor...</span>
+          ) : (
+            <>
+              Otomatik hesaplanan oran:{" "}
+              <span className="font-semibold text-green-600">%{cashbackPercentage}</span>
+              {" "}(İsterseniz manuel değiştirebilirsiniz)
+            </>
+          )}
         </p>
       </div>
       <button

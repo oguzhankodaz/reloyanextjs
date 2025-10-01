@@ -7,20 +7,20 @@
 
 export const LEGAL_CONFIG = {
   company: {
-    name: "ReloYa Teknoloji A.Ş.",
-    shortName: "ReloYa",
-    address: "İstanbul, Türkiye",
-    email: "kvkk@reloya.com",
-    phone: "+90 (212) XXX XX XX",
-    mersisNo: "XXXXXXXXXXXXXXXXXX", // MERSIS numarası
-    tradeRegisterNo: "XXXXXX", // Ticaret sicil no
+    name: "Asekod Yazılım Ltd. Şti.",
+    shortName: "Asekod",
+    address: "Adana, Çukurova",
+    email: "info@asekod.com",
+    phone: "0534 731 29 91",
+    mersisNo: "", // MERSIS numarası
+    tradeRegisterNo: "", // Ticaret sicil no
   },
   
   dpo: {
     // Veri Sorumlusu Temsilcisi / Data Protection Officer
     name: "KVKK Sorumlusu",
-    email: "kvkk@reloya.com",
-    phone: "+90 (212) XXX XX XX",
+    email: "info@asekod.com",
+    phone: "0534 731 29 91",
   },
 
   data: {
@@ -40,19 +40,14 @@ export const LEGAL_CONFIG = {
     // Yurt dışına veri aktarımı yapılan ülkeler ve yasal dayanaklar
     transfers: [
       {
-        country: "ABD",
-        provider: "Vercel (hosting)",
-        legalBasis: "Standart sözleşme hükümleri",
+        country: "Avrupa Birliği",
+        provider: "Bulut altyapı hizmeti sağlayıcısı",
+        legalBasis: "Standart sözleşme hükümleri ve yeterli koruma",
       },
       {
-        country: "ABD", 
-        provider: "SendGrid (e-posta)",
+        country: "Avrupa Birliği", 
+        provider: "E-posta hizmeti sağlayıcısı",
         legalBasis: "Yeterli koruma sağlanmış",
-      },
-      {
-        country: "ABD",
-        provider: "Neon (PostgreSQL)",
-        legalBasis: "Standart sözleşme hükümleri",
       },
     ],
   },
@@ -65,22 +60,10 @@ export const LEGAL_CONFIG = {
         description: "Platformun çalışması için gerekli çerezler",
         cookies: [
           {
-            name: "usr_sess_x92h1",
-            purpose: "Kullanıcı oturum yönetimi",
+            name: "Oturum Çerezleri",
+            purpose: "Kullanıcı kimlik doğrulama ve oturum yönetimi",
             duration: "7 gün",
-            type: "HttpOnly",
-          },
-          {
-            name: "cmp_sess_z71f8",
-            purpose: "Şirket oturum yönetimi",
-            duration: "7 gün",
-            type: "HttpOnly",
-          },
-          {
-            name: "stf_sess_91kd2",
-            purpose: "Personel oturum yönetimi",
-            duration: "7 gün",
-            type: "HttpOnly",
+            type: "HttpOnly, Güvenli",
           },
         ],
       },
@@ -88,21 +71,21 @@ export const LEGAL_CONFIG = {
         name: "İşlevsel Çerezler",
         description: "Kullanıcı tercihlerini hatırlayan çerezler",
         cookies: [
-          // Şu an yok, gelecekte eklenebilir
+          // Şu an kullanılmamaktadır
         ],
       },
       analytics: {
         name: "Analitik Çerezler",
         description: "Platform kullanımını analiz eden çerezler",
         cookies: [
-          // Örnek: Google Analytics eklenirse
+          // Şu an kullanılmamaktadır
         ],
       },
       marketing: {
         name: "Reklam Çerezleri",
         description: "Pazarlama ve hedefleme için çerezler",
         cookies: [
-          // Şu an yok
+          // Şu an kullanılmamaktadır
         ],
       },
     },
