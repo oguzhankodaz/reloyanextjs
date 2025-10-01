@@ -139,7 +139,7 @@ export async function registerAction(prevState: unknown, formData: FormData) {
   } catch (e: unknown) {
     console.error(
       "registerAction → sendVerificationEmail(user) error:",
-      e?.message || String(e)
+      e instanceof Error ? e.message : String(e)
     );
   }
 
@@ -289,7 +289,7 @@ export async function registerCompanyAction(
   } catch (e: unknown) {
     console.error(
       "registerCompanyAction → sendVerificationEmail(company) error:",
-      e?.message || String(e)
+      e instanceof Error ? e.message : String(e)
     );
   }
 
