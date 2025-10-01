@@ -18,6 +18,10 @@ export function middleware(req: NextRequest) {
     "/company/login",
     "/company/register",
     "/company/staff/login",
+    "/privacy",
+    "/terms",
+    "/cookies",
+    "/verify-success",
   ];
 
   // Public path kontrolü
@@ -72,11 +76,12 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // ✅ User dashboard kontrolü
-  if (pathname.startsWith("/dashboard")) {
+  // ✅ User dashboard ve account kontrolü
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/account") || pathname.startsWith("/points")) {
     if (!userToken) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
+    return NextResponse.next();
   }
 
   return NextResponse.next();

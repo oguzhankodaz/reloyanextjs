@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Package, Users, BarChart2, Home, UserCog } from "lucide-react";
+import { Package, Users, BarChart2, Home, UserCog, Settings } from "lucide-react";
 import CompanyLogoutButton from "../CompanyLogoutButton";
 import Image from "next/image";
 import { useStaffAuth } from "@/context/StaffAuthContext";
@@ -134,6 +134,20 @@ const CompanyNavbar = () => {
               <span className="hidden sm:inline text-sm">{label}</span>
             </Link>
           ))}
+
+          {/* Ayarlar Butonu */}
+          <Link
+            href="/company/profile"
+            className={`flex items-center gap-2 hover:text-yellow-400 transition ${
+              pathname === "/company/profile"
+                ? "text-yellow-400 font-semibold"
+                : "text-gray-300"
+            }`}
+            title="Şirket Ayarları"
+          >
+            <Settings className="w-5 h-5" />
+            <span className="hidden sm:inline text-sm">Ayarlar</span>
+          </Link>
 
           <CompanyLogoutButton />
         </div>

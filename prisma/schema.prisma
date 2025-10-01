@@ -21,6 +21,8 @@ model User {
   userPoints         UserPoints[]
   pointsUsages       PointsUsage[]
   verificationTokens VerificationToken[] // 👈 ilişki
+  consents           UserConsent[]       // KVKK rıza kayıtları
+  dsarRequests       DsarRequest[]       // KVKK veri talepleri
 }
 
 model Company {
@@ -165,4 +167,62 @@ model CompanyVerificationToken {
   companyId String
   expires   DateTime
   createdAt DateTime @default(now())
+}
+
+/// KVKK - Rıza yönetimi (Consent tracking)
+model UserConsent {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  
+  consentType String  // "marketing", "analytics", "profiling", etc.
+  granted     Boolean @default(false)
+  grantedAt   DateTime?
+  revokedAt   DateTime?
+  ipAddress   String?
+  userAgent   String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, consentType])
+}
+
+/// KVKK - Veri talebi kayıtları (DSAR - Data Subject Access Requests)
+model DsarRequest {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  
+  requestType String   // "export", "delete", "rectify"
+  status      String   @default("pending") // "pending", "processing", "completed", "rejected"
+  details     String?  // JSON string with request details
+  response    String?  // Admin response or processing notes
+  
+  requestedAt DateTime @default(now())
+  processedAt DateTime?
+  completedAt DateTime?
+  
+  ipAddress   String?
+  
+  @@index([userId, requestType])
+  @@index([status])
+}
+
+/// Audit log için veri değişikliği kayıtları
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  // Nullable - system actions may not have userId
+  action    String   // "user.update", "user.delete", "consent.grant", etc.
+  entityType String  // "User", "Purchase", "Consent", etc.
+  entityId  String
+  changes   String?  // JSON string with before/after values
+  ipAddress String?
+  userAgent String?
+  
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }

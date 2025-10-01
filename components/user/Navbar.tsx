@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import React from "react";
 import Link from "next/link";
-import { Home, Star } from "lucide-react";
+import { Home, Star, Settings } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 import Image from "next/image";
 
@@ -58,6 +58,20 @@ const UserNavbar = () => {
               <span className="hidden sm:inline text-sm">{label}</span>
             </Link>
           ))}
+
+          {/* Ayarlar Butonu */}
+          <Link
+            href="/account/privacy"
+            className={`flex items-center gap-2 hover:text-yellow-400 transition ${
+              pathname.startsWith("/account")
+                ? "text-yellow-400 font-semibold"
+                : "text-gray-300"
+            }`}
+            title="Ayarlar ve Gizlilik"
+          >
+            <Settings className="w-5 h-5" />
+            <span className="hidden sm:inline text-sm">Ayarlar</span>
+          </Link>
 
           <LogoutButton />
         </div>
