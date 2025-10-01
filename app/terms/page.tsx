@@ -44,9 +44,9 @@ export default function TermsPage() {
           {/* Giriş */}
           <section>
             <p className="text-gray-300 leading-relaxed">
-              İşbu Hizmet Koşulları, <strong>{company.name}</strong> ("
-              <strong>ReloYa</strong>", "<strong>Şirket</strong>", "
-              <strong>Biz</strong>") tarafından işletilen müşteri sadakat
+              İşbu Hizmet Koşulları, <strong>{company.name}</strong> (&quot;
+              <strong>ReloYa</strong>&quot;, &quot;<strong>Şirket</strong>&quot;, &quot;
+              <strong>Biz</strong>&quot;) tarafından işletilen müşteri sadakat
               platformunun kullanımına ilişkin hüküm ve koşulları
               düzenlemektedir. Platformu kullanarak bu koşulları kabul etmiş
               sayılırsınız.
@@ -205,7 +205,7 @@ export default function TermsPage() {
             </h2>
             <div className="space-y-4 text-gray-300">
               <p>
-                <strong>7.1.</strong> Platform "olduğu gibi" sunulmaktadır.
+                <strong>7.1.</strong> Platform &quot;olduğu gibi&quot; sunulmaktadır.
                 Hizmetin kesintisiz veya hatasız olacağını garanti etmiyoruz.
               </p>
               <p>
@@ -232,7 +232,7 @@ export default function TermsPage() {
             </h2>
             <p className="text-gray-300 leading-relaxed">
               Platform üzerindeki tüm içerik, tasarım, logo, yazılım, kod ve
-              diğer materyaller ReloYa'nın veya lisans verenlerin mülkiyetindedir
+              diğer materyaller ReloYa&apos;nın veya lisans verenlerin mülkiyetindedir
               ve telif hakkı yasalarıyla korunmaktadır. İzinsiz kullanım, kopyalama
               veya dağıtım yasaktır.
             </p>

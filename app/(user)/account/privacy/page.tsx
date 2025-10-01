@@ -158,7 +158,7 @@ export default function PrivacyPage() {
             d="M10 19l-7-7m0 0l7-7m-7 7h18"
           />
         </svg>
-        Dashboard'a Dön
+        Dashboard’a Dön
       </Link>
 
       {/* Header */}
@@ -358,7 +358,7 @@ export default function PrivacyPage() {
             >
               KVKK Aydınlatma Metni
             </Link>
-            'ni inceleyebilirsiniz.
+            ’ni inceleyebilirsiniz.
           </p>
         </div>
       </div>

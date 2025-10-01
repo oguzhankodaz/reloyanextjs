@@ -1,7 +1,7 @@
 /** @format */
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
@@ -24,7 +24,6 @@ import { formatCurrency } from "@/lib/helpers";
 
 export default function QRResultPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const userId = searchParams.get("userId");
   const toast = useRadixToast();
 
@@ -40,7 +39,6 @@ export default function QRResultPage() {
     cartItems,
     addToCart,
     removeFromCart,
-    calculateTotals,
     setCartItems,
   } = useCart(products);
 

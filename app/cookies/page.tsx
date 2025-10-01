@@ -121,7 +121,7 @@ export default function CookiesPage() {
             <p className="text-gray-300 leading-relaxed">
               İşlevsel çerezler, tercihlerinizi hatırlamamıza ve platformu
               kişiselleştirmemize yardımcı olur (örn. dil tercihi, tema
-              ayarları). Şu anda ReloYa'da aktif işlevsel çerez kullanılmamaktadır.
+              ayarları). Şu anda ReloYa’da aktif işlevsel çerez kullanılmamaktadır.
               Gelecekte eklenirse, bu sayfa güncellenecektir.
             </p>
           </section>
@@ -185,7 +185,7 @@ export default function CookiesPage() {
               >
                 KVKK Aydınlatma Metni
               </Link>
-              'ni inceleyebilirsiniz.
+              ’ni inceleyebilirsiniz.
             </p>
           </section>
 
@@ -244,7 +244,7 @@ export default function CookiesPage() {
               </p>
               <p>
                 <strong>Kalıcı Çerezler:</strong> Belirlenen süre boyunca
-                (genellikle 7-30 gün) cihazınızda kalır. ReloYa'da oturum
+                (genellikle 7-30 gün) cihazınızda kalır. ReloYa’da oturum
                 çerezleri maksimum 7 gün saklanır.
               </p>
             </div>

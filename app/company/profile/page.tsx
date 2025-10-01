@@ -64,7 +64,7 @@ export default function CompanyProfilePage() {
     setMessage(null);
 
     try {
-      // TODO: Company update API endpoint'i eklenecek
+      // TODO: Company update API endpoint’i eklenecek
       // Şimdilik mock response
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -104,7 +104,7 @@ export default function CompanyProfilePage() {
               d="M10 19l-7-7m0 0l7-7m-7 7h18"
             />
           </svg>
-          Dashboard'a Dön
+          Dashboard’a Dön
         </Link>
 
         {/* Header */}
@@ -189,7 +189,7 @@ export default function CompanyProfilePage() {
                   placeholder="sirket@email.com"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  E-posta değiştirmek için destek ile iletişime geçin
+                  {`E-posta değiştirmek için destek ile iletişime geçin`}
                 </p>
               </div>
 

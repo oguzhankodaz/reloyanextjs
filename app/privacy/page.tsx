@@ -45,10 +45,10 @@ export default function PrivacyPage() {
               1. Veri Sorumlusu
             </h2>
             <p className="text-gray-300 leading-relaxed">
-              6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca,
+              6698 sayılı Kişisel Verilerin Korunması Kanunu (&quot;KVKK&quot;) uyarınca,
               kişisel verileriniz; veri sorumlusu olarak{" "}
-              <strong>{company.name}</strong> ("
-              <strong>{company.shortName}</strong>") tarafından aşağıda
+              <strong>{company.name}</strong> (&quot;
+              <strong>{company.shortName}</strong>&quot;) tarafından aşağıda
               açıklanan kapsamda işlenebilecektir.
             </p>
             <div className="mt-4 p-4 bg-gray-900/50 rounded border border-gray-600">
@@ -118,7 +118,7 @@ export default function PrivacyPage() {
               4. İşlemenin Hukuki Sebepleri
             </h2>
             <p className="text-gray-300 leading-relaxed mb-4">
-              Kişisel verileriniz, KVKK'nın 5. ve 6. maddelerinde belirtilen
+              Kişisel verileriniz, KVKK&apos;nın 5. ve 6. maddelerinde belirtilen
               aşağıdaki hukuki sebeplere dayanılarak işlenmektedir:
             </p>
             <ul className="list-disc list-inside space-y-2 text-gray-300 ml-4">
@@ -134,7 +134,7 @@ export default function PrivacyPage() {
               5. Kişisel Verilerin Aktarılması
             </h2>
             <p className="text-gray-300 leading-relaxed mb-4">
-              Kişisel verileriniz, yukarıda belirtilen amaçlarla ve KVKK'nın 8.
+              Kişisel verileriniz, yukarıda belirtilen amaçlarla ve KVKK&apos;nın 8.
               ve 9. maddelerinde belirtilen şartlara uygun olarak aşağıdaki
               alıcı gruplarıyla paylaşılabilir:
             </p>
@@ -158,7 +158,7 @@ export default function PrivacyPage() {
             </h2>
             <p className="text-gray-300 leading-relaxed mb-4">
               Platform altyapısının sağlanması amacıyla kişisel verileriniz
-              aşağıdaki ülkelere aktarılmaktadır. Bu aktarımlar KVKK'nın 9.
+              aşağıdaki ülkelere aktarılmaktadır. Bu aktarımlar KVKK&apos;nın 9.
               maddesi uyarınca uygun güvencelerle yapılmaktadır:
             </p>
             <div className="space-y-3">
@@ -218,7 +218,7 @@ export default function PrivacyPage() {
               8. KVKK Kapsamındaki Haklarınız
             </h2>
             <p className="text-gray-300 leading-relaxed mb-4">
-              KVKK'nın 11. maddesi uyarınca, veri sorumlusu olan şirketimize
+              KVKK&apos;nın 11. maddesi uyarınca, veri sorumlusu olan şirketimize
               başvurarak aşağıdaki haklarınızı kullanabilirsiniz:
             </p>
             <ul className="list-disc list-inside space-y-2 text-gray-300 ml-4">
@@ -234,7 +234,7 @@ export default function PrivacyPage() {
               9. Haklarınızı Nasıl Kullanabilirsiniz?
             </h2>
             <p className="text-gray-300 leading-relaxed mb-4">
-              KVKK'dan doğan haklarınızı kullanmak için aşağıdaki kanallardan
+              KVKK&apos;dan doğan haklarınızı kullanmak için aşağıdaki kanallardan
               talepte bulunabilirsiniz:
             </p>
             <div className="p-4 bg-cyan-900/20 border border-cyan-600 rounded">
