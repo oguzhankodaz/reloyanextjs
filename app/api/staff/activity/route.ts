@@ -144,7 +144,7 @@ export async function GET() {
       },
       activitiesByDate: byDate,
     });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json(
       { staff: null, company: null, activitiesByDate: {} },
       { status: 200 }

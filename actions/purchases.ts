@@ -10,7 +10,7 @@ async function getCurrentStaffId(): Promise<string | null> {
     const store = await cookies();
     const token = store.get("stf_sess_91kd2")?.value;
     if (!token) return null;
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { type: string; staffId: string };
     if (decoded?.type !== "staff") return null;
     return decoded.staffId as string;
   } catch {

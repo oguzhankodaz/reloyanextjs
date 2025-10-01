@@ -76,10 +76,10 @@ export async function getReportData(
     }
 
     // ---- 1) Özet --------------------------------------------------------
-    const purchaseWhere: any = { companyId };
+    const purchaseWhere: { companyId: string; purchaseDate?: { gte: Date } } = { companyId };
     if (since) purchaseWhere.purchaseDate = { gte: since };
 
-    const usageWhere: any = { companyId };
+    const usageWhere: { companyId: string; usedAt?: { gte: Date } } = { companyId };
     if (since) usageWhere.usedAt = { gte: since };
 
     const distinctCustomers = await prisma.purchase.groupBy({
@@ -134,7 +134,7 @@ export async function getReportData(
     );
 
     // ---- 3) Grafik ------------------------------------------------------
-    const chartRaw = await prisma.$queryRaw<{ label: string; total: any }[]>`
+    const chartRaw = await prisma.$queryRaw<{ label: string; total: unknown }[]>`
       SELECT TO_CHAR("purchaseDate", ${Prisma.sql`${groupByFormat}`}) as label, 
              SUM("cashbackEarned") as total
       FROM "Purchase"

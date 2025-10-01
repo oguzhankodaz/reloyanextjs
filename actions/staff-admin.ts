@@ -8,8 +8,8 @@ export async function deleteStaffAction(id: string) {
   try {
     await prisma.companyStaff.delete({ where: { id } });
     return { success: true, message: "Personel silindi." };
-  } catch (e: any) {
-    return { success: false, message: "Silinemedi: " + e.message };
+  } catch (e: unknown) {
+    return { success: false, message: "Silinemedi: " + (e instanceof Error ? e.message : String(e)) };
   }
 }
 
@@ -24,7 +24,7 @@ export async function toggleStaffActiveAction(id: string, isActive: boolean) {
       success: true,
       message: isActive ? "Pasifleştirildi." : "Aktifleştirildi.",
     };
-  } catch (e: any) {
-    return { success: false, message: "Güncellenemedi: " + e.message };
+  } catch (e: unknown) {
+    return { success: false, message: "Güncellenemedi: " + (e instanceof Error ? e.message : String(e)) };
   }
 }

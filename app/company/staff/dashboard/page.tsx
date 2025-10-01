@@ -27,7 +27,7 @@ type ActivityView =
     };
 
 export default function StaffDashboardPage() {
-  const [message, setMessage] = useState<string>("");
+  const [message] = useState<string>("");
   const [header, setHeader] = useState<{
     staffName: string;
     companyName: string;

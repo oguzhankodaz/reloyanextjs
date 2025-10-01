@@ -1,12 +1,10 @@
 /** @format */
 
+"use client";
+
 import { LEGAL_CONFIG } from "@/legal/config";
 import Link from "next/link";
-
-export const metadata = {
-  title: "Hizmet Koşulları | ReloYa",
-  description: "ReloYa platformu kullanım koşulları ve sözleşmesi",
-};
+import SmartBackButton from "@/components/SmartBackButton";
 
 export default function TermsPage() {
   const { company } = LEGAL_CONFIG;
@@ -14,26 +12,8 @@ export default function TermsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white py-12">
       <div className="max-w-4xl mx-auto px-6">
-        {/* Back Button */}
-        <Link
-          href="/"
-          className="inline-flex items-center text-gray-400 hover:text-cyan-400 transition-colors mb-6 group"
-        >
-          <svg
-            className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          Ana Sayfaya Dön
-        </Link>
+        {/* Smart Back Button */}
+        <SmartBackButton fallbackUrl="/" label="Geri Dön" />
 
         <h1 className="text-4xl font-bold mb-2">Hizmet Koşulları</h1>
         <p className="text-gray-400 mb-8">

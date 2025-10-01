@@ -27,12 +27,6 @@ export default function Footer() {
           >
             Çerez Politikası
           </Link>
-          <Link
-            href="/account/privacy"
-            className="hover:text-cyan-400 transition-colors"
-          >
-            Veri Taleplerim
-          </Link>
         </div>
 
         {/* Copyright */}

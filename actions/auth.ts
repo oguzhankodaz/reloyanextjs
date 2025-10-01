@@ -15,7 +15,7 @@ import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 
 // ————— USER LOGIN —————
-export async function loginAction(prevState: any, formData: FormData) {
+export async function loginAction(prevState: unknown, formData: FormData) {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
 
@@ -78,7 +78,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 }
 
 // ————— USER REGISTER —————
-export async function registerAction(prevState: any, formData: FormData) {
+export async function registerAction(prevState: unknown, formData: FormData) {
   const name = String(formData.get("name") ?? "");
   const surname = String(formData.get("surname") ?? "");
   const email = String(formData.get("email") ?? "");
@@ -136,7 +136,7 @@ export async function registerAction(prevState: any, formData: FormData) {
   try {
     const emailResult = await sendVerificationEmail(user.email, token, "user");
     console.log("registerAction → sendVerificationEmail(user)", emailResult);
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error(
       "registerAction → sendVerificationEmail(user) error:",
       e?.message || String(e)
@@ -151,7 +151,7 @@ export async function registerAction(prevState: any, formData: FormData) {
 }
 
 // ————— COMPANY LOGIN —————
-export async function loginCompanyAction(prevState: any, formData: FormData) {
+export async function loginCompanyAction(prevState: unknown, formData: FormData) {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
 
@@ -217,7 +217,7 @@ export async function loginCompanyAction(prevState: any, formData: FormData) {
 
 // ————— COMPANY REGISTER —————
 export async function registerCompanyAction(
-  prevState: any,
+  prevState: unknown,
   formData: FormData
 ) {
   const name = String(formData.get("name") ?? "");
@@ -286,7 +286,7 @@ export async function registerCompanyAction(
       "registerCompanyAction → sendVerificationEmail(company)",
       emailResult
     );
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error(
       "registerCompanyAction → sendVerificationEmail(company) error:",
       e?.message || String(e)
@@ -309,15 +309,15 @@ export async function checkSession() {
 
   try {
     if (userToken) {
-      const decoded: any = jwt.verify(userToken, process.env.JWT_SECRET!);
+      const decoded = jwt.verify(userToken, process.env.JWT_SECRET!) as { type: string; userId: string; email: string; name: string; surname: string };
       return { type: "user", data: decoded };
     }
     if (companyToken) {
-      const decoded: any = jwt.verify(companyToken, process.env.JWT_SECRET!);
+      const decoded = jwt.verify(companyToken, process.env.JWT_SECRET!) as { type: string; companyId: string; email: string; name: string };
       return { type: "company", data: decoded };
     }
     if (staffToken) {
-      const decoded: any = jwt.verify(staffToken, process.env.JWT_SECRET!);
+      const decoded = jwt.verify(staffToken, process.env.JWT_SECRET!) as { type: string; staffId: string; companyId: string; email: string; name: string };
       return { type: "staff", data: decoded };
     }
   } catch {
@@ -370,12 +370,12 @@ export async function registerStaffAction(formData: FormData) {
     });
 
     return { success: true, message: "Personel eklendi.", staff };
-  } catch (e: any) {
-    return { success: false, message: "Personel eklenemedi: " + e.message };
+  } catch (e: unknown) {
+    return { success: false, message: "Personel eklenemedi: " + (e instanceof Error ? e.message : String(e)) };
   }
 }
 
-export async function loginStaffAction(prevState: any, formData: FormData) {
+export async function loginStaffAction(prevState: unknown, formData: FormData) {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
 

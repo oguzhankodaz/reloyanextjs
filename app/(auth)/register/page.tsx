@@ -4,9 +4,12 @@
 
 import { registerAction } from "@/actions/auth";
 import { useActionState } from "react";
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import LegalModal from "@/components/legal/LegalModal";
+import KvkkContent from "@/components/legal/KvkkContent";
+import TermsContent from "@/components/legal/TermsContent";
 
 export default function RegisterPage() {
   const [state, formAction] = useActionState(registerAction, {
@@ -16,6 +19,9 @@ export default function RegisterPage() {
   });
 
   const [isPending, startTransition] = useTransition();
+  const [kvkkAccepted, setKvkkAccepted] = useState(false);
+  const [showKvkkModal, setShowKvkkModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const router = useRouter();
 
   // ✅ Başarılı kayıt sonrası login sayfasına yönlendir
@@ -96,13 +102,55 @@ export default function RegisterPage() {
             title="En az 8 karakter, en az bir harf ve bir rakam içermeli."
             className="text-black w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400"
           />
+
+          {/* KVKK Onay Checkbox */}
+          <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <input
+              type="checkbox"
+              id="kvkk-consent"
+              checked={kvkkAccepted}
+              onChange={(e) => setKvkkAccepted(e.target.checked)}
+              className="mt-1 w-4 h-4 text-black border-gray-300 rounded focus:ring-2 focus:ring-black cursor-pointer"
+            />
+            <label htmlFor="kvkk-consent" className="text-xs text-gray-700 leading-relaxed cursor-pointer">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowKvkkModal(true);
+                }}
+                className="text-black font-semibold hover:underline"
+              >
+                KVKK Aydınlatma Metni
+              </button>
+              &apos;ni okudum, anladım. Kişisel verilerimin işlenmesine ve{" "}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowTermsModal(true);
+                }}
+                className="text-black font-semibold hover:underline"
+              >
+                Hizmet Koşulları
+              </button>
+              &apos;nı kabul ediyorum.
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={isPending}
-            className="w-full bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+            disabled={isPending || !kvkkAccepted}
+            className="w-full bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isPending ? "⏳ Kayıt olunuyor..." : "Kayıt Ol"}
           </button>
+          
+          {!kvkkAccepted && (
+            <p className="text-xs text-center text-gray-500">
+              Kayıt olmak için KVKK metnini kabul etmelisiniz
+            </p>
+          )}
         </form>
 
         {/* Hata veya başarı mesajı */}
@@ -124,6 +172,24 @@ export default function RegisterPage() {
           </a>
         </div>
       </div>
+
+      {/* KVKK Modal */}
+      <LegalModal
+        isOpen={showKvkkModal}
+        onClose={() => setShowKvkkModal(false)}
+        title="KVKK Aydınlatma Metni"
+      >
+        <KvkkContent />
+      </LegalModal>
+
+      {/* Terms Modal */}
+      <LegalModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        title="Hizmet Koşulları"
+      >
+        <TermsContent />
+      </LegalModal>
     </div>
   );
 }

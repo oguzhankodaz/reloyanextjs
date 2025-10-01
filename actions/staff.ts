@@ -14,7 +14,7 @@ async function getStaffFromCookie() {
   if (!token) throw new Error("Yetkisiz (personel oturumu yok).");
 
   try {
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { type: string; staffId: string; companyId: string; email: string; name: string };
     if (decoded.type !== "staff") throw new Error("Geçersiz token tipi.");
     return decoded as {
       staffId: string;
@@ -60,8 +60,8 @@ export async function addPurchaseByStaffAction(formData: FormData) {
     });
 
     return { success: true, message: "Satış ve puan artışı kaydedildi." };
-  } catch (e: any) {
-    return { success: false, message: e.message ?? "İşlem başarısız." };
+  } catch (e: unknown) {
+    return { success: false, message: (e instanceof Error ? e.message : String(e)) ?? "İşlem başarısız." };
   }
 }
 
@@ -104,8 +104,8 @@ export async function spendPointsByStaffAction(formData: FormData) {
     });
 
     return { success: true, message: "Puan düşüldü." };
-  } catch (e: any) {
-    return { success: false, message: e.message ?? "İşlem başarısız." };
+  } catch (e: unknown) {
+    return { success: false, message: (e instanceof Error ? e.message : String(e)) ?? "İşlem başarısız." };
   }
 }
 
@@ -217,7 +217,7 @@ export async function undoLastActionByStaffAction() {
 
       return { success: true, message: "Puan harcama geri alındı." };
     }
-  } catch (e: any) {
-    return { success: false, message: e.message ?? "Geri alma başarısız." };
+  } catch (e: unknown) {
+    return { success: false, message: (e instanceof Error ? e.message : String(e)) ?? "Geri alma başarısız." };
   }
 }
