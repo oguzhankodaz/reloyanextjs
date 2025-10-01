@@ -1,4 +1,6 @@
+
 /** @format */
+import "server-only";            // ← bu dosya asla client/edge'te import edilmesin
 import sgMail, { MailDataRequired } from "@sendgrid/mail";
 
 type SendVerificationResult = {

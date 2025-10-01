@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Kullanıcılar (müşteriler)
 model User {
   id                 String              @id @default(uuid())
   name               String
@@ -31,7 +30,6 @@ model Company {
   password  String
   address   String?
   createdAt DateTime @default(now())
-
   categories         Category[]
   products           Product[]
   purchases          Purchase[]
@@ -40,7 +38,6 @@ model Company {
   campaigns          Campaign[]
   verified           Boolean                    @default(false)
   verificationTokens CompanyVerificationToken[]
-  // 👇 burası eksikti
   staff              CompanyStaff[]
 }
 
@@ -48,19 +45,16 @@ model CompanyStaff {
   id        String  @id @default(uuid())
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
-
   name     String
   email    String  @unique
   password String
   isActive Boolean @default(true)
-
   createdAt DateTime @default(now())
 
   purchases    Purchase[]
   pointsUsages PointsUsage[]
 }
 
-/// Ürün kategorileri
 model Category {
   id   Int    @id @default(autoincrement())
   name String
@@ -71,20 +65,16 @@ model Category {
   products Product[]
 }
 
-/// Ürünler
 model Product {
   id        Int      @id @default(autoincrement())
   name      String
   price     Float
   cashback  Float    @default(0) // ✅ artık TL iade alanı
   createdAt DateTime @default(now())
-
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
-
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   categoryId Int?
-
   purchases    Purchase[]
   pointsUsages PointsUsage[] // ✅ tekrar eklendi
 }
