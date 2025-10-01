@@ -1,6 +1,6 @@
-
 /** @format */
-import "server-only";            // ← bu dosya asla client/edge'te import edilmesin
+// Bu util dosyası sadece sunucuda kullanılmalı:
+import "server-only";
 import sgMail, { MailDataRequired } from "@sendgrid/mail";
 
 type SendVerificationResult = {
@@ -14,76 +14,65 @@ export async function sendVerificationEmail(
   token: string,
   type: "user" | "company"
 ): Promise<SendVerificationResult> {
-  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/verify?token=${token}&type=${type}`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const apiKey = process.env.SENDGRID_API_KEY;
+  const from = process.env.SENDGRID_FROM;
 
-  // ✅ ENV kontrolü
-  if (!process.env.SENDGRID_API_KEY || !process.env.SENDGRID_FROM) {
-    console.error("❌ SendGrid yapılandırması eksik", {
-      SENDGRID_API_KEY: process.env.SENDGRID_API_KEY ? "****" : "undefined",
-      SENDGRID_FROM: process.env.SENDGRID_FROM || "undefined",
+  if (!apiKey || !from || !appUrl) {
+    console.error("❌ SendGrid config missing", {
+      hasApiKey: !!apiKey,
+      hasFrom: !!from,
+      hasAppUrl: !!appUrl,
     });
     return { success: false, error: "SendGrid configuration missing" };
   }
 
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  const verifyUrl = `${appUrl}/api/verify?token=${token}&type=${type}`;
+  sgMail.setApiKey(apiKey);
 
-  // ✅ Daha kurumsal HTML içerik
+  // Doğrulama e-postası: izleme kapalı → daha hızlı/temiz teslim
   const html = `
   <div style="font-family: Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:auto; border:1px solid #e5e5e5; border-radius:8px; padding:24px;">
     <div style="text-align:center; margin-bottom:24px;">
-      <h1 style="color:#111;">Reloya</h1>
+      <h1 style="color:#111;">ReloYa</h1>
     </div>
     <h2 style="color:#111;">Merhaba,</h2>
     <p>Hesabınızı aktifleştirmek için aşağıdaki butona tıklayın. Bu bağlantı yalnızca <strong>1 saat</strong> boyunca geçerlidir.</p>
     <div style="text-align:center; margin:30px 0;">
-      <a href="${verifyUrl}" target="_blank" style="background:#111; color:#fff; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold; display:inline-block;">
+      <a href="${verifyUrl}" target="_blank" rel="noopener" style="background:#111; color:#fff; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold; display:inline-block;">
         Hesabımı Doğrula
       </a>
     </div>
     <p>Eğer bu işlemi siz başlatmadıysanız, bu e-postayı görmezden gelebilirsiniz.</p>
     <hr style="margin:30px 0; border:none; border-top:1px solid #ddd;" />
     <p style="font-size:12px; color:#666; text-align:center;">
-      Bu e-posta Reloya sistemi tarafından otomatik olarak gönderilmiştir.<br/>
-      © ${new Date().getFullYear()} Reloya. Tüm hakları saklıdır.
+      Bu e-posta ReloYa sistemi tarafından otomatik olarak gönderilmiştir.<br/>
+      © ${new Date().getFullYear()} ReloYa. Tüm hakları saklıdır.
     </p>
-  </div>
-  `;
+  </div>`;
 
   const msg: MailDataRequired = {
     to,
-    from: {
-      email: process.env.SENDGRID_FROM as string,
-      name: "Reloya",
-    },
-    subject: "Hesabınızı Doğrulayın - Reloya",
+    from: { email: from, name: "ReloYa" },
+    subject: "Hesabınızı Doğrulayın - ReloYa",
     html,
+    trackingSettings: {
+      clickTracking: { enable: false, enableText: false },
+      openTracking: { enable: false },
+      subscriptionTracking: { enable: false },
+    },
   };
 
   try {
     const [res] = await sgMail.send(msg);
     const messageId =
-      res.headers?.get("x-message-id") ||
-      res.headers?.get("x-sendgrid-message-id") ||
+      res.headers?.get?.("x-message-id") ||
+      res.headers?.get?.("x-sendgrid-message-id") ||
       undefined;
-
-    console.log("✅ SendGrid ile mail gönderildi", {
-      statusCode: res.statusCode,
-      messageId,
-      to,
-      type,
-    });
-
     return { success: true, messageId };
-  } catch (err) {
-    const errorMessage =
-      err instanceof Error
-        ? err.message
-        : typeof err === "object" && err !== null
-        ? JSON.stringify(err)
-        : String(err);
-
-    console.error("❌ SendGrid mail gönderim hatası", errorMessage);
-
-    return { success: false, error: errorMessage };
+  } catch (e: any) {
+    // İstersen burada HTTP fallback de eklenebilir
+    console.error("❌ SendGrid send error:", e?.message || e);
+    return { success: false, error: e?.message ?? String(e) };
   }
 }
