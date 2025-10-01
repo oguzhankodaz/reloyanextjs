@@ -2,15 +2,21 @@
 "use client";
 
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
-import QRReader from "@/components/company/QrReader";
-import { Package, Users, BarChart2, UserCog } from "lucide-react"; // 👈 UserCog eklendi
+import { Package, Users, BarChart2, UserCog, Settings, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import CompanyDashboardReport from "./CompanyDashboardReport";
 
 const CompanyDashboard = () => {
   const router = useRouter();
   const { company } = useCompanyAuth();
+  const [navigating, setNavigating] = useState<string | null>(null);
+
+  const handleNavigate = (path: string) => {
+    setNavigating(path);
+    router.push(path);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex flex-col">
@@ -33,40 +39,99 @@ const CompanyDashboard = () => {
       {/* Ana Menü */}
       <main className="flex-1 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Ürünler */}
-        <div
-          onClick={() => router.push("/company/products")}
-          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
+        <button
+          onClick={() => handleNavigate("/company/products")}
+          disabled={navigating === "/company/products"}
+          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
         >
-          <Package className="w-10 h-10 mb-3 text-yellow-500" />
-          <span className="font-medium text-base">Ürün İşlemleri</span>
-        </div>
+          {navigating === "/company/products" ? (
+            <>
+              <Loader2 className="w-10 h-10 mb-3 text-yellow-500 animate-spin" />
+              <span className="font-medium text-base">Yükleniyor...</span>
+            </>
+          ) : (
+            <>
+              <Package className="w-10 h-10 mb-3 text-yellow-500" />
+              <span className="font-medium text-base">Ürün İşlemleri</span>
+            </>
+          )}
+        </button>
 
         {/* Müşteriler */}
-        <div
-          onClick={() => router.push("/company/customers")}
-          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
+        <button
+          onClick={() => handleNavigate("/company/customers")}
+          disabled={navigating === "/company/customers"}
+          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
         >
-          <Users className="w-10 h-10 mb-3 text-green-500" />
-          <span className="font-medium text-base">Müşterilerim</span>
-        </div>
+          {navigating === "/company/customers" ? (
+            <>
+              <Loader2 className="w-10 h-10 mb-3 text-green-500 animate-spin" />
+              <span className="font-medium text-base">Yükleniyor...</span>
+            </>
+          ) : (
+            <>
+              <Users className="w-10 h-10 mb-3 text-green-500" />
+              <span className="font-medium text-base">Müşterilerim</span>
+            </>
+          )}
+        </button>
 
         {/* Raporlar */}
-        <div
-          onClick={() => router.push("/company/reports")}
-          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
+        <button
+          onClick={() => handleNavigate("/company/reports")}
+          disabled={navigating === "/company/reports"}
+          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
         >
-          <BarChart2 className="w-10 h-10 mb-3 text-blue-500" />
-          <span className="font-medium text-base">Raporlar</span>
-        </div>
+          {navigating === "/company/reports" ? (
+            <>
+              <Loader2 className="w-10 h-10 mb-3 text-blue-500 animate-spin" />
+              <span className="font-medium text-base">Yükleniyor...</span>
+            </>
+          ) : (
+            <>
+              <BarChart2 className="w-10 h-10 mb-3 text-blue-500" />
+              <span className="font-medium text-base">Raporlar</span>
+            </>
+          )}
+        </button>
 
         {/* Personel İşlemleri */}
-        <div
-          onClick={() => router.push("/company/staff")}
-          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 transition w-full"
+        <button
+          onClick={() => handleNavigate("/company/staff")}
+          disabled={navigating === "/company/staff"}
+          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
         >
-          <UserCog className="w-10 h-10 mb-3 text-purple-500" />
-          <span className="font-medium text-base">Personel İşlemleri</span>
-        </div>
+          {navigating === "/company/staff" ? (
+            <>
+              <Loader2 className="w-10 h-10 mb-3 text-purple-500 animate-spin" />
+              <span className="font-medium text-base">Yükleniyor...</span>
+            </>
+          ) : (
+            <>
+              <UserCog className="w-10 h-10 mb-3 text-purple-500" />
+              <span className="font-medium text-base">Personel İşlemleri</span>
+            </>
+          )}
+        </button>
+
+        {/* Ayarlar / Profil */}
+        <button
+          onClick={() => handleNavigate("/company/profile")}
+          disabled={navigating === "/company/profile"}
+          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
+        >
+          {navigating === "/company/profile" ? (
+            <>
+              <Loader2 className="w-10 h-10 mb-3 text-orange-500 animate-spin" />
+              <span className="font-medium text-base">Yükleniyor...</span>
+            </>
+          ) : (
+            <>
+              <Settings className="w-10 h-10 mb-3 text-orange-500" />
+              <span className="font-medium text-base">Profil & Ayarlar</span>
+            </>
+          )}
+        </button>
       </main>
 
       <span className="h-px w-full bg-gray-700 block"></span>
@@ -82,8 +147,6 @@ const CompanyDashboard = () => {
           </ul>
         </div>
       </section>
-
-      <QRReader />
     </div>
   );
 };

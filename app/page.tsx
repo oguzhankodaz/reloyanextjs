@@ -1,14 +1,15 @@
 /** @format */
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Gift, TrendingUp, Building2, Users } from "lucide-react";
+import { Sparkles, Gift, TrendingUp, Building2, Users, Loader2 } from "lucide-react";
 import { checkSession } from "@/actions/auth";
 import Image from "next/image";
 
 export default function HomePage() {
   const router = useRouter();
+  const [navigating, setNavigating] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -21,6 +22,11 @@ export default function HomePage() {
       }
     })();
   }, [router]);
+
+  const handleNavigate = (path: string) => {
+    setNavigating(path);
+    router.push(path);
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black text-white px-6 pt-8 pb-4">
@@ -80,16 +86,32 @@ export default function HomePage() {
           </p>
           <div className="flex gap-4">
             <button
-              onClick={() => router.push("/login")}
-              className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+              onClick={() => handleNavigate("/login")}
+              disabled={navigating === "/login"}
+              className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-wait flex items-center gap-2"
             >
-              Giriş Yap
+              {navigating === "/login" ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Yükleniyor...
+                </>
+              ) : (
+                "Giriş Yap"
+              )}
             </button>
             <button
-              onClick={() => router.push("/register")}
-              className="px-6 py-2 border border-black text-black rounded-lg hover:bg-gray-100"
+              onClick={() => handleNavigate("/register")}
+              disabled={navigating === "/register"}
+              className="px-6 py-2 border border-black text-black rounded-lg hover:bg-gray-100 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-wait flex items-center gap-2"
             >
-              Kayıt Ol
+              {navigating === "/register" ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Yükleniyor...
+                </>
+              ) : (
+                "Kayıt Ol"
+              )}
             </button>
           </div>
         </div>
@@ -103,16 +125,32 @@ export default function HomePage() {
           </p>
           <div className="flex gap-4">
             <button
-              onClick={() => router.push("/company/login")}
-              className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+              onClick={() => handleNavigate("/company/login")}
+              disabled={navigating === "/company/login"}
+              className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-wait flex items-center gap-2"
             >
-              Giriş Yap
+              {navigating === "/company/login" ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Yükleniyor...
+                </>
+              ) : (
+                "Giriş Yap"
+              )}
             </button>
             <button
-              onClick={() => router.push("/company/register")}
-              className="px-6 py-2 border border-black text-black rounded-lg hover:bg-gray-100"
+              onClick={() => handleNavigate("/company/register")}
+              disabled={navigating === "/company/register"}
+              className="px-6 py-2 border border-black text-black rounded-lg hover:bg-gray-100 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-wait flex items-center gap-2"
             >
-              Kayıt Ol
+              {navigating === "/company/register" ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Yükleniyor...
+                </>
+              ) : (
+                "Kayıt Ol"
+              )}
             </button>
           </div>
         </div>

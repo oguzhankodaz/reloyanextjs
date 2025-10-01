@@ -120,7 +120,10 @@ export default function PrivacyPage() {
 
       setMessage({
         type: "success",
-        text: `Silme talebiniz alındı. Talep ID: ${data.requestId.substring(0, 8)}... İşlem 30 gün içinde tamamlanacaktır.`,
+        text: `Silme talebiniz alındı. Talep ID: ${data.requestId.substring(
+          0,
+          8
+        )}... İşlem 30 gün içinde tamamlanacaktır.`,
       });
     } catch (error) {
       console.error("Delete error:", error);
@@ -184,44 +187,6 @@ export default function PrivacyPage() {
 
       {/* DSAR Actions Grid */}
       <div className="grid md:grid-cols-2 gap-6 mb-8">
-        {/* Export Data Card */}
-        <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
-          <div className="flex items-start mb-4">
-            <div className="w-12 h-12 bg-cyan-900/40 rounded-lg flex items-center justify-center mr-4">
-              <svg
-                className="w-6 h-6 text-cyan-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
-                />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h2 className="text-xl font-semibold mb-2">
-                Verilerimi İndir
-              </h2>
-              <p className="text-gray-400 text-sm mb-4">
-                Sistemde kayıtlı tüm kişisel verilerinizi JSON formatında
-                indirin. Profil bilgileri, satın almalar, puanlar ve rıza
-                kayıtlarını içerir.
-              </p>
-              <button
-                onClick={handleExportData}
-                disabled={loading}
-                className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded transition-colors"
-              >
-                {loading ? "İndiriliyor..." : "Verilerimi İndir"}
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Rectify Data Card */}
         <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
           <div className="flex items-start mb-4">
@@ -241,19 +206,51 @@ export default function PrivacyPage() {
               </svg>
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-semibold mb-2">
-                Bilgilerimi Düzelt
-              </h2>
+              <h2 className="text-xl font-semibold mb-2">Bilgilerimi Düzelt</h2>
               <p className="text-gray-400 text-sm mb-4">
-                Yanlış veya eksik kayıtlı kişisel bilgilerinizi düzeltin.
-                Ad, soyad, e-posta ve telefon bilgilerinizi
-                güncelleyebilirsiniz.
+                Yanlış veya eksik kayıtlı kişisel bilgilerinizi düzeltin. Ad,
+                soyad, e-posta ve telefon bilgilerinizi güncelleyebilirsiniz.
               </p>
               <button
                 onClick={handleRectifyData}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"
               >
                 Bilgilerimi Düzenle
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* Export Data Card */}
+        <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
+          <div className="flex items-start mb-4">
+            <div className="w-12 h-12 bg-cyan-900/40 rounded-lg flex items-center justify-center mr-4">
+              <svg
+                className="w-6 h-6 text-cyan-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold mb-2">Verilerimi İndir</h2>
+              <p className="text-gray-400 text-sm mb-4">
+                Sistemde kayıtlı tüm kişisel verilerinizi JSON formatında
+                indirin. Profil bilgileri, satın almalar, puanlar ve rıza
+                kayıtlarını içerir.
+              </p>
+              <button
+                onClick={handleExportData}
+                disabled={loading}
+                className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded transition-colors"
+              >
+                {loading ? "İndiriliyor..." : "Verilerimi İndir"}
               </button>
             </div>
           </div>
@@ -298,7 +295,7 @@ export default function PrivacyPage() {
         </div>
 
         {/* Consent Management Card */}
-        <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
+        {/* <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
           <div className="flex items-start mb-4">
             <div className="w-12 h-12 bg-purple-900/40 rounded-lg flex items-center justify-center mr-4">
               <svg
@@ -329,7 +326,7 @@ export default function PrivacyPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Information Panel */}
@@ -344,18 +341,21 @@ export default function PrivacyPage() {
         <ul className="text-sm text-gray-400 space-y-1 list-disc list-inside">
           <li>Kişisel verilerinizin işlenip işlenmediğini öğrenme</li>
           <li>İşlenmişse buna ilişkin bilgi talep etme</li>
-          <li>İşlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme</li>
+          <li>
+            İşlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme
+          </li>
           <li>Eksik veya yanlış işlenmiş verilerin düzeltilmesini isteme</li>
-          <li>Belirli koşullarda verilerin silinmesini/yok edilmesini isteme</li>
-          <li>İşlenen verilerin analizi sonucu aleyhe bir sonuca itiraz etme</li>
+          <li>
+            Belirli koşullarda verilerin silinmesini/yok edilmesini isteme
+          </li>
+          <li>
+            İşlenen verilerin analizi sonucu aleyhe bir sonuca itiraz etme
+          </li>
         </ul>
         <div className="mt-4 pt-4 border-t border-cyan-800">
           <p className="text-sm text-gray-400">
             Detaylı bilgi için{" "}
-            <Link
-              href="/privacy"
-              className="text-cyan-400 hover:underline"
-            >
+            <Link href="/privacy" className="text-cyan-400 hover:underline">
               KVKK Aydınlatma Metni
             </Link>
             ’ni inceleyebilirsiniz.
@@ -380,4 +380,3 @@ export default function PrivacyPage() {
     </div>
   );
 }
-

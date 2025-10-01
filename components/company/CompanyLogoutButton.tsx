@@ -2,11 +2,12 @@
 
 "use client";
 
-import { LogOut } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import { useStaffAuth } from "@/context/StaffAuthContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 
 const CompanyLogoutButton = () => {
@@ -14,7 +15,10 @@ const CompanyLogoutButton = () => {
   const { setCompany } = useCompanyAuth();
   const { setStaff } = useStaffAuth();
   const queryClient = useQueryClient();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     // Hem company hem staff cookie'lerini temizlemeye çalış
     await fetch("/api/logout", { method: "POST", credentials: "include" });
     await fetch("/api/staff/logout", {
@@ -33,10 +37,20 @@ const CompanyLogoutButton = () => {
   return (
     <button
       onClick={handleLogout}
-      className="flex items-center gap-2 text-gray-300 hover:text-red-500 transition"
+      disabled={isLoggingOut}
+      className="flex items-center gap-2 text-gray-300 hover:text-red-500 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-wait"
     >
-      <LogOut className="w-5 h-5" />
-      <span className="hidden sm:inline text-sm font-medium">Çıkış</span>
+      {isLoggingOut ? (
+        <>
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="hidden sm:inline text-sm font-medium">Çıkış yapılıyor...</span>
+        </>
+      ) : (
+        <>
+          <LogOut className="w-5 h-5" />
+          <span className="hidden sm:inline text-sm font-medium">Çıkış</span>
+        </>
+      )}
     </button>
   );
 };

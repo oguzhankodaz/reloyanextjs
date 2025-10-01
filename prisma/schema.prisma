@@ -26,12 +26,13 @@ model User {
 }
 
 model Company {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  address   String?
-  createdAt DateTime @default(now())
+  id                 String   @id @default(uuid())
+  name               String
+  email              String   @unique
+  password           String
+  address            String?
+  cashbackPercentage Float    @default(3) // Varsayılan %3
+  createdAt          DateTime @default(now())
   categories         Category[]
   products           Product[]
   purchases          Purchase[]

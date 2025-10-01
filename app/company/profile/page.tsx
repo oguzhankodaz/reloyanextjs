@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRadixToast } from "@/components/notifications/ToastProvider";
 
 export default function CompanyProfilePage() {
   const { company } = useCompanyAuth();
@@ -22,6 +23,11 @@ export default function CompanyProfilePage() {
     type: "success" | "error";
     text: string;
   } | null>(null);
+
+  // Cashback ayarları
+  const toast = useRadixToast();
+  const [cashbackPercentage, setCashbackPercentage] = useState<string>("3");
+  const [savingCashback, setSavingCashback] = useState(false);
 
   // Load company data
   useEffect(() => {
@@ -43,6 +49,16 @@ export default function CompanyProfilePage() {
         }
       })
       .catch((error) => console.error("Failed to load company data:", error));
+
+    // Fetch cashback settings
+    fetch("/api/company/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.settings) {
+          setCashbackPercentage(data.settings.cashbackPercentage.toString());
+        }
+      })
+      .catch((error) => console.error("Failed to load settings:", error));
   }, [company, router]);
 
   if (!company) {
@@ -64,7 +80,7 @@ export default function CompanyProfilePage() {
     setMessage(null);
 
     try {
-      // TODO: Company update API endpoint’i eklenecek
+      // TODO: Company update API endpoint'i eklenecek
       // Şimdilik mock response
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -80,6 +96,52 @@ export default function CompanyProfilePage() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveCashback = async () => {
+    const percentage = parseFloat(cashbackPercentage);
+
+    if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+      toast({
+        title: "Hata",
+        description: "Geçerli bir yüzde değeri girin (0-100 arası)",
+        variant: "error",
+      });
+      return;
+    }
+
+    setSavingCashback(true);
+    try {
+      const res = await fetch("/api/company/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cashbackPercentage: percentage }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        toast({
+          title: "Başarılı",
+          description: "Nakit iade oranı güncellendi ✅",
+          variant: "success",
+        });
+      } else {
+        toast({
+          title: "Hata",
+          description: data.message || "Ayarlar güncellenemedi",
+          variant: "error",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Hata",
+        description: "Bir hata oluştu",
+        variant: "error",
+      });
+    } finally {
+      setSavingCashback(false);
     }
   };
 
@@ -225,6 +287,60 @@ export default function CompanyProfilePage() {
 
           {/* Security & Settings Card */}
           <div className="space-y-6">
+            {/* Cashback Settings */}
+            <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <svg
+                  className="w-6 h-6 mr-2 text-yellow-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Nakit İade Oranı
+              </h2>
+              <p className="text-gray-400 text-sm mb-4">
+                Müşterilere verilecek varsayılan nakit iade yüzdesini belirleyin
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Yüzde (%)
+                  </label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={cashbackPercentage}
+                      onChange={(e) => setCashbackPercentage(e.target.value)}
+                      className="flex-1 px-4 py-2 bg-gray-900/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      placeholder="Örn: 3"
+                    />
+                    <span className="text-xl font-bold text-yellow-400">%</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Örnek: %{cashbackPercentage || "0"} ile 100₺ harcamada{" "}
+                    {((parseFloat(cashbackPercentage || "0") * 100) / 100).toFixed(2)}₺ iade
+                  </p>
+                </div>
+                <button
+                  onClick={handleSaveCashback}
+                  disabled={savingCashback}
+                  className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  {savingCashback ? "Kaydediliyor..." : "Oranı Kaydet"}
+                </button>
+              </div>
+            </div>
+
             {/* Password Change */}
             <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center">

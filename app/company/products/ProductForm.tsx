@@ -1,7 +1,7 @@
 /** @format */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createProduct } from "@/actions/product";
 import { useRadixToast } from "@/components/notifications/ToastProvider";
@@ -16,7 +16,22 @@ export default function ProductForm({ companyId }: Props) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState<string>("");
   const [cashback, setCashback] = useState<string>("");
+  const [cashbackPercentage, setCashbackPercentage] = useState<number>(3); // Varsayılan %3
   const toast = useRadixToast();
+
+  // Şirketin cashback oranını yükle
+  useEffect(() => {
+    fetch("/api/company/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.settings) {
+          setCashbackPercentage(data.settings.cashbackPercentage);
+        }
+      })
+      .catch(() => {
+        // Hata durumunda varsayılan %3 kullan
+      });
+  }, []);
 
   const mutation = useMutation({
     mutationFn: (newProduct: {
@@ -56,13 +71,14 @@ export default function ProductForm({ companyId }: Props) {
     });
   };
 
-  // ✅ Fiyat değiştiğinde %3 hesapla
+  // ✅ Fiyat değiştiğinde şirket oranına göre hesapla
   const handlePriceChange = (value: string) => {
     setPrice(value);
 
     const num = parseFloat(value);
     if (!isNaN(num) && num > 0) {
-      setCashback((num * 0.03).toFixed(2)); // %3
+      const calculatedCashback = (num * cashbackPercentage) / 100;
+      setCashback(calculatedCashback.toFixed(2));
     } else {
       setCashback("");
     }
@@ -84,13 +100,20 @@ export default function ProductForm({ companyId }: Props) {
         onChange={(e) => handlePriceChange(e.target.value)}
         className="w-full border rounded px-3 py-2"
       />
-      <input
-        type="number"
-        placeholder="Nakit İade (₺)"
-        value={cashback}
-        onChange={(e) => setCashback(e.target.value)} // kullanıcı isterse değiştirir
-        className="w-full border rounded px-3 py-2"
-      />
+      <div>
+        <input
+          type="number"
+          placeholder="Nakit İade (₺)"
+          value={cashback}
+          onChange={(e) => setCashback(e.target.value)} // kullanıcı isterse değiştirir
+          className="w-full border rounded px-3 py-2"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Otomatik hesaplanan oran:{" "}
+          <span className="font-semibold text-green-600">%{cashbackPercentage}</span>
+          {" "}(İsterseniz manuel değiştirebilirsiniz)
+        </p>
+      </div>
       <button
         type="submit"
         disabled={mutation.isPending}

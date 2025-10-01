@@ -15,7 +15,10 @@ export function useUserData(userId: string | null, companyId: string | null) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId || !companyId) return;
+    if (!userId || !companyId) {
+      setLoading(false);
+      return;
+    }
 
     (async () => {
       const userRes = await getUserByIdAction(userId);

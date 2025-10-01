@@ -2,8 +2,9 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { Banknote, Building2, Gift } from "lucide-react";
-import Link from "next/link";
+import { Banknote, Building2, Gift, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserCashbackAction } from "@/actions/points";
 
@@ -15,6 +16,8 @@ type UserCashback = {
 
 const CashbackPage = () => {
   const { user } = useAuth();
+  const router = useRouter();
+  const [navigating, setNavigating] = useState<string | null>(null);
 
   // ✅ React Query ile cashback verilerini çekiyoruz
   const {
@@ -32,6 +35,11 @@ const CashbackPage = () => {
     enabled: !!user?.userId,
     staleTime: 1000 * 60 * 5,
   });
+
+  const handleNavigate = (companyId: string) => {
+    setNavigating(companyId);
+    router.push(`/points/${companyId}`);
+  };
 
   if (isLoading) {
     return (
@@ -90,13 +98,23 @@ const CashbackPage = () => {
                 </p>
               </div>
 
-              <Link
-                href={`/points/${c.companyId}`}
-                className="mt-4 inline-flex items-center gap-2 justify-center bg-green-400 text-black font-medium px-4 py-2 rounded-lg hover:bg-green-300 transition text-sm"
+              <button
+                onClick={() => handleNavigate(c.companyId)}
+                disabled={navigating === c.companyId}
+                className="mt-4 inline-flex items-center gap-2 justify-center bg-green-400 text-black font-medium px-4 py-2 rounded-lg hover:bg-green-300 active:scale-95 transition-all text-sm disabled:opacity-70 disabled:cursor-wait"
               >
-                <Gift className="w-4 h-4" />
-                Ürünleri Görüntüle
-              </Link>
+                {navigating === c.companyId ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Yükleniyor...
+                  </>
+                ) : (
+                  <>
+                    <Gift className="w-4 h-4" />
+                    Ürünleri Görüntüle
+                  </>
+                )}
+              </button>
             </div>
           ))
         )}

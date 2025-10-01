@@ -7,7 +7,6 @@ type Props = {
   totalSpendInput: string;
   setTotalSpendInput: (v: string) => void;
   percentageInput: string;
-  setPercentageInput: (v: string) => void;
   cashbackPreview: number;
   handleGiveCashbackBySpend: () => void;
   useCashbackInput: string;
@@ -21,7 +20,6 @@ export function CashbackActions({
   totalSpendInput,
   setTotalSpendInput,
   percentageInput,
-  setPercentageInput,
   cashbackPreview,
   handleGiveCashbackBySpend,
   useCashbackInput,
@@ -49,26 +47,13 @@ export function CashbackActions({
           placeholder="Toplam harcama (₺)"
         />
 
-        <div className="mb-4">
-          <label
-            htmlFor="percentageInput"
-            className="block text-sm font-medium text-gray-200 mb-2"
-          >
-            Nakit İade Oranı (%)
-          </label>
-          <input
-            id="percentageInput"
-            type="number"
-            min={1}
-            max={100}
-            value={percentageInput}
-            onChange={(e) => setPercentageInput(e.target.value)}
-            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-100"
-            placeholder="Varsayılan: %3"
-          />
-          <p className="text-xs text-gray-400 mt-1">
-            Varsayılan oran{" "}
-            <span className="font-semibold text-green-400">3%</span>’tür.
+        <div className="mb-4 bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3">
+          <p className="text-sm text-gray-400">
+            <span className="text-gray-300 font-medium">Nakit İade Oranı:</span>{" "}
+            <span className="font-bold text-yellow-400 text-lg">%{percentageInput}</span>
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Bu oran şirket yöneticisi tarafından belirlenir
           </p>
         </div>
 
