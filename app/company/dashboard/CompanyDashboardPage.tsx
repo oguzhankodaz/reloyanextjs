@@ -19,7 +19,7 @@ const CompanyDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex flex-col">
+    <div className="min-h-screen p-6 text-white flex flex-col">
       <CompanyNavbar />
 
       {/* İşletme Adı */}
@@ -37,7 +37,7 @@ const CompanyDashboard = () => {
       <span className="h-px w-full bg-gray-700 block"></span>
 
       {/* Ana Menü */}
-      <main className="flex-1 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <main className="flex-1 p-6 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Ürünler */}
         <button
           onClick={() => handleNavigate("/company/products")}
@@ -114,24 +114,7 @@ const CompanyDashboard = () => {
           )}
         </button>
 
-        {/* Ayarlar / Profil */}
-        <button
-          onClick={() => handleNavigate("/company/profile")}
-          disabled={navigating === "/company/profile"}
-          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
-        >
-          {navigating === "/company/profile" ? (
-            <>
-              <Loader2 className="w-10 h-10 mb-3 text-orange-500 animate-spin" />
-              <span className="font-medium text-base">Yükleniyor...</span>
-            </>
-          ) : (
-            <>
-              <Settings className="w-10 h-10 mb-3 text-orange-500" />
-              <span className="font-medium text-base">Profil & Ayarlar</span>
-            </>
-          )}
-        </button>
+   
       </main>
 
       <span className="h-px w-full bg-gray-700 block"></span>

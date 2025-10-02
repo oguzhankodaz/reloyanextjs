@@ -38,16 +38,16 @@ const CompanyLogoutButton = () => {
     <button
       onClick={handleLogout}
       disabled={isLoggingOut}
-      className="flex items-center gap-2 text-gray-300 hover:text-red-500 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-wait"
+      className="flex items-center gap-2 text-red-300 hover:text-red-500 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-wait"
     >
       {isLoggingOut ? (
         <>
-          <Loader2 className="w-5 h-5 animate-spin" />
+          <Loader2 className="w-6 h-6 animate-spin" />
           <span className="hidden sm:inline text-sm font-medium">Çıkış yapılıyor...</span>
         </>
       ) : (
         <>
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-6 h-6" />
           <span className="hidden sm:inline text-sm font-medium">Çıkış</span>
         </>
       )}

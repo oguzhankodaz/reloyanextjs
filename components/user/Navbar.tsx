@@ -53,9 +53,9 @@ const UserNavbar = () => {
                   : "text-gray-300"
               }`}
             >
-              <Icon className="w-5 h-5" />
-              {/* Mobilde gizle, sadece büyük ekranda göster */}
-              <span className="hidden sm:inline text-sm">{label}</span>
+               <Icon className="w-6 h-6" />
+               {/* Mobilde gizle, sadece büyük ekranda göster */}
+               <span className="hidden sm:inline text-sm">{label}</span>
             </Link>
           ))}
 
@@ -69,8 +69,8 @@ const UserNavbar = () => {
             }`}
             title="Ayarlar ve Gizlilik"
           >
-            <Settings className="w-5 h-5" />
-            <span className="hidden sm:inline text-sm">Ayarlar</span>
+             <Settings className="w-6 h-6" />
+             <span className="hidden sm:inline text-sm">Ayarlar</span>
           </Link>
 
           <LogoutButton />

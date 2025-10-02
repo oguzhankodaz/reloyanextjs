@@ -45,7 +45,7 @@ const UserDashboard = () => {
   const badgeStyles = getBadgeStyles(userBadge.currentBadge);
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
+    <div className="min-h-screen p-6 text-white">
       {/* Başlık */}
       <h1 className="text-3xl font-bold mb-2">
         👋 Hoş Geldiniz,{" "}
@@ -56,18 +56,23 @@ const UserDashboard = () => {
         edebilirsiniz.
       </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Rozet ve Toplam Cashback Kartı */}
-        <div className="col-span-1 bg-gray-800 rounded-xl p-6 shadow">
+        <div className="lg:col-span-1 bg-gray-800 rounded-xl p-6 shadow w-full mx-auto">
           {/* Rozet Gösterimi */}
-          <div className={`${badgeStyles.gradient} rounded-lg p-4 mb-4 text-center`}>
+          <div
+            className={`${badgeStyles.gradient} rounded-lg p-4 mb-4 text-center`}
+          >
             <div className="text-3xl mb-2">{userBadge.currentBadge.icon}</div>
-            <h3 className="text-lg font-bold text-white">{userBadge.currentBadge.name} Üye</h3>
+            <h3 className="text-lg font-bold text-white">
+              {userBadge.currentBadge.name} Üye
+            </h3>
             <p className="text-sm text-white/80">
-              {userBadge.nextBadge 
-                ? `${userBadge.nextBadge.name} seviyesine ${formatCurrency(userBadge.nextBadge.minAmount - data.totalEarnings)} kaldı`
-                : "En yüksek seviyedesiniz!"
-              }
+              {userBadge.nextBadge
+                ? `${userBadge.nextBadge.name} seviyesine ${formatCurrency(
+                    userBadge.nextBadge.minAmount - data.totalEarnings
+                  )} kaldı`
+                : "En yüksek seviyedesiniz!"}
             </p>
           </div>
 
@@ -79,7 +84,7 @@ const UserDashboard = () => {
                 <span>{userBadge.nextBadge.name}</span>
               </div>
               <div className="w-full bg-gray-700 rounded-full h-2">
-                <div 
+                <div
                   className={`${badgeStyles.gradient} h-2 rounded-full transition-all duration-500`}
                   style={{ width: `${userBadge.progressToNext}%` }}
                 ></div>
@@ -100,7 +105,7 @@ const UserDashboard = () => {
         </div>
 
         {/* İşletmelere Göre Cashback */}
-        <div className="col-span-2 bg-gray-800 rounded-xl p-6 shadow">
+        <div className="lg:col-span-2 bg-gray-800 rounded-xl p-6 shadow w-full mx-auto">
           <h2 className="text-xl font-semibold mb-4">
             🏢 İşletmelere Göre Para Puanlarım
           </h2>

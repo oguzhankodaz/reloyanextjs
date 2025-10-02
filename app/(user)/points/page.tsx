@@ -58,7 +58,7 @@ const CashbackPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white px-4 py-6">
+    <div className="min-h-screen p-6 text-white">
       {/* Sayfa Başlığı */}
       <div className="max-w-xl mx-auto text-center mb-8">
         <h1 className="text-3xl md:text-4xl font-extrabold text-green-400 flex items-center justify-center gap-2">

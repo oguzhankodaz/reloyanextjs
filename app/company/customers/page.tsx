@@ -52,7 +52,7 @@ const CustomersPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-gray-100">
+    <div className="min-h-screen p-6 text-gray flex flex-col">
       <CompanyNavbar />
       <BackButton />
 
