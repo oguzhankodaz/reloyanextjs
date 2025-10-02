@@ -37,7 +37,7 @@ const CompanyDashboard = () => {
       <span className="h-px w-full bg-gray-700 block"></span>
 
       {/* Ana Menü */}
-      <main className="flex-1 p-6 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <main className="flex-1 p-6 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Ürünler */}
         <button
           onClick={() => handleNavigate("/company/products")}
