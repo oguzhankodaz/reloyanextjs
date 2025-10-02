@@ -57,6 +57,16 @@ export async function addPurchaseByStaffAction(formData: FormData) {
         update: { totalPoints: { increment: Math.round(cashbackEarned) } },
         create: { userId, companyId, totalPoints: Math.round(cashbackEarned) },
       });
+
+      // 🏆 Kullanıcının toplam kazancını güncelle (rozet sistemi için)
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          totalEarnings: {
+            increment: cashbackEarned
+          }
+        }
+      });
     });
 
     return { success: true, message: "Satış ve puan artışı kaydedildi." };
@@ -176,6 +186,16 @@ export async function undoLastActionByStaffAction() {
             data: { totalPoints: { decrement: Math.round(p.cashbackEarned) } },
           });
         }
+
+        // 🏆 Kullanıcının toplam kazancını düşür (rozet sistemi için)
+        await tx.user.update({
+          where: { id: p.userId },
+          data: {
+            totalEarnings: {
+              decrement: p.cashbackEarned
+            }
+          }
+        });
 
         await tx.purchase.delete({ where: { id: choice!.id } });
       });

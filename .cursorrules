@@ -1,0 +1,36 @@
+# === İlgisiz klasörleri hariç tut ===
+ignore:
+  - node_modules/**
+  - .next/**
+  - dist/**
+  - build/**
+  - coverage/**
+  - .turbo/**
+  - .vercel/**
+  - .git/**
+  - .vscode/**
+  - .idea/**
+  - tmp/**
+  - logs/**
+  - **/*.log
+
+# === Büyük dosyaları hariç tut ===
+  - public/**/*.png
+  - public/**/*.jpg
+  - public/**/*.jpeg
+  - public/**/*.gif
+  - public/**/*.webp
+  - public/**/*.svg
+  - public/**/*.ico
+  - **/*.mp4
+  - **/*.mp3
+
+# === Derlenmiş dosyaları hariç tut ===
+  - **/*.lock
+  - **/*.db
+  - **/*.sqlite
+  - **/*.zip
+  - **/*.tar
+  - **/*.gz
+
+

@@ -29,6 +29,8 @@ export async function addPurchaseAction(
   try {
     const staffId = await getCurrentStaffId();
     await prisma.$transaction(async (tx) => {
+      let totalCashbackEarned = 0;
+      
       for (const item of items) {
         await tx.purchase.create({
           data: {
@@ -42,7 +44,19 @@ export async function addPurchaseAction(
             createdByStaffId: staffId ?? undefined,
           },
         });
+        
+        totalCashbackEarned += item.cashbackEarned;
       }
+
+      // 🏆 Kullanıcının toplam kazancını güncelle (rozet sistemi için)
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          totalEarnings: {
+            increment: totalCashbackEarned
+          }
+        }
+      });
     });
 
     return { success: true, message: "Satın alma kaydedildi" };

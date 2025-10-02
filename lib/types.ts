@@ -6,6 +6,39 @@ export type ActionResponse = {
 };
 
 /**
+ * Müşteri rozet seviyeleri
+ */
+export enum BadgeLevel {
+  BRONZE = "BRONZE",
+  SILVER = "SILVER", 
+  GOLD = "GOLD",
+  PLATINUM = "PLATINUM"
+}
+
+/**
+ * Rozet bilgileri
+ */
+export type Badge = {
+  level: BadgeLevel;
+  name: string;
+  minAmount: number;
+  maxAmount: number | null;
+  color: string;
+  bgColor: string;
+  icon: string;
+};
+
+/**
+ * Rozet hesaplama sonucu
+ */
+export type UserBadge = {
+  currentBadge: Badge;
+  totalEarnings: number;
+  nextBadge: Badge | null;
+  progressToNext: number; // 0-100 arası yüzde
+};
+
+/**
  * Şirket müşterisi (artık totalPoints yerine toplam cashback)
  */
 export type CompanyCustomer = {
@@ -101,6 +134,7 @@ export type MostActiveCompany = {
  */
 export type UserDashboardData = {
   totalCashback: number;
+  totalEarnings: number; // 🏆 Rozet sistemi için toplam kazanç
   companyCashback: {
     companyId: string;
     companyName: string;

@@ -8,6 +8,7 @@ import { getUserDashboard } from "@/actions/userDashboard";
 import { UserDashboardData } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/helpers"; // ✅ currency helper import
+import { calculateUserBadge, getBadgeStyles } from "@/lib/badge";
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -39,6 +40,10 @@ const UserDashboard = () => {
     );
   }
 
+  // Rozet hesaplama (totalEarnings üzerinden)
+  const userBadge = calculateUserBadge(data.totalEarnings);
+  const badgeStyles = getBadgeStyles(userBadge.currentBadge);
+
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
       {/* Başlık */}
@@ -52,8 +57,39 @@ const UserDashboard = () => {
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Toplam Cashback Kartı */}
+        {/* Rozet ve Toplam Cashback Kartı */}
         <div className="col-span-1 bg-gray-800 rounded-xl p-6 shadow">
+          {/* Rozet Gösterimi */}
+          <div className={`${badgeStyles.gradient} rounded-lg p-4 mb-4 text-center`}>
+            <div className="text-3xl mb-2">{userBadge.currentBadge.icon}</div>
+            <h3 className="text-lg font-bold text-white">{userBadge.currentBadge.name} Üye</h3>
+            <p className="text-sm text-white/80">
+              {userBadge.nextBadge 
+                ? `${userBadge.nextBadge.name} seviyesine ${formatCurrency(userBadge.nextBadge.minAmount - data.totalEarnings)} kaldı`
+                : "En yüksek seviyedesiniz!"
+              }
+            </p>
+          </div>
+
+          {/* İlerleme Çubuğu */}
+          {userBadge.nextBadge && (
+            <div className="mb-4">
+              <div className="flex justify-between text-xs text-gray-400 mb-1">
+                <span>{userBadge.currentBadge.name}</span>
+                <span>{userBadge.nextBadge.name}</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div 
+                  className={`${badgeStyles.gradient} h-2 rounded-full transition-all duration-500`}
+                  style={{ width: `${userBadge.progressToNext}%` }}
+                ></div>
+              </div>
+              <p className="text-xs text-gray-400 mt-1 text-center">
+                %{userBadge.progressToNext} tamamlandı
+              </p>
+            </div>
+          )}
+
           <h2 className="text-xl font-semibold mb-2">💰 Toplam Para Puan</h2>
           <p className="text-4xl font-bold text-green-400">
             {formatCurrency(data.totalCashback)} {/* ✅ formatlı */}

@@ -6,6 +6,12 @@ import { UserDashboardData } from "@/lib/types";
 
 export async function getUserDashboard(userId: string): Promise<UserDashboardData> {
   try {
+    // Kullanıcı bilgilerini al (totalEarnings dahil)
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { totalEarnings: true }
+    });
+
     // Kazanılan toplam cashback
     const earnedAgg = await prisma.purchase.aggregate({
       where: { userId },
@@ -108,6 +114,7 @@ export async function getUserDashboard(userId: string): Promise<UserDashboardDat
 
     return {
       totalCashback,
+      totalEarnings: user?.totalEarnings ?? 0, // 🏆 Rozet sistemi için
       companyCashback,
       lastPurchases,
       campaigns,
@@ -116,6 +123,7 @@ export async function getUserDashboard(userId: string): Promise<UserDashboardDat
     console.error("getUserDashboard error:", err);
     return {
       totalCashback: 0,
+      totalEarnings: 0, // 🏆 Rozet sistemi için
       companyCashback: [],
       lastPurchases: [],
       campaigns: [],

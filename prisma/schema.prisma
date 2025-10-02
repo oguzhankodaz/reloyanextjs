@@ -17,6 +17,7 @@ model User {
   createdAt          DateTime            @default(now())
   password           String
   verified           Boolean             @default(false) // 👈 ekledik
+  totalEarnings      Float               @default(0) // 🏆 Rozet sistemi için toplam kazanç
   purchases          Purchase[]
   userPoints         UserPoints[]
   pointsUsages       PointsUsage[]
