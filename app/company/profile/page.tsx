@@ -15,7 +15,6 @@ export default function CompanyProfilePage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    address: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -44,7 +43,6 @@ export default function CompanyProfilePage() {
           setFormData({
             name: data.company.name || "",
             email: data.company.email || "",
-            address: data.company.address || "",
           });
         }
       })
@@ -80,14 +78,33 @@ export default function CompanyProfilePage() {
     setMessage(null);
 
     try {
-      // TODO: Company update API endpoint'i eklenecek
-      // Şimdilik mock response
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setMessage({
-        type: "success",
-        text: "Şirket bilgileriniz başarıyla güncellendi!",
+      const response = await fetch("/api/company/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name: formData.name,
+        }),
       });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setMessage({
+          type: "success",
+          text: "Şirket bilgileriniz başarıyla güncellendi!",
+        });
+        
+        // Context'i güncelle (sayfa yenilenmeden güncel bilgileri göstermek için)
+        window.location.reload();
+      } else {
+        setMessage({
+          type: "error",
+          text: data.error || "Bir hata oluştu. Lütfen tekrar deneyin.",
+        });
+      }
     } catch (error) {
       console.error("Update error:", error);
       setMessage({
@@ -255,25 +272,6 @@ export default function CompanyProfilePage() {
                 </p>
               </div>
 
-              {/* Address */}
-              <div>
-                <label
-                  htmlFor="address"
-                  className="block text-sm font-medium text-gray-300 mb-2"
-                >
-                  Adres
-                </label>
-                <textarea
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  rows={3}
-                  className="w-full px-4 py-2 bg-gray-900/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                  placeholder="Şirket adresiniz"
-                />
-              </div>
-
               {/* Submit Button */}
               <button
                 type="submit"
@@ -342,7 +340,7 @@ export default function CompanyProfilePage() {
             </div>
 
             {/* Password Change */}
-            <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
+            {/* <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
                 <svg
                   className="w-6 h-6 mr-2 text-yellow-400"
@@ -369,7 +367,7 @@ export default function CompanyProfilePage() {
               >
                 Yakında Aktif Olacak
               </button>
-            </div>
+            </div> */}
 
             {/* Data & Privacy */}
             <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
