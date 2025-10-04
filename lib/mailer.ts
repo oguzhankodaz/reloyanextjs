@@ -1,7 +1,7 @@
 /** @format */
 // Bu util dosyası sadece sunucuda kullanılmalı:
 import "server-only";
-import sgMail, { MailDataRequired } from "@sendgrid/mail";
+import nodemailer from "nodemailer";
 
 type SendVerificationResult = {
   success: boolean;
@@ -9,15 +9,17 @@ type SendVerificationResult = {
   error?: string;
 };
 
-// Type-safe header okuma yardımcıları
-function getHeader(res: unknown, name: string): string | undefined {
-  // @sendgrid/mail send() -> [ClientResponse, any]
-  // ClientResponse.headers Node tarzı olabilir: Record<string, string | string[]>
-  const headers =
-    (res as { headers?: Record<string, unknown> } | undefined)?.headers;
-  const raw = headers?.[name];
-  if (!raw) return undefined;
-  return Array.isArray(raw) ? raw[0] : (raw as string);
+// Amazon SES transporter oluşturma
+function createTransporter() {
+  return nodemailer.createTransport({
+    host: process.env.EMAIL_HOST || 'email-smtp.us-east-1.amazonaws.com',
+    port: parseInt(process.env.EMAIL_PORT || '587'),
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
 }
 
 function errorToMessage(err: unknown): string {
@@ -36,23 +38,25 @@ export async function sendPasswordResetEmail(
   type: "user" | "company"
 ): Promise<SendVerificationResult> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  const apiKey = process.env.SENDGRID_API_KEY;
-  const from = process.env.SENDGRID_FROM;
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+  const from = process.env.EMAIL_FROM;
 
-  if (!apiKey || !from || !appUrl) {
-    console.error("❌ SendGrid config missing", {
-      hasApiKey: !!apiKey,
+  if (!emailUser || !emailPass || !from || !appUrl) {
+    console.error("❌ Amazon SES config missing", {
+      hasEmailUser: !!emailUser,
+      hasEmailPass: !!emailPass,
       hasFrom: !!from,
       hasAppUrl: !!appUrl,
     });
-    return { success: false, error: "SendGrid configuration missing" };
+    return { success: false, error: "Amazon SES configuration missing" };
   }
 
   const resetUrl = type === "user" 
     ? `${appUrl}/reset-password?token=${token}`
     : `${appUrl}/company/reset-password?token=${token}`;
   
-  sgMail.setApiKey(apiKey);
+  const transporter = createTransporter();
 
   const html = `
   <div style="font-family: Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:auto; border:1px solid #e5e5e5; border-radius:8px; padding:24px;">
@@ -75,26 +79,19 @@ export async function sendPasswordResetEmail(
     </p>
   </div>`;
 
-  const msg: MailDataRequired = {
+  const mailOptions = {
+    from: `"ReloYa" <${from}>`,
     to,
-    from: { email: from, name: "ReloYa" },
     subject: "Şifre Sıfırlama - ReloYa",
     html,
-    trackingSettings: {
-      clickTracking: { enable: false, enableText: false },
-      openTracking: { enable: false },
-      subscriptionTracking: { enable: false },
-    },
   };
 
   try {
-    const [res] = await sgMail.send(msg);
-    const messageId =
-      getHeader(res, "x-message-id") || getHeader(res, "x-sendgrid-message-id");
-    return { success: true, messageId };
+    const info = await transporter.sendMail(mailOptions);
+    return { success: true, messageId: info.messageId };
   } catch (e: unknown) {
     const message = errorToMessage(e);
-    console.error("❌ SendGrid send error:", message);
+    console.error("❌ Amazon SES send error:", message);
     return { success: false, error: message };
   }
 }
@@ -105,20 +102,22 @@ export async function sendVerificationEmail(
   type: "user" | "company"
 ): Promise<SendVerificationResult> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  const apiKey = process.env.SENDGRID_API_KEY;
-  const from = process.env.SENDGRID_FROM;
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+  const from = process.env.EMAIL_FROM;
 
-  if (!apiKey || !from || !appUrl) {
-    console.error("❌ SendGrid config missing", {
-      hasApiKey: !!apiKey,
+  if (!emailUser || !emailPass || !from || !appUrl) {
+    console.error("❌ Amazon SES config missing", {
+      hasEmailUser: !!emailUser,
+      hasEmailPass: !!emailPass,
       hasFrom: !!from,
       hasAppUrl: !!appUrl,
     });
-    return { success: false, error: "SendGrid configuration missing" };
+    return { success: false, error: "Amazon SES configuration missing" };
   }
 
   const verifyUrl = `${appUrl}/api/verify?token=${token}&type=${type}`;
-  sgMail.setApiKey(apiKey);
+  const transporter = createTransporter();
 
   // Doğrulama e-postası: izleme kapalı → daha hızlı/temiz teslim
   const html = `
@@ -141,26 +140,19 @@ export async function sendVerificationEmail(
     </p>
   </div>`;
 
-  const msg: MailDataRequired = {
+  const mailOptions = {
+    from: `"ReloYa" <${from}>`,
     to,
-    from: { email: from, name: "ReloYa" },
     subject: "Hesabınızı Doğrulayın - ReloYa",
     html,
-    trackingSettings: {
-      clickTracking: { enable: false, enableText: false },
-      openTracking: { enable: false },
-      subscriptionTracking: { enable: false },
-    },
   };
 
   try {
-    const [res] = await sgMail.send(msg);
-    const messageId =
-      getHeader(res, "x-message-id") || getHeader(res, "x-sendgrid-message-id");
-    return { success: true, messageId };
+    const info = await transporter.sendMail(mailOptions);
+    return { success: true, messageId: info.messageId };
   } catch (e: unknown) {
     const message = errorToMessage(e);
-    console.error("❌ SendGrid send error:", message);
+    console.error("❌ Amazon SES send error:", message);
     return { success: false, error: message };
   }
 }
