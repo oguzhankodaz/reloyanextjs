@@ -103,22 +103,12 @@ export default function HomePage() {
       {/* Mobile-Optimized Header */}
       <header className="w-full px-4 sm:px-6 py-4 flex justify-between items-center">
         <div className="flex items-center">
-          {/* Mobile Logo */}
-          <Image
-            src="/logo_xs_white.webp"
-            alt="Reloya Logo"
-            width={80}
-            height={30}
-            className="h-6 w-auto sm:hidden"
-            priority
-          />
-          {/* Desktop Logo */}
           <Image
             src="/logo_xl_white.webp"
             alt="Reloya Logo"
             width={120}
             height={40}
-            className="h-8 w-auto hidden sm:block"
+            className="h-8 w-auto"
             priority
           />
         </div>
@@ -164,24 +154,25 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="text-center px-6 py-12">
-        <h1 className="text-5xl md:text-6xl font-extrabold mb-6 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+      <section className="text-center px-4 sm:px-6 py-8 sm:py-12">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 sm:mb-6 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent leading-tight">
           Reloya ile Kazanmaya Başla
         </h1>
-        <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-8">
+        <p className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-6 sm:mb-8 px-2">
           <span className="font-semibold text-white">
             Her yerde, her zaman yanınızda
           </span>
-          . <br />
+          <br className="hidden sm:block" />
+          <span className="sm:hidden"> </span>
           Harcamalarınız boşa gitmesin, kazanca dönüşsün. 🎉
         </p>
 
         {/* CTA Button */}
-        <div className="mb-12">
+        <div className="mb-8 sm:mb-12">
           <button
             onClick={() => handleNavigate("/register")}
             disabled={navigating === "/register"}
-            className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-lg font-semibold rounded-lg hover:from-blue-600 hover:to-purple-700 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2 mx-auto shadow-lg hover:shadow-xl"
+            className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-base sm:text-lg font-semibold rounded-lg hover:from-blue-600 hover:to-purple-700 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2 mx-auto shadow-lg hover:shadow-xl w-full max-w-xs sm:w-auto sm:max-w-none"
           >
             {navigating === "/register" ? (
               <>
