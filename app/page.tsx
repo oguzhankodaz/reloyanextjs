@@ -231,7 +231,7 @@ export default function HomePage() {
             Fiyatlandırma Planları
           </h2>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            İhtiyacınıza uygun planı seçin ve Reloya'nın tüm avantajlarından yararlanın
+            İhtiyacınıza uygun planı seçin ve Reloya&apos;nın tüm avantajlarından yararlanın
           </p>
         </div>
 
