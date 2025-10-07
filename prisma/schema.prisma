@@ -8,137 +8,124 @@ datasource db {
 }
 
 model User {
-  id                 String              @id @default(uuid())
-  name               String
-  surname            String?
-  email              String              @unique
-  phone              String?             @unique
-  qrCode             String              @unique
-  createdAt          DateTime            @default(now())
-  password           String
-  verified           Boolean             @default(false) // 👈 ekledik
-  totalEarnings      Float               @default(0) // 🏆 Rozet sistemi için toplam kazanç
-  purchases          Purchase[]
-  userPoints         UserPoints[]
-  pointsUsages       PointsUsage[]
-  verificationTokens   VerificationToken[]   // 👈 ilişki
-  passwordResetTokens  PasswordResetToken[]  // Şifre sıfırlama
-  consents             UserConsent[]         // KVKK rıza kayıtları
-  dsarRequests         DsarRequest[]         // KVKK veri talepleri
+  id                  String               @id @default(uuid())
+  name                String
+  surname             String?
+  email               String               @unique
+  phone               String?              @unique
+  qrCode              String               @unique
+  createdAt           DateTime             @default(now())
+  password            String
+  verified            Boolean              @default(false)
+  totalEarnings       Float                @default(0)
+  dsarRequests        DsarRequest[]
+  passwordResetTokens PasswordResetToken[]
+  pointsUsages        PointsUsage[]
+  purchases           Purchase[]
+  consents            UserConsent[]
+  userPoints          UserPoints[]
+  verificationTokens  VerificationToken[]
 }
 
 model Company {
-  id                 String   @id @default(uuid())
-  name               String
-  email              String   @unique
-  password           String
-  address            String?
-  cashbackPercentage Float    @default(3) // Varsayılan %3
-  createdAt          DateTime @default(now())
-  categories         Category[]
-  products           Product[]
-  purchases          Purchase[]
-  userPoints         UserPoints[]
-  pointsUsages       PointsUsage[]
-  campaigns              Campaign[]
-  verified               Boolean                       @default(false)
-  verificationTokens     CompanyVerificationToken[]
-  passwordResetTokens    CompanyPasswordResetToken[]   // Şifre sıfırlama
-  staff                  CompanyStaff[]
+  id                  String                      @id @default(uuid())
+  name                String
+  address             String?
+  createdAt           DateTime                    @default(now())
+  email               String                      @unique
+  password            String
+  verified            Boolean                     @default(false)
+  cashbackPercentage  Float                       @default(3)
+  campaigns           Campaign[]
+  categories          Category[]
+  passwordResetTokens CompanyPasswordResetToken[]
+  staff               CompanyStaff[]
+  verificationTokens  CompanyVerificationToken[]
+  pointsUsages        PointsUsage[]
+  products            Product[]
+  purchases           Purchase[]
+  userPoints          UserPoints[]
 }
 
 model CompanyStaff {
-  id        String  @id @default(uuid())
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId String
-  name     String
-  email    String  @unique
-  password String
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-
-  purchases    Purchase[]
+  id           String        @id @default(uuid())
+  companyId    String
+  name         String
+  email        String        @unique
+  password     String
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   pointsUsages PointsUsage[]
+  purchases    Purchase[]
 }
 
 model Category {
-  id   Int    @id @default(autoincrement())
-  name String
-
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  id        Int       @id @default(autoincrement())
+  name      String
   companyId String
-
-  products Product[]
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  products  Product[]
 }
 
 model Product {
-  id        Int      @id @default(autoincrement())
-  name      String
-  price     Float
-  cashback  Float    @default(0) // ✅ artık TL iade alanı
-  createdAt DateTime @default(now())
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId String
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  categoryId Int?
+  id           Int           @id @default(autoincrement())
+  name         String
+  price        Float
+  createdAt    DateTime      @default(now())
+  companyId    String
+  categoryId   Int?
+  cashback     Float         @default(0)
+  pointsUsages PointsUsage[]
+  category     Category?     @relation(fields: [categoryId], references: [id])
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   purchases    Purchase[]
-  pointsUsages PointsUsage[] // ✅ tekrar eklendi
 }
 
 /// Satın almalar
 model Purchase {
-  id             Int      @id @default(autoincrement())
-  quantity       Int      @default(1)
-  totalPrice     Float
-  cashbackEarned Float    @default(0)
-  purchaseDate   DateTime @default(now())
-
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId String
-
-  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  productId Int?
-
-  // 👇 personeli izlemek için (opsiyonel, bozulma yok)
-  createdByStaff   CompanyStaff? @relation(fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  id               Int           @id @default(autoincrement())
+  quantity         Int           @default(1)
+  totalPrice       Float
+  purchaseDate     DateTime      @default(now())
+  userId           String
+  companyId        String
+  productId        Int?
+  cashbackEarned   Float         @default(0)
   createdByStaffId String?
+  company          Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdByStaff   CompanyStaff? @relation(fields: [createdByStaffId], references: [id])
+  product          Product?      @relation(fields: [productId], references: [id])
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 /// Müşteri puanları
 model UserPoints {
-  id          Int @id @default(autoincrement())
-  totalPoints Int @default(0)
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
-
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId String
+  id          Int     @id @default(autoincrement())
+  totalPoints Int     @default(0)
+  userId      String
+  companyId   String
+  company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, companyId])
 }
 
 /// Kullanılan puanlar
 model PointsUsage {
-  id       Int      @id @default(autoincrement())
-  amount   Int
-  quantity Int      @default(1)
-  price    Float    @default(0)
-  usedAt   DateTime @default(now())
-
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId String
-
-  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  productId Int?
-
-  // 👇 personeli izlemek için (opsiyonel, bozulma yok)
-  createdByStaff   CompanyStaff? @relation(fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  id               Int           @id @default(autoincrement())
+  amount           Float
+  usedAt           DateTime      @default(now())
+  userId           String
+  companyId        String
+  price            Float         @default(0)
+  productId        Int?
+  quantity         Int           @default(1)
   createdByStaffId String?
+  company          Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdByStaff   CompanyStaff? @relation(fields: [createdByStaffId], references: [id])
+  product          Product?      @relation(fields: [productId], references: [id])
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Campaign {
@@ -148,101 +135,92 @@ model Campaign {
   startDate DateTime
   endDate   DateTime
   createdAt DateTime @default(now())
-
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
-  id      Int      @id @default(autoincrement())
-  token   String   @unique
-  expires DateTime
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
-
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  expires   DateTime
+  userId    String
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PasswordResetToken {
   id        Int      @id @default(autoincrement())
   token     String   @unique
   expires   DateTime
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model CompanyPasswordResetToken {
   id        Int      @id @default(autoincrement())
   token     String   @unique
   expires   DateTime
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
   createdAt DateTime @default(now())
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 model CompanyVerificationToken {
   id        Int      @id @default(autoincrement())
   token     String   @unique
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
   expires   DateTime
   createdAt DateTime @default(now())
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 /// KVKK - Rıza yönetimi (Consent tracking)
 model UserConsent {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  
-  consentType String  // "marketing", "analytics", "profiling", etc.
-  granted     Boolean @default(false)
+  id          String    @id @default(uuid())
+  userId      String
+  consentType String
+  granted     Boolean   @default(false)
   grantedAt   DateTime?
   revokedAt   DateTime?
   ipAddress   String?
   userAgent   String?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, consentType])
 }
 
 /// KVKK - Veri talebi kayıtları (DSAR - Data Subject Access Requests)
 model DsarRequest {
-  id          String   @id @default(uuid())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid())
   userId      String
-  
-  requestType String   // "export", "delete", "rectify"
-  status      String   @default("pending") // "pending", "processing", "completed", "rejected"
-  details     String?  // JSON string with request details
-  response    String?  // Admin response or processing notes
-  
-  requestedAt DateTime @default(now())
+  requestType String
+  status      String    @default("pending")
+  details     String?
+  response    String?
+  requestedAt DateTime  @default(now())
   processedAt DateTime?
   completedAt DateTime?
-  
   ipAddress   String?
-  
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId, requestType])
   @@index([status])
 }
 
 /// Audit log için veri değişikliği kayıtları
 model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?  // Nullable - system actions may not have userId
-  action    String   // "user.update", "user.delete", "consent.grant", etc.
-  entityType String  // "User", "Purchase", "Consent", etc.
-  entityId  String
-  changes   String?  // JSON string with before/after values
-  ipAddress String?
-  userAgent String?
-  
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String
+  changes    String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
 
   @@index([userId])
   @@index([entityType, entityId])
