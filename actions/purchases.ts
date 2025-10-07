@@ -128,7 +128,23 @@ export async function spendCashbackAction(
     const currentCashback =
       (earnedAgg._sum.cashbackEarned ?? 0) - (spentAgg._sum.amount ?? 0);
 
-    if (currentCashback < amount) {
+    // Floating point precision sorununu çöz - her iki değeri de 2 ondalık basamağa yuvarla
+    const roundedCurrentCashback = Math.round(currentCashback * 100) / 100;
+    const roundedAmount = Math.round(amount * 100) / 100;
+
+    console.log("SpendCashbackAction Debug:", {
+      userId,
+      companyId,
+      amount,
+      earnedTotal: earnedAgg._sum.cashbackEarned ?? 0,
+      spentTotal: spentAgg._sum.amount ?? 0,
+      currentCashback,
+      roundedCurrentCashback,
+      roundedAmount,
+      isInsufficient: roundedCurrentCashback < roundedAmount
+    });
+
+    if (roundedCurrentCashback < roundedAmount) {
       return { success: false, message: "Yetersiz bakiye" };
     }
 

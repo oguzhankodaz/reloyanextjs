@@ -122,19 +122,41 @@ const UserDashboard = () => {
           <h2 className="text-lg sm:text-xl font-semibold mb-4">
             🏢 İşletmelere Göre Para Puanlarım
           </h2>
-          <div className="space-y-2 sm:space-y-3">
-            {data.companyCashback.map((c) => (
-              <div
-                key={c.companyId}
-                className="flex justify-between items-center border-b border-gray-700 pb-2"
-              >
-                <span className="text-sm sm:text-base">{c.companyName}</span>
-                <span className="font-semibold text-green-400 text-sm sm:text-base">
-                  {formatCurrency(c.cashback)} {/* ✅ formatlı */}
-                </span>
-              </div>
-            ))}
+          <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+            <div className="space-y-2 sm:space-y-3 pr-2">
+              {data.companyCashback
+                .sort((a, b) => b.cashback - a.cashback) // En yüksek puandan en düşüğe sırala
+                .map((c, index) => (
+                  <div
+                    key={c.companyId}
+                    className={`flex justify-between items-center p-3 rounded-lg transition-colors duration-200 ${
+                      index === 0 
+                        ? 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border border-yellow-500/30' 
+                        : 'bg-gray-700/50 hover:bg-gray-700/70'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      {index === 0 && (
+                        <span className="text-yellow-400 text-lg">👑</span>
+                      )}
+                      <span className="text-sm sm:text-base font-medium">
+                        {c.companyName}
+                      </span>
+                    </div>
+                    <span className={`font-semibold text-sm sm:text-base ${
+                      index === 0 ? 'text-yellow-400' : 'text-green-400'
+                    }`}>
+                      {formatCurrency(c.cashback)}
+                    </span>
+                  </div>
+                ))}
+            </div>
           </div>
+          {data.companyCashback.length === 0 && (
+            <p className="text-gray-400 text-center py-8">
+              Henüz işletmeden para puanı kazanmadınız.
+            </p>
+          )}
         </div>
       </div>
 

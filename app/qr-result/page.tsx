@@ -8,6 +8,7 @@ import CompanyNavbar from "@/components/company/Navbar/Navbar";
 import { UserInfoCard } from "@/components/UserInfoCard";
 import { Cart } from "@/components/Cart";
 import { ProductSelector } from "@/components/ProductSelector";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 import { useCompanyOrStaffCompanyId } from "@/hooks/useCompanyOrStaffCompanyId";
 import { useUserData } from "@/hooks/useUserData";
@@ -323,13 +324,19 @@ export default function QRResultPage() {
                     </p>
                   </div>
                 )}
-                <button
-                  onClick={handleGiveCashbackBySpend}
-                  disabled={saving || !totalSpendInput || parseFloat(totalSpendInput) <= 0}
-                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
-                >
-                  {saving ? "İşleniyor..." : "İade Ver"}
-                </button>
+                <ConfirmDialog
+                  trigger={
+                    <button
+                      disabled={saving || !totalSpendInput || parseFloat(totalSpendInput) <= 0}
+                      className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                    >
+                      {saving ? "İşleniyor..." : "İade Ver"}
+                    </button>
+                  }
+                  title="İade Verme Onayı"
+                  description={`${formatCurrency(cashbackPreview)} tutarında iade vermek istediğinizden emin misiniz?`}
+                  onConfirm={handleGiveCashbackBySpend}
+                />
               </div>
             </div>
 
@@ -378,20 +385,70 @@ export default function QRResultPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <button
-                    onClick={handleUseCashback}
-                    disabled={saving || !useCashbackInput || parseFloat(useCashbackInput) <= 0}
-                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
-                  >
-                    {saving ? "İşleniyor..." : "Para Puan Kullan"}
-                  </button>
-                  <button
-                    onClick={() => setUseCashbackInput((Math.round(totalCashback * 100) / 100).toString())}
-                    disabled={saving || totalCashback <= 0}
-                    className="w-full bg-blue-700 hover:bg-blue-800 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                  >
-                    💳 Tüm Bakiyeyi Kullan ({formatCurrency(totalCashback)})
-                  </button>
+                  <ConfirmDialog
+                    trigger={
+                      <button
+                        disabled={saving || !useCashbackInput || parseFloat(useCashbackInput) <= 0}
+                        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                      >
+                        {saving ? "İşleniyor..." : "Para Puan Kullan"}
+                      </button>
+                    }
+                    title="Para Puan Kullanma Onayı"
+                    description={`${formatCurrency(parseFloat(useCashbackInput || "0"))} tutarında para puan kullanmak istediğinizden emin misiniz?`}
+                    onConfirm={handleUseCashback}
+                  />
+                  <ConfirmDialog
+                    trigger={
+                      <button
+                        disabled={saving || totalCashback <= 0}
+                        className="w-full bg-blue-700 hover:bg-blue-800 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                      >
+                        💳 Tüm Bakiyeyi Kullan ({formatCurrency(totalCashback)})
+                      </button>
+                    }
+                    title="Tüm Bakiye Kullanma Onayı"
+                    description={`Tüm bakiyenizi (${formatCurrency(totalCashback)}) kullanmak istediğinizden emin misiniz?`}
+                    onConfirm={async () => {
+                      if (!userId || !companyId) return;
+                      const amount = Math.round(totalCashback * 100) / 100;
+                      console.log("Tüm bakiye kullanma - Debug:", {
+                        totalCashback,
+                        amount,
+                        userId,
+                        companyId
+                      });
+                      
+                      if (isNaN(amount) || amount <= 0) {
+                        toast({
+                          title: "Hatalı giriş",
+                          description: "Geçerli bir tutar girin.",
+                          variant: "error",
+                        });
+                        return;
+                      }
+                      setSaving(true);
+                      const res = await spendCashback(userId, companyId, amount);
+                      setSaving(false);
+                      if (res.success) {
+                        toast({
+                          title: "Bakiye kullanıldı",
+                          description: `-${formatCurrency(amount)} bakiye düşüldü ✅`,
+                          variant: "success",
+                        });
+                        setUseCashbackInput("");
+                        setTotalCashback(res.totalCashback ?? totalCashback);
+                        
+                        // Staff dashboard'a geri dön
+                        setTimeout(() => {
+                          router.push("/company/staff/dashboard");
+                        }, 1500);
+                      } else {
+                        console.error("Spend cashback error:", res);
+                        toast({ title: "Hata", description: res.message, variant: "error" });
+                      }
+                    }}
+                  />
                 </div>
               </div>
             </div>

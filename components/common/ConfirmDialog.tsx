@@ -18,18 +18,18 @@ export function ConfirmDialog({
       <AlertDialog.Trigger asChild>{trigger}</AlertDialog.Trigger>
       <AlertDialog.Portal>
         <AlertDialog.Overlay className="fixed inset-0 bg-black/50" />
-        <AlertDialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-          <AlertDialog.Title className="text-lg font-bold mb-2 text-gray-900">
+        <AlertDialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 p-6 rounded-lg shadow-lg max-w-md w-full z-50">
+          <AlertDialog.Title className="text-lg font-bold mb-2 text-white">
             {title}
           </AlertDialog.Title>
           {description && (
-            <AlertDialog.Description className="text-sm text-gray-600 mb-4">
+            <AlertDialog.Description className="text-sm text-gray-300 mb-4">
               {description}
             </AlertDialog.Description>
           )}
           <div className="flex justify-end gap-3">
             <AlertDialog.Cancel
-              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-gray-900 transition"
+              className="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 bg-gray-700 hover:bg-gray-600 hover:text-white transition"
             >
               İptal
             </AlertDialog.Cancel>

@@ -43,80 +43,130 @@ const CashbackPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-300">
-        ⏳ Para puanlar yükleniyor...
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 bg-gray-800 rounded-full flex items-center justify-center shadow-sm">
+            <Loader2 className="w-6 h-6 text-green-400 animate-spin" />
+          </div>
+          <h3 className="text-lg font-medium text-white mb-2">
+            Para puanlar yükleniyor
+          </h3>
+          <p className="text-gray-400">
+            Lütfen bekleyin...
+          </p>
+        </div>
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-500">
-        ❌ Para puanlar yüklenirken hata oluştu
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 bg-red-900/30 rounded-full flex items-center justify-center">
+            <span className="text-red-400 text-xl">⚠️</span>
+          </div>
+          <h3 className="text-lg font-medium text-white mb-2">
+            Bir hata oluştu
+          </h3>
+          <p className="text-gray-400">
+            Para puanlar yüklenirken bir sorun yaşandı
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-6 text-white">
-      {/* Sayfa Başlığı */}
-      <div className="max-w-xl mx-auto text-center mb-8">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-green-400 flex items-center justify-center gap-2">
-          <Banknote className="w-7 h-7" />
-          Kazandığınız Para Puanlar
-        </h1>
-        <p className="text-gray-400 text-sm md:text-base mt-2">
-          Aşağıda işletmelere göre kazandığınız para puanları görebilir ve
-          ürünleri görüntüleyebilirsiniz.
-        </p>
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Minimal Header */}
+      <div className="bg-gray-800 border-b border-gray-700">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-2">
+            <Banknote className="w-5 h-5 text-green-400" />
+            <h1 className="text-xl font-semibold text-white">
+              Para Puanlarım
+            </h1>
+          </div>
+        </div>
       </div>
 
-      {/* Kartlar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-4xl mx-auto">
+      {/* Compact Cards Container with Scroll */}
+      <div className="max-w-4xl mx-auto px-4 py-4">
         {!cashback || cashback.length === 0 ? (
-          <p className="text-center text-gray-400 col-span-full">
-            Henüz hiç para puanınız yok 🙁
-          </p>
-        ) : (
-          cashback.map((c) => (
-            <div
-              key={c.companyId}
-              className="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-lg hover:shadow-green-400/10 transition-all duration-200 flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <Building2 className="w-5 h-5 text-blue-400" />
-                  <h2 className="text-lg font-semibold text-white">
-                    {c.companyName}
-                  </h2>
-                </div>
-                <p className="text-green-400 text-2xl font-bold mb-1">
-                  {c.totalCashback.toFixed(2)} ₺
-                </p>
-                <p className="text-gray-400 text-sm">
-                  Bu işletmeden kazandığınız toplam para puan
-                </p>
-              </div>
-
-              <button
-                onClick={() => handleNavigate(c.companyId)}
-                disabled={navigating === c.companyId}
-                className="mt-4 inline-flex items-center gap-2 justify-center bg-green-400 text-black font-medium px-4 py-2 rounded-lg hover:bg-green-300 active:scale-95 transition-all text-sm disabled:opacity-70 disabled:cursor-wait"
-              >
-                {navigating === c.companyId ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Yükleniyor...
-                  </>
-                ) : (
-                  <>
-                    <Gift className="w-4 h-4" />
-                    Ürünleri Görüntüle
-                  </>
-                )}
-              </button>
+          <div className="text-center py-12">
+            <div className="w-12 h-12 mx-auto mb-3 bg-gray-800 rounded-full flex items-center justify-center">
+              <Banknote className="w-6 h-6 text-gray-400" />
             </div>
-          ))
+            <h3 className="text-base font-medium text-white mb-1">
+              Henüz para puanınız yok
+            </h3>
+            <p className="text-sm text-gray-400">
+              İşletmelerden alışveriş yaparak para puanı kazanmaya başlayın
+            </p>
+          </div>
+        ) : (
+          <div className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pr-2">
+              {cashback
+                .sort((a, b) => b.totalCashback - a.totalCashback)
+                .map((c, index) => (
+                  <div
+                    key={c.companyId}
+                    className={`group relative bg-gray-800 rounded-lg border transition-all duration-200 hover:border-gray-600 ${
+                      index === 0 
+                        ? 'border-yellow-500/50' 
+                        : 'border-gray-700'
+                    }`}
+                  >
+                    <div className="p-4 relative">
+                      {/* Badge for #1 - Top right corner */}
+                      {index === 0 && (
+                        <div className="absolute top-2 right-2">
+                          <div className="bg-yellow-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">
+                            👑
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Vertical Layout */}
+                      <div className="text-center">
+                        {/* Company Name */}
+                        <h3 className="text-base font-semibold text-white mb-2">
+                          {c.companyName}
+                        </h3>
+                        
+                        {/* Total Points */}
+                        <div className={`text-2xl font-bold mb-3 ${
+                          index === 0 
+                            ? 'text-yellow-400' 
+                            : 'text-green-400'
+                        }`}>
+                          {c.totalCashback.toFixed(2)} ₺
+                        </div>
+                        
+                        {/* Action Button - Icon Only */}
+                        <button
+                          onClick={() => handleNavigate(c.companyId)}
+                          disabled={navigating === c.companyId}
+                          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                            index === 0 
+                              ? 'bg-yellow-500 hover:bg-yellow-600 text-white' 
+                              : 'bg-green-500 hover:bg-green-600 text-white'
+                          }`}
+                        >
+                          {navigating === c.companyId ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Gift className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
         )}
       </div>
     </div>
