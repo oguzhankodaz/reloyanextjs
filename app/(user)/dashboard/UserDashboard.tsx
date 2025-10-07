@@ -95,13 +95,26 @@ const UserDashboard = () => {
             </div>
           )}
 
-          <h2 className="text-lg sm:text-xl font-semibold mb-2">💰 Toplam Para Puan</h2>
+          <h2 className="text-lg sm:text-xl font-semibold mb-2">💰 Mevcut Bakiye</h2>
           <p className="text-3xl sm:text-4xl font-bold text-green-400">
             {formatCurrency(data.totalCashback)} {/* ✅ formatlı */}
           </p>
           <p className="text-sm text-gray-400 mt-2">
             Biriken para puanlarınızı dilediğiniz zaman kullanabilirsiniz.
           </p>
+
+          {/* Toplam Kazanılan Para Puan */}
+          <div className="mt-6 pt-4 border-t border-gray-700">
+            <h3 className="text-base sm:text-lg font-semibold mb-2 text-yellow-400">
+              🏆 Toplam Kazanılan
+            </h3>
+            <p className="text-2xl sm:text-3xl font-bold text-yellow-400">
+              {formatCurrency(data.totalEarnings)}
+            </p>
+            <p className="text-xs sm:text-sm text-gray-400 mt-1">
+              Bugüne kadar kazandığınız toplam para puan
+            </p>
+          </div>
         </div>
 
         {/* İşletmelere Göre Cashback */}

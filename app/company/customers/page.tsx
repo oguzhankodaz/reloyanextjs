@@ -52,11 +52,12 @@ const CustomersPage = () => {
   };
 
   return (
-    <div className="min-h-screen p-6 text-gray flex flex-col">
+    <div className="min-h-screen flex flex-col"> {/* p-6 ve text-gray kaldırıldı, yapı aynı */}
       <CompanyNavbar />
       <BackButton />
 
-      <div className="p-6">
+      {/* 🔧 SAĞ/SOL SIKIŞMAYI GİDEREN SARMALAYICI */}
+      <div className="w-full mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         <h1 className="text-2xl font-bold mb-6 text-white">👥 Müşterilerim</h1>
 
         {isLoading ? (
@@ -70,11 +71,11 @@ const CustomersPage = () => {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-800 text-gray-200">
-                  <th className="px-4 py-3 text-left">Ad Soyad</th>
-                  <th className="px-4 py-3 text-center">
+                  <th className="px-4 sm:px-5 py-3 text-left">Ad Soyad</th>
+                  <th className="px-4 sm:px-5 py-3 text-center">
                     Toplam Nakit İade (₺)
                   </th>
-                  <th className="px-4 py-3 text-center">Detay</th>
+                  <th className="px-4 sm:px-5 py-3 text-center">Detay</th>
                 </tr>
               </thead>
               <tbody>
@@ -85,13 +86,13 @@ const CustomersPage = () => {
                         idx % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
                       } hover:bg-gray-700 transition`}
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-4 sm:px-5 py-3">
                         {c.user.name} {c.user.surname}
                       </td>
-                      <td className="px-4 py-3 text-center font-semibold text-green-400">
+                      <td className="px-4 sm:px-5 py-3 text-center font-semibold text-green-400">
                         {formatCurrency(c.totalCashback ?? 0)}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 sm:px-5 py-3 text-center">
                         <button
                           onClick={() => handleShowDetails(c.user.id)}
                           className="text-blue-400 hover:underline"
@@ -103,7 +104,7 @@ const CustomersPage = () => {
 
                     {openUserId === c.user.id && (
                       <tr>
-                        <td colSpan={4} className="bg-gray-700 px-4 py-3">
+                        <td colSpan={4} className="bg-gray-700 px-4 sm:px-5 py-3">
                           {loadingPurchases ? (
                             <p className="text-gray-300">Yükleniyor...</p>
                           ) : !purchases || purchases.length === 0 ? (
@@ -113,19 +114,19 @@ const CustomersPage = () => {
                               <table className="w-full text-sm border-collapse">
                                 <thead>
                                   <tr className="bg-gray-600 text-gray-100">
-                                    <th className="px-3 py-2 text-left">
+                                    <th className="px-3 sm:px-4 py-2 text-left">
                                       Ürün
                                     </th>
-                                    <th className="px-3 py-2 text-center">
+                                    <th className="px-3 sm:px-4 py-2 text-center">
                                       Adet
                                     </th>
-                                    <th className="px-3 py-2 text-center">
+                                    <th className="px-3 sm:px-4 py-2 text-center">
                                       Fiyat (₺)
                                     </th>
-                                    <th className="px-3 py-2 text-center">
+                                    <th className="px-3 sm:px-4 py-2 text-center">
                                       Nakit İade (₺)
                                     </th>
-                                    <th className="px-3 py-2 text-center">
+                                    <th className="px-3 sm:px-4 py-2 text-center">
                                       Tarih
                                     </th>
                                   </tr>
@@ -136,17 +137,17 @@ const CustomersPage = () => {
                                       key={`history-${c.user.id}-${h.id}-${index}`}
                                       className="bg-gray-800"
                                     >
-                                      <td className="px-3 py-2">{h.product}</td>
-                                      <td className="px-3 py-2 text-center">
+                                      <td className="px-3 sm:px-4 py-2">{h.product}</td>
+                                      <td className="px-3 sm:px-4 py-2 text-center">
                                         {h.quantity}
                                       </td>
-                                      <td className="px-3 py-2 text-center">
+                                      <td className="px-3 sm:px-4 py-2 text-center">
                                         {h.totalPrice > 0
                                           ? formatCurrency(h.totalPrice)
                                           : "-"}
                                       </td>
                                       <td
-                                        className={`px-3 py-2 text-center font-semibold ${
+                                        className={`px-3 sm:px-4 py-2 text-center font-semibold ${
                                           h.cashbackEarned > 0
                                             ? "text-green-400"
                                             : "text-red-400"
@@ -154,7 +155,7 @@ const CustomersPage = () => {
                                       >
                                         {formatCurrency(h.cashbackEarned)}
                                       </td>
-                                      <td className="px-3 py-2 text-center">
+                                      <td className="px-3 sm:px-4 py-2 text-center">
                                         {new Date(h.date).toLocaleDateString(
                                           "tr-TR"
                                         )}
