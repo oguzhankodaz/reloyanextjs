@@ -45,29 +45,29 @@ const UserDashboard = () => {
   const badgeStyles = getBadgeStyles(userBadge.currentBadge);
 
   return (
-    <div className="min-h-screen p-6 text-white">
+    <div className="min-h-screen px-3 sm:px-4 lg:px-6 py-4 sm:py-6 text-white">
       {/* Başlık */}
-      <h1 className="text-3xl font-bold mb-2">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-2">
         👋 Hoş Geldiniz,{" "}
         <span className="text-yellow-400">{user?.name ?? "İşletme"}</span>
       </h1>
-      <p className="text-gray-400 mb-6">
+      <p className="text-gray-400 mb-4 sm:mb-6 text-sm sm:text-base">
         Buradan bakiyenizi, işlemlerinizi ve avantajlarınızı takip
         edebilirsiniz.
       </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-start">
         {/* Rozet ve Toplam Cashback Kartı */}
-        <div className="lg:col-span-1 bg-gray-800 rounded-xl p-6 shadow w-full mx-auto">
+        <div className="lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow w-full mx-auto">
           {/* Rozet Gösterimi */}
           <div
-            className={`${badgeStyles.gradient} rounded-lg p-4 mb-4 text-center`}
+            className={`${badgeStyles.gradient} rounded-lg p-3 sm:p-4 mb-4 text-center`}
           >
-            <div className="text-3xl mb-2">{userBadge.currentBadge.icon}</div>
-            <h3 className="text-lg font-bold text-white">
+            <div className="text-2xl sm:text-3xl mb-2">{userBadge.currentBadge.icon}</div>
+            <h3 className="text-base sm:text-lg font-bold text-white">
               {userBadge.currentBadge.name} Üye
             </h3>
-            <p className="text-sm text-white/80">
+            <p className="text-xs sm:text-sm text-white/80">
               {userBadge.nextBadge
                 ? `${userBadge.nextBadge.name} seviyesine ${formatCurrency(
                     userBadge.nextBadge.minAmount - data.totalEarnings
@@ -95,8 +95,8 @@ const UserDashboard = () => {
             </div>
           )}
 
-          <h2 className="text-xl font-semibold mb-2">💰 Toplam Para Puan</h2>
-          <p className="text-4xl font-bold text-green-400">
+          <h2 className="text-lg sm:text-xl font-semibold mb-2">💰 Toplam Para Puan</h2>
+          <p className="text-3xl sm:text-4xl font-bold text-green-400">
             {formatCurrency(data.totalCashback)} {/* ✅ formatlı */}
           </p>
           <p className="text-sm text-gray-400 mt-2">
@@ -105,18 +105,18 @@ const UserDashboard = () => {
         </div>
 
         {/* İşletmelere Göre Cashback */}
-        <div className="lg:col-span-2 bg-gray-800 rounded-xl p-6 shadow w-full mx-auto">
-          <h2 className="text-xl font-semibold mb-4">
+        <div className="lg:col-span-2 bg-gray-800 rounded-xl p-4 sm:p-6 shadow w-full mx-auto">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">
             🏢 İşletmelere Göre Para Puanlarım
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {data.companyCashback.map((c) => (
               <div
                 key={c.companyId}
-                className="flex justify-between border-b border-gray-700 pb-2"
+                className="flex justify-between items-center border-b border-gray-700 pb-2"
               >
-                <span>{c.companyName}</span>
-                <span className="font-semibold text-green-400">
+                <span className="text-sm sm:text-base">{c.companyName}</span>
+                <span className="font-semibold text-green-400 text-sm sm:text-base">
                   {formatCurrency(c.cashback)} {/* ✅ formatlı */}
                 </span>
               </div>
@@ -126,35 +126,35 @@ const UserDashboard = () => {
       </div>
 
       {/* Alt kısım: Son İşlemler & Kampanyalar */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-4 sm:mt-6">
         {/* Son İşlemler */}
         {/* Son İşlemler */}
-        <div className="bg-gray-800 rounded-xl p-6 shadow">
-          <h2 className="text-xl font-semibold mb-4">📜 Son İşlemler</h2>
-          <ul className="space-y-3 text-gray-300 text-sm">
+        <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">📜 Son İşlemler</h2>
+          <ul className="space-y-2 sm:space-y-3 text-gray-300 text-xs sm:text-sm">
             {data.lastPurchases.length === 0 ? (
               <li className="text-gray-400">Henüz işlem yok.</li>
             ) : (
               data.lastPurchases.map((p, i) => (
                 <li
                   key={`${p.id}-${i}`}
-                  className="flex justify-between border-b border-gray-700 pb-2"
+                  className="flex justify-between items-start border-b border-gray-700 pb-2"
                 >
                   <div>
                     {/* Ürün + fiyat */}
-                    <span>
+                    <span className="block">
                       {p.product}{" "}
                       <span className="text-yellow-400 font-bold">
                         {formatCurrency(p.totalPrice)}
                       </span>
                     </span>
                     {/* İşletme adı ayrı satırda */}
-                    <div className="text-blue-400 text-xs">{p.company}</div>
+                    <div className="text-blue-400 text-xs mt-1">{p.company}</div>
                   </div>
 
                   {/* Kazanılan / Harcanan Cashback */}
                   <span
-                    className={`${
+                    className={`text-xs sm:text-sm font-semibold ${
                       p.cashbackEarned > 0 ? "text-green-400" : "text-red-400"
                     }`}
                   >
@@ -169,17 +169,17 @@ const UserDashboard = () => {
         </div>
 
         {/* Kampanyalar */}
-        <div className="bg-gray-800 rounded-xl p-6 shadow">
-          <h2 className="text-xl font-semibold mb-4">🎁 Kampanyalar</h2>
-          <div className="space-y-3">
+        <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">🎁 Kampanyalar</h2>
+          <div className="space-y-2 sm:space-y-3">
             {data.campaigns.length === 0 ? (
-              <p className="text-gray-400 text-sm">Şu anda kampanya yok.</p>
+              <p className="text-gray-400 text-xs sm:text-sm">Şu anda kampanya yok.</p>
             ) : (
               data.campaigns.map((c) => (
                 <div key={c.id} className="p-3 bg-gray-700 rounded">
-                  <p className="font-semibold">{c.title}</p>
+                  <p className="font-semibold text-sm sm:text-base">{c.title}</p>
                   {c.detail && (
-                    <p className="text-sm text-gray-300">{c.detail}</p>
+                    <p className="text-xs sm:text-sm text-gray-300">{c.detail}</p>
                   )}
                   <p className="text-xs text-gray-400 mt-1">
                     {c.company.name} •{" "}

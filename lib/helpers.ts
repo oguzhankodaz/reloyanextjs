@@ -38,6 +38,13 @@ export const isValidName = (value: string) => {
   return re.test(value.trim());
 };
 
+export const isValidPhone = (phone: string) => {
+  if (!phone) return true; // Phone is optional, so empty is valid
+  // Turkish phone number format: +90 5XX XXX XX XX or 05XX XXX XX XX
+  const re = /^(\+90\s?)?(5\d{2}\s?\d{3}\s?\d{2}\s?\d{2}|0\d{3}\s?\d{3}\s?\d{2}\s?\d{2})$/;
+  return re.test(phone.trim());
+};
+
 export const isValidCompanyName = (value: string) => {
   if (!value) return false;
   // Allow letters/numbers basic punctuation & spaces; min 2 chars

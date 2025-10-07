@@ -19,11 +19,11 @@ const CompanyDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen p-6 text-white flex flex-col">
+    <div className="min-h-screen px-3 sm:px-4 lg:px-6 py-4 sm:py-6 text-white flex flex-col">
       <CompanyNavbar />
 
       {/* İşletme Adı */}
-      <section className="p-6">
+      <section className="px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
         <h1 className="text-2xl font-bold">
           👋 Hoş geldiniz,{" "}
           <span className="text-yellow-400">{company?.name ?? "İşletme"}</span>
@@ -37,12 +37,12 @@ const CompanyDashboard = () => {
       <span className="h-px w-full bg-gray-700 block"></span>
 
       {/* Ana Menü */}
-      <main className="flex-1 p-6 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <main className="flex-1 px-3 sm:px-4 lg:px-6 py-4 sm:py-6 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {/* Ürünler */}
         <button
           onClick={() => handleNavigate("/company/products")}
           disabled={navigating === "/company/products"}
-          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
+          className="cursor-pointer bg-white text-black rounded-xl p-4 sm:p-5 lg:p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
         >
           {navigating === "/company/products" ? (
             <>
@@ -61,7 +61,7 @@ const CompanyDashboard = () => {
         <button
           onClick={() => handleNavigate("/company/customers")}
           disabled={navigating === "/company/customers"}
-          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
+          className="cursor-pointer bg-white text-black rounded-xl p-4 sm:p-5 lg:p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
         >
           {navigating === "/company/customers" ? (
             <>
@@ -80,7 +80,7 @@ const CompanyDashboard = () => {
         <button
           onClick={() => handleNavigate("/company/reports")}
           disabled={navigating === "/company/reports"}
-          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
+          className="cursor-pointer bg-white text-black rounded-xl p-4 sm:p-5 lg:p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
         >
           {navigating === "/company/reports" ? (
             <>
@@ -99,7 +99,7 @@ const CompanyDashboard = () => {
         <button
           onClick={() => handleNavigate("/company/staff")}
           disabled={navigating === "/company/staff"}
-          className="cursor-pointer bg-white text-black rounded-xl p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
+          className="cursor-pointer bg-white text-black rounded-xl p-4 sm:p-5 lg:p-6 flex flex-col items-center shadow hover:scale-105 active:scale-95 transition-all w-full disabled:opacity-70 disabled:cursor-wait"
         >
           {navigating === "/company/staff" ? (
             <>
@@ -120,8 +120,8 @@ const CompanyDashboard = () => {
       <span className="h-px w-full bg-gray-700 block"></span>
 
       {/* Duyurular */}
-      <section className="p-6">
-        <div className="bg-gray-800 rounded-lg p-4 shadow">
+      <section className="px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
+        <div className="bg-gray-800 rounded-lg p-3 sm:p-4 shadow">
           <h2 className="text-lg font-semibold mb-2">📢 Şirket Duyuruları</h2>
           <ul className="space-y-2 text-gray-300 text-sm">
             <li>☕ Bu hafta kahve ürünlerinde çift puan kampanyası başladı!</li>

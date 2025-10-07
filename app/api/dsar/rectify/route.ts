@@ -10,7 +10,7 @@ import {
 } from "@/lib/rateLimit";
 import { NextRequest } from "next/server";
 import { LEGAL_CONFIG } from "@/legal/config";
-import { isValidEmail, isValidName } from "@/lib/helpers";
+import { isValidEmail, isValidName, isValidPhone } from "@/lib/helpers";
 
 /**
  * İstek gövdesi tipi
@@ -116,8 +116,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (phone !== undefined) {
-      // Eğer phone için format doğrulaması yapıyorsan burada ekleyebilirsin
-      changes.phone = phone;
+      if (!isValidPhone(phone)) {
+        return new Response(
+          JSON.stringify({ error: "Geçersiz telefon numarası formatı" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      changes.phone = phone || null; // Empty string becomes null
     }
 
     if (Object.keys(changes).length === 0) {

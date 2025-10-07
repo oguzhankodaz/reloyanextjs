@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { isValidPhone } from "@/lib/helpers";
 
 export default function EditProfilePage() {
   const { user, setUser } = useAuth();
@@ -63,6 +64,16 @@ export default function EditProfilePage() {
     setLoading(true);
     setMessage(null);
 
+    // Client-side validation
+    if (formData.phone && !isValidPhone(formData.phone)) {
+      setMessage({
+        type: "error",
+        text: "Geçersiz telefon numarası formatı. Örnek: +90 5XX XXX XX XX",
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
       // Email değişikliğine izin verilmiyor, sadece ad/soyad ve telefon
       const response = await fetch("/api/dsar/rectify", {
@@ -102,6 +113,7 @@ export default function EditProfilePage() {
         ...user,
         name: formData.name,
         surname: formData.surname,
+        phone: formData.phone,
       });
     } catch (error) {
       console.error("Update error:", error);
@@ -233,7 +245,7 @@ export default function EditProfilePage() {
               htmlFor="phone"
               className="block text-sm font-medium text-gray-300 mb-2"
             >
-              Telefon
+              Telefon (Opsiyonel)
             </label>
             <input
               type="tel"
@@ -244,6 +256,9 @@ export default function EditProfilePage() {
               className="w-full px-4 py-2 bg-gray-900/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               placeholder="+90 5XX XXX XX XX"
             />
+            <p className="mt-1 text-xs text-gray-500">
+              Türk telefon numarası formatında girin. Örnek: +90 555 123 45 67
+            </p>
           </div>
 
           {/* Info */}

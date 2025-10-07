@@ -6,6 +6,7 @@ interface UserPayload extends jwt.JwtPayload {
   email: string;
   name: string;
   surname: string;
+  phone?: string;
 }
 
 export async function getUserFromCookie(): Promise<UserPayload | null> {
@@ -20,6 +21,7 @@ export async function getUserFromCookie(): Promise<UserPayload | null> {
       email: decoded.email,
       name: decoded.name,
       surname: decoded.surname,
+      phone: decoded.phone,
     };
   } catch {
     return null;

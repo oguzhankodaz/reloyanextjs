@@ -23,14 +23,14 @@ export default function CompanyDashboardReport() {
 
   return (
     <div>
-      <div className="px-4 pt-2">
+      <div className="px-3 sm:px-4 lg:px-6 pt-2">
         <h2 className="text-xl font-bold text-white">📅 Günlük Özet</h2>
         <p className="text-sm text-gray-400 mb-3">
           Bugüne ait müşteri, satış ve iade hareketleri
         </p>
       </div>
-      <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4">
-        <div className="bg-gray-800 rounded-lg p-4 text-center shadow">
+      <section className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
+        <div className="bg-gray-800 rounded-lg p-3 sm:p-4 text-center shadow">
           <p className="text-sm text-gray-400">Müşteri</p>
           {isLoading ? (
             <div className="h-7 bg-gray-700 rounded animate-pulse mt-1"></div>
@@ -41,7 +41,7 @@ export default function CompanyDashboardReport() {
           )}
         </div>
 
-        <div className="bg-gray-800 rounded-lg p-4 text-center shadow">
+        <div className="bg-gray-800 rounded-lg p-3 sm:p-4 text-center shadow">
           <p className="text-sm text-gray-400">Satış (₺)</p>
           {isLoading ? (
             <div className="h-7 bg-gray-700 rounded animate-pulse mt-1"></div>
@@ -52,7 +52,7 @@ export default function CompanyDashboardReport() {
           )}
         </div>
 
-        <div className="bg-gray-800 rounded-lg p-4 text-center shadow">
+        <div className="bg-gray-800 rounded-lg p-3 sm:p-4 text-center shadow">
           <p className="text-sm text-gray-400">Nakit İade (₺)</p>
           {isLoading ? (
             <div className="h-7 bg-gray-700 rounded animate-pulse mt-1"></div>
@@ -63,7 +63,7 @@ export default function CompanyDashboardReport() {
           )}
         </div>
 
-        <div className="bg-gray-800 rounded-lg p-4 text-center shadow">
+        <div className="bg-gray-800 rounded-lg p-3 sm:p-4 text-center shadow">
           <p className="text-sm text-gray-400">Kullanılan Para Puan (₺)</p>
           {isLoading ? (
             <div className="h-7 bg-gray-700 rounded animate-pulse mt-1"></div>

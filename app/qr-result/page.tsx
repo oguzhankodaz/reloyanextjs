@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
 import { UserInfoCard } from "@/components/UserInfoCard";
-import { CashbackActions } from "@/components/CashbackActions";
 import { Cart } from "@/components/Cart";
 import { ProductSelector } from "@/components/ProductSelector";
 
@@ -50,6 +49,7 @@ export default function QRResultPage() {
   const [percentageInput, setPercentageInput] = useState("3");
   const [cashbackPreview, setCashbackPreview] = useState(0);
   const [useCashbackInput, setUseCashbackInput] = useState("");
+  const [selectedAction, setSelectedAction] = useState<"cashback" | "points">("cashback");
 
   // Şirket cashback yüzdesini yükle
   useEffect(() => {
@@ -57,24 +57,39 @@ export default function QRResultPage() {
       fetch("/api/company/settings")
         .then((res) => res.json())
         .then((data) => {
-          if (data.success && data.settings) {
+          console.log("Company settings response:", data);
+          if (data.success && data.settings && data.settings.cashbackPercentage) {
             setPercentageInput(data.settings.cashbackPercentage.toString());
+          } else {
+            // API'den veri gelmezse varsayılan değer
+            setPercentageInput("3");
           }
         })
-        .catch(() => {
+        .catch((error) => {
+          console.error("Company settings fetch error:", error);
           // Hata durumunda varsayılan değer kullanılır
+          setPercentageInput("3");
         });
+    } else {
+      // companyId yoksa varsayılan değer
+      setPercentageInput("3");
     }
   }, [companyId]);
 
   // cashback preview hesapla
   useEffect(() => {
     const spend = parseFloat(totalSpendInput);
-    const percent = parseFloat(percentageInput);
+    const percent = parseFloat(percentageInput || "3"); // Fallback to 3 if empty
+    
+    console.log("Cashback calculation:", { spend, percent, totalSpendInput, percentageInput });
+    
     if (!isNaN(spend) && spend > 0 && !isNaN(percent) && percent > 0) {
-      setCashbackPreview((spend * percent) / 100);
+      const calculated = Math.round(((spend * percent) / 100) * 100) / 100;
+      setCashbackPreview(calculated);
+      console.log("Calculated cashback:", calculated);
     } else {
       setCashbackPreview(0);
+      console.log("Cashback calculation failed:", { spend, percent, isNaNSpend: isNaN(spend), isNaNPercent: isNaN(percent) });
     }
   }, [totalSpendInput, percentageInput]);
 
@@ -122,7 +137,10 @@ export default function QRResultPage() {
   const handleGiveCashbackBySpend = async () => {
     if (!userId || !companyId) return;
     const spend = parseFloat(totalSpendInput);
-    const percent = parseFloat(percentageInput);
+    const percent = parseFloat(percentageInput || "3"); // Fallback to 3 if empty
+    
+    console.log("HandleGiveCashback:", { spend, percent, totalSpendInput, percentageInput });
+    
     if (isNaN(spend) || spend <= 0 || isNaN(percent) || percent <= 0) {
       toast({
         title: "Hatalı giriş",
@@ -131,7 +149,7 @@ export default function QRResultPage() {
       });
       return;
     }
-    const cashbackToGive = (spend * percent) / 100;
+    const cashbackToGive = Math.round(((spend * percent) / 100) * 100) / 100;
     setSaving(true);
     const res = await addPurchase(userId, companyId, [
       {
@@ -246,26 +264,139 @@ export default function QRResultPage() {
       <CompanyNavbar />
       <div className="flex flex-col items-center justify-start p-4 space-y-6">
         <UserInfoCard user={user} totalCashback={totalCashback} />
-        <CashbackActions
-          totalSpendInput={totalSpendInput}
-          setTotalSpendInput={setTotalSpendInput}
-          percentageInput={percentageInput}
-          cashbackPreview={cashbackPreview}
-          handleGiveCashbackBySpend={handleGiveCashbackBySpend}
-          useCashbackInput={useCashbackInput}
-          setUseCashbackInput={setUseCashbackInput}
-          handleUseCashback={handleUseCashback}
-          totalCashback={totalCashback}
-          saving={saving}
-        />
-        <ProductSelector products={products} onAdd={addToCart} />
-        <Cart
-          cartItems={cartItems}
-          products={products}
-          onRemove={removeFromCart}
-          onSave={handleSave}
-          saving={saving}
-        />
+        
+        {/* Main Action Selection */}
+        <div className="w-full max-w-md">
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => setSelectedAction("cashback")}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+                selectedAction === "cashback"
+                  ? "bg-green-600 text-white shadow-lg"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              }`}
+            >
+              💰 İade Ver
+            </button>
+            <button
+              onClick={() => setSelectedAction("points")}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+                selectedAction === "points"
+                  ? "bg-blue-600 text-white shadow-lg"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              }`}
+            >
+              🎯 Para Puan Kullan
+            </button>
+          </div>
+        </div>
+
+        {/* Cashback Section */}
+        {selectedAction === "cashback" && (
+          <div className="w-full max-w-md space-y-6">
+            {/* Total Cashback Give */}
+            <div className="bg-gray-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">
+                💰 Toplam Nakit İade Ver
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Harcama Tutarı (₺)
+                  </label>
+                  <input
+                    type="number"
+                    value={totalSpendInput}
+                    onChange={(e) => setTotalSpendInput(e.target.value)}
+                    className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="0.00"
+                  />
+                </div>
+             
+                {totalSpendInput && parseFloat(totalSpendInput) > 0 && (
+                  <div className="bg-green-900/20 border border-green-600 rounded-lg p-3">
+                    <p className="text-green-300 text-sm">
+                      <strong>İade Tutarı:</strong> {formatCurrency(cashbackPreview)}
+                    </p>
+                    <p className="text-green-400 text-xs mt-1">
+                      {parseFloat(percentageInput || "3")}% oranında iade verilecek
+                    </p>
+                  </div>
+                )}
+                <button
+                  onClick={handleGiveCashbackBySpend}
+                  disabled={saving || !totalSpendInput || parseFloat(totalSpendInput) <= 0}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                >
+                  {saving ? "İşleniyor..." : "İade Ver"}
+                </button>
+              </div>
+            </div>
+
+            {/* Product Search and Cart */}
+            <div className="bg-gray-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">
+                🛒 Ürün Ara & Sepetiniz
+              </h3>
+              <ProductSelector products={products} onAdd={addToCart} />
+            </div>
+
+            {/* Cart */}
+            <Cart
+              cartItems={cartItems}
+              products={products}
+              onRemove={removeFromCart}
+              onSave={handleSave}
+              saving={saving}
+            />
+          </div>
+        )}
+
+        {/* Points Usage Section */}
+        {selectedAction === "points" && (
+          <div className="w-full max-w-md">
+            <div className="bg-gray-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">
+                🎯 Para Puan Kullan
+              </h3>
+              <div className="space-y-4">
+                <div className="bg-blue-900/20 border border-blue-600 rounded-lg p-4">
+                  <p className="text-blue-300 text-sm">
+                    <strong>Mevcut Bakiye:</strong> {formatCurrency(totalCashback)}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Kullanılacak Tutar (₺)
+                  </label>
+                  <input
+                    type="number"
+                    value={useCashbackInput}
+                    onChange={(e) => setUseCashbackInput(e.target.value)}
+                    className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <button
+                    onClick={handleUseCashback}
+                    disabled={saving || !useCashbackInput || parseFloat(useCashbackInput) <= 0}
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                  >
+                    {saving ? "İşleniyor..." : "Para Puan Kullan"}
+                  </button>
+                  <button
+                    onClick={() => setUseCashbackInput((Math.round(totalCashback * 100) / 100).toString())}
+                    disabled={saving || totalCashback <= 0}
+                    className="w-full bg-blue-700 hover:bg-blue-800 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                  >
+                    💳 Tüm Bakiyeyi Kullan ({formatCurrency(totalCashback)})
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

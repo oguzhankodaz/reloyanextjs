@@ -9,6 +9,7 @@ type User = {
   email: string;
   name: string; // ✅ artık name de var
   surname?: string | null; // ✅ düzeltme
+  phone?: string | null; // ✅ telefon numarası
 } | null;
 
 const AuthContext = createContext<{ user: User; setUser: (u: User) => void }>({
@@ -26,10 +27,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .then((data) => {
         if (data?.user) {
           const cleanUser = {
-            userId: data.user.userId,
+            userId: data.user.id,
             email: data.user.email,
             name: data.user.name,
             surname: data.user.surname,
+            phone: data.user.phone,
           };
           setUser(cleanUser);
         } else {

@@ -220,41 +220,6 @@ export default function PrivacyPage() {
             </div>
           </div>
         </div>
-        {/* Export Data Card */}
-        <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
-          <div className="flex items-start mb-4">
-            <div className="w-12 h-12 bg-cyan-900/40 rounded-lg flex items-center justify-center mr-4">
-              <svg
-                className="w-6 h-6 text-cyan-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
-                />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h2 className="text-xl font-semibold mb-2">Verilerimi İndir</h2>
-              <p className="text-gray-400 text-sm mb-4">
-                Sistemde kayıtlı tüm kişisel verilerinizi JSON formatında
-                indirin. Profil bilgileri, satın almalar, puanlar ve rıza
-                kayıtlarını içerir.
-              </p>
-              <button
-                onClick={handleExportData}
-                disabled={loading}
-                className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded transition-colors"
-              >
-                {loading ? "İndiriliyor..." : "Verilerimi İndir"}
-              </button>
-            </div>
-          </div>
-        </div>
 
         {/* Delete Account Card */}
         <div className="bg-gray-800/40 backdrop-blur-sm border border-red-900/50 rounded-lg p-6">
@@ -376,6 +341,22 @@ export default function PrivacyPage() {
         <Link href="/cookies" className="hover:text-cyan-400">
           Çerez Politikası
         </Link>
+      </div>
+
+      {/* Subtle Download Data Section */}
+      <div className="mt-8 pt-6 border-t border-gray-800">
+        <div className="text-center">
+          <p className="text-xs text-gray-500 mb-3">
+            KVKK kapsamında verilerinizi indirebilirsiniz
+          </p>
+          <button
+            onClick={handleExportData}
+            disabled={loading}
+            className="text-xs text-gray-400 hover:text-gray-300 underline disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? "İndiriliyor..." : "Verilerimi İndir"}
+          </button>
+        </div>
       </div>
     </div>
   );
