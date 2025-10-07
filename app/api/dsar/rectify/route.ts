@@ -34,7 +34,7 @@ type UserChangeSet = Partial<{
   name: string;
   surname: string;
   email: string;
-  phone: string;
+  phone: string | null;
 }>;
 
 /**
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
           { status: 400, headers: { "Content-Type": "application/json" } }
         );
       }
-      changes.phone = phone || null; // Empty string becomes null
+      changes.phone = phone.trim() === "" ? null : phone; // Empty string becomes null
     }
 
     if (Object.keys(changes).length === 0) {
