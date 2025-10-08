@@ -5,6 +5,11 @@ import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 import { toTitleCase } from "@/lib/helpers";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
+import { startOfDay } from "date-fns";
+
+// Türkiye saat dilimi
+const TIMEZONE = "Europe/Istanbul";
 
 type ActivityItem =
   | {
@@ -63,9 +68,10 @@ export async function GET() {
       select: { id: true, name: true },
     });
 
-    // Bugünün başlangıcı (00:00) itibarıyla yapılan işlemler
-    const now = new Date();
-    const since = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Türkiye saatine göre bugünün başlangıcı (00:00) itibarıyla yapılan işlemler
+    const nowInTurkey = toZonedTime(new Date(), TIMEZONE);
+    const todayStartInTurkey = startOfDay(nowInTurkey);
+    const since = fromZonedTime(todayStartInTurkey, TIMEZONE);
 
     const purchases = await prisma.purchase.findMany({
       where: { companyId: staff.companyId, purchaseDate: { gte: since } },

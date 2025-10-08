@@ -6,6 +6,10 @@ import { Prisma } from "@prisma/client";
 
 import { ReportData, ReportFilter } from "@/lib/types";
 import { startOfDay, startOfMonth, startOfYear } from "date-fns";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
+
+// Türkiye saat dilimi
+const TIMEZONE = "Europe/Istanbul";
 
 export async function getCompanyStatsAction(companyId: string) {
   try {
@@ -14,11 +18,16 @@ export async function getCompanyStatsAction(companyId: string) {
       where: { companyId },
     });
 
+    // Türkiye saatine göre bugünün başlangıcı
+    const nowInTurkey = toZonedTime(new Date(), TIMEZONE);
+    const todayStartInTurkey = startOfDay(nowInTurkey);
+    const todayStartUTC = fromZonedTime(todayStartInTurkey, TIMEZONE);
+
     const todaySales = await prisma.purchase.aggregate({
       where: {
         companyId,
         purchaseDate: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)), // gün başı
+          gte: todayStartUTC, // Türkiye saatine göre gün başı
         },
       },
       _sum: { totalPrice: true },
@@ -51,26 +60,35 @@ export async function getReportData(
   filter: ReportFilter = "all"
 ): Promise<ReportData> {
   try {
-    const now = new Date();
+    // Türkiye saatine göre şu anki zaman
+    const nowUTC = new Date();
+    const nowInTurkey = toZonedTime(nowUTC, TIMEZONE);
+    
     let since: Date | null = null;
     let until: Date | null = null;
     let groupByFormat = "YYYY";
 
     if (filter === "day") {
       groupByFormat = "HH24"; // saat
-      since = startOfDay(now);
-      until = new Date(since);
-      until.setDate(until.getDate() + 1);
+      const dayStartInTurkey = startOfDay(nowInTurkey);
+      since = fromZonedTime(dayStartInTurkey, TIMEZONE);
+      const dayEndInTurkey = new Date(dayStartInTurkey);
+      dayEndInTurkey.setDate(dayEndInTurkey.getDate() + 1);
+      until = fromZonedTime(dayEndInTurkey, TIMEZONE);
     } else if (filter === "month") {
       groupByFormat = "YYYY-MM-DD"; // gün
-      since = startOfMonth(now);
-      until = new Date(since);
-      until.setMonth(until.getMonth() + 1);
+      const monthStartInTurkey = startOfMonth(nowInTurkey);
+      since = fromZonedTime(monthStartInTurkey, TIMEZONE);
+      const monthEndInTurkey = new Date(monthStartInTurkey);
+      monthEndInTurkey.setMonth(monthEndInTurkey.getMonth() + 1);
+      until = fromZonedTime(monthEndInTurkey, TIMEZONE);
     } else if (filter === "year") {
       groupByFormat = "YYYY-MM"; // ay
-      since = startOfYear(now);
-      until = new Date(since);
-      until.setFullYear(until.getFullYear() + 1);
+      const yearStartInTurkey = startOfYear(nowInTurkey);
+      since = fromZonedTime(yearStartInTurkey, TIMEZONE);
+      const yearEndInTurkey = new Date(yearStartInTurkey);
+      yearEndInTurkey.setFullYear(yearEndInTurkey.getFullYear() + 1);
+      until = fromZonedTime(yearEndInTurkey, TIMEZONE);
     } else {
       groupByFormat = "YYYY"; // yıl
     }
@@ -134,8 +152,9 @@ export async function getReportData(
     );
 
     // ---- 3) Grafik ------------------------------------------------------
+    // Veritabanı UTC'de, TO_CHAR'da Türkiye saatine çeviriyoruz
     const chartRaw = await prisma.$queryRaw<{ label: string; total: unknown }[]>`
-      SELECT TO_CHAR("purchaseDate", ${Prisma.sql`${groupByFormat}`}) as label, 
+      SELECT TO_CHAR("purchaseDate" AT TIME ZONE 'UTC' AT TIME ZONE ${TIMEZONE}, ${Prisma.sql`${groupByFormat}`}) as label, 
              SUM("cashbackEarned") as total
       FROM "Purchase"
       WHERE "companyId" = ${companyId}
@@ -162,7 +181,7 @@ export async function getReportData(
       });
       chartData = hours;
     } else if (filter === "month") {
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const daysInMonth = new Date(nowInTurkey.getFullYear(), nowInTurkey.getMonth() + 1, 0).getDate();
       const days = Array.from({ length: daysInMonth }, (_, i) => ({
         label: (i + 1).toString().padStart(2, "0"),
         cashback: 0,
