@@ -182,7 +182,7 @@ export default function HomePage() {
             ) : (
               <>
                 <Users className="w-5 h-5" />
-                Hemen Kayıt Ol
+                Hemen Ücretsiz Kayıt Ol
                 <ArrowRight className="w-5 h-5" />
               </>
             )}
@@ -219,7 +219,7 @@ export default function HomePage() {
       <section className="px-6 py-16">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Fiyatlandırma Planları
+            İşletmeler İçin Fiyatlandırma Planları
           </h2>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
             İhtiyacınıza uygun planı seçin ve Reloya&apos;nın tüm avantajlarından yararlanın

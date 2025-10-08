@@ -302,6 +302,14 @@ export default function TermsPage() {
                   {company.email}
                 </a>
                 <br />
+                <strong>Destek:</strong>{" "}
+                <a
+                  href={`mailto:${company.supportEmail}`}
+                  className="text-cyan-400 hover:underline"
+                >
+                  {company.supportEmail}
+                </a>
+                <br />
                 <strong>Telefon:</strong> {company.phone}
               </p>
             </div>

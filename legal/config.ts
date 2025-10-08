@@ -11,6 +11,7 @@ export const LEGAL_CONFIG = {
     shortName: "Asekod",
     address: "Adana, Çukurova",
     email: "info@asekod.com",
+    supportEmail: "support@reloya.com", // Destek e-posta adresi
     phone: "0534 731 29 91",
     mersisNo: "", // MERSIS numarası
     tradeRegisterNo: "", // Ticaret sicil no

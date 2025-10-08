@@ -72,6 +72,7 @@ export async function sendPasswordResetEmail(
       </a>
     </div>
     <p>Eğer bu işlemi siz başlatmadıysanız, bu e-postayı görmezden gelebilirsiniz ve şifreniz değişmeyecektir.</p>
+    <p style="margin-top:30px;">Yardıma mı ihtiyacınız var? <a href="mailto:support@reloya.com" style="color:#0891b2;">support@reloya.com</a></p>
     <hr style="margin:30px 0; border:none; border-top:1px solid #ddd;" />
     <p style="font-size:12px; color:#666; text-align:center;">
       Bu e-posta ReloYa sistemi tarafından otomatik olarak gönderilmiştir.<br/>
@@ -82,6 +83,7 @@ export async function sendPasswordResetEmail(
   const mailOptions = {
     from: `"ReloYa" <${from}>`,
     to,
+    replyTo: '"ReloYa Destek" <support@reloya.com>',
     subject: "Şifre Sıfırlama - ReloYa",
     html,
   };
@@ -133,6 +135,7 @@ export async function sendVerificationEmail(
       </a>
     </div>
     <p>Eğer bu işlemi siz başlatmadıysanız, bu e-postayı görmezden gelebilirsiniz.</p>
+    <p style="margin-top:30px;">Yardıma mı ihtiyacınız var? <a href="mailto:support@reloya.com" style="color:#0891b2;">support@reloya.com</a></p>
     <hr style="margin:30px 0; border:none; border-top:1px solid #ddd;" />
     <p style="font-size:12px; color:#666; text-align:center;">
       Bu e-posta ReloYa sistemi tarafından otomatik olarak gönderilmiştir.<br/>
@@ -143,6 +146,7 @@ export async function sendVerificationEmail(
   const mailOptions = {
     from: `"ReloYa" <${from}>`,
     to,
+    replyTo: '"ReloYa Destek" <support@reloya.com>',
     subject: "Hesabınızı Doğrulayın - ReloYa",
     html,
   };

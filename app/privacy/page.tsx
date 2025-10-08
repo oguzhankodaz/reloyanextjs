@@ -269,6 +269,14 @@ export default function PrivacyPage() {
                   {dpo.email}
                 </a>
                 <br />
+                <strong>Destek:</strong>{" "}
+                <a
+                  href={`mailto:${company.supportEmail}`}
+                  className="text-cyan-400 hover:underline"
+                >
+                  {company.supportEmail}
+                </a>
+                <br />
                 <strong>Telefon:</strong> {dpo.phone}
               </p>
             </div>

@@ -27,6 +27,22 @@ export default function Footer() {
           >
             Çerez Politikası
           </Link>
+          <Link
+            href="/contact"
+            className="hover:text-cyan-400 transition-colors"
+          >
+            İletişim
+          </Link>
+        </div>
+
+        {/* Support Email */}
+        <div className="text-center text-sm mb-3">
+          <a
+            href="mailto:support@reloya.com"
+            className="hover:text-cyan-400 transition-colors"
+          >
+            Destek: support@reloya.com
+          </a>
         </div>
 
         {/* Copyright */}
