@@ -79,7 +79,9 @@ const CustomersPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {customers.map((c, idx) => (
+                {[...customers]
+                  .sort((a, b) => (b.totalCashback ?? 0) - (a.totalCashback ?? 0))
+                  .map((c, idx) => (
                   <React.Fragment key={`customer-${c.user.id}`}>
                     <tr
                       className={`${
