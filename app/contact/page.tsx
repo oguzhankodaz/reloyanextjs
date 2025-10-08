@@ -32,7 +32,7 @@ export default function ContactPage() {
             Destek Merkezi
           </h2>
           <p className="text-gray-300 mb-4 max-w-2xl mx-auto">
-            Herhangi bir sorunuz veya destek talebiniz için bize e-posta gönderin. 
+            Herhangi bir sorunuz veya destek talebiniz için bize e-posta gönderin.
             Ekibimiz en kısa sürede size geri dönüş yapacaktır.
           </p>
           <a
@@ -104,7 +104,7 @@ export default function ContactPage() {
                 >
                   KVKK Aydınlatma Metni
                 </Link>
-                'ni inceleyebilirsiniz.
+                &apos;ni inceleyebilirsiniz.
               </p>
             </div>
 
