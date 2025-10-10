@@ -15,6 +15,14 @@ export async function GET() {
       );
     }
 
+    // Type guard sonrası userId'ye erişim güvenli
+    if (!("userId" in session.data)) {
+      return NextResponse.json(
+        { success: false, message: "Yetkisiz erişim" },
+        { status: 401 }
+      );
+    }
+
     const userId = session.data.userId;
 
     // Kullanıcının tüm onaylarını getir
@@ -42,6 +50,14 @@ export async function PUT(req: Request) {
     const session = await checkSession();
     
     if (!session || session.type !== "user") {
+      return NextResponse.json(
+        { success: false, message: "Yetkisiz erişim" },
+        { status: 401 }
+      );
+    }
+
+    // Type guard sonrası userId'ye erişim güvenli
+    if (!("userId" in session.data)) {
       return NextResponse.json(
         { success: false, message: "Yetkisiz erişim" },
         { status: 401 }
