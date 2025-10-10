@@ -12,7 +12,17 @@ import {
   isValidCompanyName,
 } from "@/lib/helpers";
 import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+
+// Helper: IP ve User-Agent bilgisini al
+async function getRequestMetadata() {
+  const headersList = await headers();
+  const ip = headersList.get("x-forwarded-for") || 
+             headersList.get("x-real-ip") || 
+             "unknown";
+  const userAgent = headersList.get("user-agent") || "unknown";
+  return { ip, userAgent };
+}
 
 // ————— USER LOGIN —————
 export async function loginAction(prevState: unknown, formData: FormData) {
@@ -111,6 +121,10 @@ export async function registerAction(prevState: unknown, formData: FormData) {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
+  
+  // IP ve User-Agent bilgisini al
+  const { ip, userAgent } = await getRequestMetadata();
+  const now = new Date();
 
   const user = await prisma.user.create({
     data: {
@@ -121,6 +135,28 @@ export async function registerAction(prevState: unknown, formData: FormData) {
       verified: false,
       qrCode: crypto.randomUUID(),
     },
+  });
+
+  // ✅ KVKK onaylarını kaydet
+  await prisma.userConsent.createMany({
+    data: [
+      {
+        userId: user.id,
+        consentType: "terms",
+        granted: true,
+        grantedAt: now,
+        ipAddress: ip,
+        userAgent: userAgent,
+      },
+      {
+        userId: user.id,
+        consentType: "privacy",
+        granted: true,
+        grantedAt: now,
+        ipAddress: ip,
+        userAgent: userAgent,
+      },
+    ],
   });
 
   const token = crypto.randomUUID();
@@ -256,6 +292,10 @@ export async function registerCompanyAction(
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
+  
+  // IP ve User-Agent bilgisini al
+  const { ip, userAgent } = await getRequestMetadata();
+  const now = new Date();
 
   const company = await prisma.company.create({
     data: {
@@ -264,6 +304,28 @@ export async function registerCompanyAction(
       password: hashedPassword,
       verified: false,
     },
+  });
+
+  // ✅ KVKK onaylarını kaydet
+  await prisma.companyConsent.createMany({
+    data: [
+      {
+        companyId: company.id,
+        consentType: "terms",
+        granted: true,
+        grantedAt: now,
+        ipAddress: ip,
+        userAgent: userAgent,
+      },
+      {
+        companyId: company.id,
+        consentType: "privacy",
+        granted: true,
+        grantedAt: now,
+        ipAddress: ip,
+        userAgent: userAgent,
+      },
+    ],
   });
 
   const token = crypto.randomUUID();

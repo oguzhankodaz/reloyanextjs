@@ -45,6 +45,7 @@ model Company {
   verificationTokens     CompanyVerificationToken[]
   passwordResetTokens    CompanyPasswordResetToken[]   // Şifre sıfırlama
   staff                  CompanyStaff[]
+  consents               CompanyConsent[]              // KVKK rıza kayıtları
 }
 
 model CompanyStaff {
@@ -207,6 +208,7 @@ model UserConsent {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([userId, consentType])
   @@index([userId, consentType])
 }
 
@@ -229,6 +231,26 @@ model DsarRequest {
   
   @@index([userId, requestType])
   @@index([status])
+}
+
+/// KVKK - Şirket rıza yönetimi
+model CompanyConsent {
+  id        String   @id @default(uuid())
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+  
+  consentType String  // "terms", "privacy", "marketing", etc.
+  granted     Boolean @default(false)
+  grantedAt   DateTime?
+  revokedAt   DateTime?
+  ipAddress   String?
+  userAgent   String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, consentType])
+  @@index([companyId, consentType])
 }
 
 /// Audit log için veri değişikliği kayıtları
