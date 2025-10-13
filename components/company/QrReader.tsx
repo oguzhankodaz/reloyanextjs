@@ -33,8 +33,12 @@ export default function QRReaderModal() {
             <h2 className="text-lg font-bold mb-3">📷 QR Kod Oku</h2>
 
             <Scanner
-              components={{}}
-              //sound={false}
+              components={{
+                audio: false,
+                finder: true,
+              }}
+              allowMultiple={false}
+              scanDelay={500}
               onScan={(data) => {
                 if (data && data[0]?.rawValue) {
                   const userId = data[0].rawValue;

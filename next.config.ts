@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
+            value: 'camera=(self), microphone=(), geolocation=()'
           },
           // Content Security Policy
           {
@@ -46,6 +46,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'", // Tailwind için gerekli
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
+              "media-src 'self' data: blob:",  // QR scanner için ses ve medya desteği
               "connect-src 'self' https:",
               "frame-ancestors 'self'",
               "base-uri 'self'",
