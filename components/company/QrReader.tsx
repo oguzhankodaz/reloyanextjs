@@ -34,7 +34,6 @@ export default function QRReaderModal() {
 
             <Scanner
               components={{
-                audio: false,
                 finder: true,
               }}
               allowMultiple={false}
