@@ -11,15 +11,25 @@ export async function GET() {
     const companyToken = store.get("cmp_sess_z71f8")?.value;
     const staffToken = store.get("stf_sess_91kd2")?.value;
 
+    // ✅ JWT_SECRET kontrolü
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error("❌ JWT_SECRET environment variable is not set");
+      return NextResponse.json(
+        { success: false, message: "Sunucu yapılandırma hatası" },
+        { status: 500 }
+      );
+    }
+
     let companyId: string | null = null;
 
     if (companyToken) {
-      const decoded = jwt.verify(companyToken, process.env.JWT_SECRET!) as {
+      const decoded = jwt.verify(companyToken, secret) as {
         companyId: string;
       };
       companyId = decoded.companyId;
     } else if (staffToken) {
-      const decoded = jwt.verify(staffToken, process.env.JWT_SECRET!) as {
+      const decoded = jwt.verify(staffToken, secret) as {
         companyId: string;
       };
       companyId = decoded.companyId;
@@ -74,7 +84,17 @@ export async function PUT(req: Request) {
       );
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+    // ✅ JWT_SECRET kontrolü
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error("❌ JWT_SECRET environment variable is not set");
+      return NextResponse.json(
+        { success: false, message: "Sunucu yapılandırma hatası" },
+        { status: 500 }
+      );
+    }
+
+    const decoded = jwt.verify(token, secret) as {
       companyId: string;
     };
 

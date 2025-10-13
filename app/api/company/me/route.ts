@@ -17,11 +17,15 @@ export async function GET() {
     return NextResponse.json({ company: null });
   }
 
+  // ✅ JWT_SECRET kontrolü
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error("❌ JWT_SECRET environment variable is not set");
+    return NextResponse.json({ company: null });
+  }
+
   try {
-    const decoded = jwt.verify(
-      cookie,
-      process.env.JWT_SECRET!
-    ) as CompanyPayload;
+    const decoded = jwt.verify(cookie, secret) as CompanyPayload;
 
     return NextResponse.json({
       company: {
@@ -43,11 +47,18 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // ✅ JWT_SECRET kontrolü
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error("❌ JWT_SECRET environment variable is not set");
+    return NextResponse.json(
+      { error: "Server configuration error" },
+      { status: 500 }
+    );
+  }
+
   try {
-    const decoded = jwt.verify(
-      cookie,
-      process.env.JWT_SECRET!
-    ) as CompanyPayload;
+    const decoded = jwt.verify(cookie, secret) as CompanyPayload;
 
     const { name } = await request.json();
 
@@ -71,7 +82,7 @@ export async function PUT(request: Request) {
         email: updatedCompany.email,
         name: updatedCompany.name,
       },
-      process.env.JWT_SECRET!,
+      secret,
       { expiresIn: "7d" }
     );
 

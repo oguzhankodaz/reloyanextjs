@@ -43,7 +43,15 @@ async function getStaffFromCookie() {
   const store = await cookies();
   const token = store.get("stf_sess_91kd2")?.value;
   if (!token) throw new Error("Unauthorized");
-  const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+  
+  // ✅ JWT_SECRET kontrolü
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error("❌ JWT_SECRET environment variable is not set");
+    throw new Error("Server configuration error");
+  }
+  
+  const decoded = jwt.verify(token, secret) as {
     type: string;
     staffId: string;
     companyId: string;

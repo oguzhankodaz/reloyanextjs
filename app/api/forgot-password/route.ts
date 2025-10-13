@@ -2,9 +2,18 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendPasswordResetEmail } from "@/lib/mailer";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   try {
+    // ✅ Rate limiting
+    const clientIp = getClientIp(req);
+    const rateLimit = checkRateLimit(`password-reset:${clientIp}`, "passwordReset");
+    
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.retryAfter || 60);
+    }
+
     const { email, type } = await req.json();
 
     if (!email || !type || (type !== "user" && type !== "company")) {

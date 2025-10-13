@@ -32,6 +32,16 @@ const RATE_LIMIT_CONFIG = {
     maxRequests: 100,
     windowMs: 60 * 1000, // 1 minute
   },
+  // Auth endpoints: 5 login attempts per 15 minutes
+  auth: {
+    maxRequests: 5,
+    windowMs: 15 * 60 * 1000, // 15 minutes
+  },
+  // Password reset: 3 requests per hour
+  passwordReset: {
+    maxRequests: 3,
+    windowMs: 60 * 60 * 1000, // 1 hour
+  },
 };
 
 /**
@@ -55,12 +65,12 @@ function cleanup() {
 /**
  * Rate limit check
  * @param identifier - Unique identifier (e.g., "ip:userId" or just "ip")
- * @param type - Rate limit type ('dsar' or 'api')
+ * @param type - Rate limit type ('dsar', 'api', 'auth', 'passwordReset')
  * @returns { allowed: boolean, remaining: number, resetAt: number }
  */
 export function checkRateLimit(
   identifier: string,
-  type: "dsar" | "api" = "api"
+  type: "dsar" | "api" | "auth" | "passwordReset" = "api"
 ): {
   allowed: boolean;
   remaining: number;

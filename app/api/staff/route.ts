@@ -20,8 +20,15 @@ export async function GET() {
     return NextResponse.json({ staff: [] }, { status: 200 });
   }
 
+  // ✅ JWT_SECRET kontrolü
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error("❌ JWT_SECRET environment variable is not set");
+    return NextResponse.json({ staff: [] }, { status: 500 });
+  }
+
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as CompanyPayload;
+    const decoded = jwt.verify(token, secret) as CompanyPayload;
     const companyId = decoded.companyId;
 
     const staff = await prisma.companyStaff.findMany({

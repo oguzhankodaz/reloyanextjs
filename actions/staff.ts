@@ -7,14 +7,21 @@ import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
-// ✅ Staff kimliği cookie’den JWT decode ederek alınıyor
+// ✅ Staff kimliği cookie'den JWT decode ederek alınıyor
 async function getStaffFromCookie() {
-  const store = await cookies(); // 👈 önce await et
+  const store = await cookies();
   const token = store.get("stf_sess_91kd2")?.value;
   if (!token) throw new Error("Yetkisiz (personel oturumu yok).");
 
+  // ✅ JWT_SECRET kontrolü
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error("❌ JWT_SECRET environment variable is not set");
+    throw new Error("Sunucu yapılandırma hatası");
+  }
+
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { type: string; staffId: string; companyId: string; email: string; name: string };
+    const decoded = jwt.verify(token, secret) as { type: string; staffId: string; companyId: string; email: string; name: string };
     if (decoded.type !== "staff") throw new Error("Geçersiz token tipi.");
     return decoded as {
       staffId: string;

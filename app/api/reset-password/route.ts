@@ -2,9 +2,19 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { isValidPassword } from "@/lib/helpers";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   try {
+    // ✅ Rate limiting
+    const clientIp = getClientIp(req);
+    const rateLimit = checkRateLimit(`reset-password:${clientIp}`, "auth");
+    
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.retryAfter || 60);
+    }
+
     const { token, password, type } = await req.json();
 
     if (!token || !password || !type || (type !== "user" && type !== "company")) {
@@ -14,10 +24,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Şifre validasyonu
-    if (password.length < 8) {
+    // ✅ Güçlü şifre validasyonu
+    if (!isValidPassword(password)) {
       return NextResponse.json(
-        { success: false, message: "Şifre en az 8 karakter olmalıdır" },
+        { success: false, message: "Şifre en az 8 karakter, harf ve rakam içermeli" },
         { status: 400 }
       );
     }

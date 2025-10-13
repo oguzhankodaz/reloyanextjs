@@ -10,7 +10,15 @@ async function getCurrentStaffId(): Promise<string | null> {
     const store = await cookies();
     const token = store.get("stf_sess_91kd2")?.value;
     if (!token) return null;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { type: string; staffId: string };
+    
+    // ✅ JWT_SECRET kontrolü
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error("❌ JWT_SECRET environment variable is not set");
+      return null;
+    }
+    
+    const decoded = jwt.verify(token, secret) as { type: string; staffId: string };
     if (decoded?.type !== "staff") return null;
     return decoded.staffId as string;
   } catch {

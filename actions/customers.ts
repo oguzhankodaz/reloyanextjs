@@ -2,9 +2,13 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { verifyCompanyOwnership } from "@/lib/authorization";
 
 export async function getCompanyCustomersAction(companyId: string) {
   try {
+    // ✅ Authorization kontrolü - Sadece kendi müşterilerini görebilir
+    await verifyCompanyOwnership(companyId);
+
     const users = await prisma.user.findMany({
       where: {
         purchases: { some: { companyId } },
@@ -43,6 +47,7 @@ export async function getCompanyCustomersAction(companyId: string) {
     return { success: true, customers };
   } catch (err) {
     console.error("getCompanyCustomersAction error:", err);
-    return { success: false, customers: [] };
+    const message = err instanceof Error ? err.message : "Müşteriler getirilemedi.";
+    return { success: false, customers: [], message };
   }
 }

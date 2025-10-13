@@ -9,12 +9,14 @@ import { UserDashboardData } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/helpers"; // ✅ currency helper import
 import { calculateUserBadge, getBadgeStyles } from "@/lib/badge";
+import LoadingState from "@/components/common/LoadingState";
+import ErrorState from "@/components/common/ErrorState";
 
 const UserDashboard = () => {
   const { user } = useAuth();
 
   // ✅ React Query ile data çekme
-  const { data, isLoading, isError } = useQuery<UserDashboardData | null>({
+  const { data, isLoading, isError, refetch } = useQuery<UserDashboardData | null>({
     queryKey: ["user-dashboard", user?.userId],
     queryFn: async () => {
       if (!user?.userId) return null;
@@ -25,18 +27,15 @@ const UserDashboard = () => {
   });
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-white">
-        Yükleniyor...
-      </div>
-    );
+    return <LoadingState message="Dashboard verileriniz yükleniyor..." />;
   }
 
   if (isError || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-500">
-        Veriler yüklenemedi ❌
-      </div>
+      <ErrorState
+        message="Dashboard verileri yüklenirken bir hata oluştu. Lütfen tekrar deneyin."
+        onRetry={() => refetch()}
+      />
     );
   }
 

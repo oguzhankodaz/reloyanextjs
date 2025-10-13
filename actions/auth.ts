@@ -54,6 +54,13 @@ export async function loginAction(prevState: unknown, formData: FormData) {
     };
   }
 
+  // ✅ JWT_SECRET kontrolü
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error("❌ JWT_SECRET environment variable is not set");
+    return { success: false, message: "Sunucu yapılandırma hatası", user: null };
+  }
+
   const token = jwt.sign(
     {
       type: "user",
@@ -62,7 +69,7 @@ export async function loginAction(prevState: unknown, formData: FormData) {
       name: user.name,
       surname: user.surname,
     },
-    process.env.JWT_SECRET!,
+    secret,
     { expiresIn: "7d" }
   );
 
@@ -220,6 +227,13 @@ export async function loginCompanyAction(prevState: unknown, formData: FormData)
     };
   }
 
+  // ✅ JWT_SECRET kontrolü
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error("❌ JWT_SECRET environment variable is not set");
+    return { success: false, message: "Sunucu yapılandırma hatası", company: null };
+  }
+
   const token = jwt.sign(
     {
       type: "company",
@@ -227,7 +241,7 @@ export async function loginCompanyAction(prevState: unknown, formData: FormData)
       email: company.email,
       name: company.name,
     },
-    process.env.JWT_SECRET!,
+    secret,
     { expiresIn: "7d" }
   );
 
@@ -369,17 +383,24 @@ export async function checkSession() {
   const companyToken = store.get("cmp_sess_z71f8")?.value;
   const staffToken = store.get("stf_sess_91kd2")?.value;
 
+  // ✅ JWT_SECRET kontrolü
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error("❌ JWT_SECRET environment variable is not set");
+    return null;
+  }
+
   try {
     if (userToken) {
-      const decoded = jwt.verify(userToken, process.env.JWT_SECRET!) as { type: string; userId: string; email: string; name: string; surname: string };
+      const decoded = jwt.verify(userToken, secret) as { type: string; userId: string; email: string; name: string; surname: string };
       return { type: "user", data: decoded };
     }
     if (companyToken) {
-      const decoded = jwt.verify(companyToken, process.env.JWT_SECRET!) as { type: string; companyId: string; email: string; name: string };
+      const decoded = jwt.verify(companyToken, secret) as { type: string; companyId: string; email: string; name: string };
       return { type: "company", data: decoded };
     }
     if (staffToken) {
-      const decoded = jwt.verify(staffToken, process.env.JWT_SECRET!) as { type: string; staffId: string; companyId: string; email: string; name: string };
+      const decoded = jwt.verify(staffToken, secret) as { type: string; staffId: string; companyId: string; email: string; name: string };
       return { type: "staff", data: decoded };
     }
   } catch {
@@ -459,6 +480,13 @@ export async function loginStaffAction(prevState: unknown, formData: FormData) {
     return { success: false, message: "Şifre hatalı.", staff: null };
   }
 
+  // ✅ JWT_SECRET kontrolü
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error("❌ JWT_SECRET environment variable is not set");
+    return { success: false, message: "Sunucu yapılandırma hatası", staff: null };
+  }
+
   const token = jwt.sign(
     {
       type: "staff",
@@ -467,7 +495,7 @@ export async function loginStaffAction(prevState: unknown, formData: FormData) {
       email: staff.email,
       name: staff.name,
     },
-    process.env.JWT_SECRET!,
+    secret,
     { expiresIn: "7d" }
   );
 

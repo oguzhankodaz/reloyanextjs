@@ -14,8 +14,15 @@ export async function getUserFromCookie(): Promise<UserPayload | null> {
   const cookie = store.get("usr_sess_x92h1")?.value;
   if (!cookie) return null;
 
+  // ✅ JWT_SECRET kontrolü
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error("❌ JWT_SECRET environment variable is not set");
+    return null;
+  }
+
   try {
-    const decoded = jwt.verify(cookie, process.env.JWT_SECRET!) as UserPayload;
+    const decoded = jwt.verify(cookie, secret) as UserPayload;
     return {
       userId: decoded.userId,
       email: decoded.email,

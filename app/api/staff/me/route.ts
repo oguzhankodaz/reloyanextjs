@@ -18,15 +18,22 @@ export async function GET() {
     return NextResponse.json({ staff: null });
   }
 
+  // ✅ JWT_SECRET kontrolü
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error("❌ JWT_SECRET environment variable is not set");
+    return NextResponse.json({ staff: null });
+  }
+
   try {
-    const decoded = jwt.verify(cookie, process.env.JWT_SECRET!) as StaffPayload;
+    const decoded = jwt.verify(cookie, secret) as StaffPayload;
 
     return NextResponse.json({
       staff: {
         staffId: decoded.staffId,
         email: decoded.email,
         name: decoded.name,
-        companyId: decoded.companyId, // 👈 burayı ekledik
+        companyId: decoded.companyId,
       },
     });
   } catch {
