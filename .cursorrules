@@ -25,12 +25,5 @@ ignore:
   - **/*.mp4
   - **/*.mp3
 
-# === Derlenmiş dosyaları hariç tut ===
-  - **/*.lock
-  - **/*.db
-  - **/*.sqlite
-  - **/*.zip
-  - **/*.tar
-  - **/*.gz
 
 

@@ -6,30 +6,29 @@ import prisma from "@/lib/prisma";
 
 const MERCHANT_KEY = process.env.PAYTR_MERCHANT_KEY;
 
-export async function POST(request: NextRequest) {
+// Ortak callback işleme fonksiyonu
+async function handleCallback(merchantOid: string | null, status: string | null, totalAmount: string | null, hash: string | null, request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const merchantOid = formData.get("merchant_oid");
-    const status = formData.get("status");
-    const totalAmount = formData.get("total_amount");
-    const hash = formData.get("hash");
+    console.log("PayTR Callback received:", { merchantOid, status, totalAmount, hash });
 
     if (!merchantOid || !status || !totalAmount || !hash) {
-      return NextResponse.json(
-        { success: false, error: "Eksik parametreler" },
-        { status: 400 }
-      );
+      console.error("Eksik parametreler:", { merchantOid, status, totalAmount, hash });
+      
+      // Fallback URL oluştur
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
+      return NextResponse.redirect(`${baseUrl}/company/profile?payment=error&reason=missing_params`);
     }
 
     // Hash doğrulama
     const hashString = `${merchantOid}${MERCHANT_KEY}${status}${totalAmount}`;
     const calculatedHash = crypto.createHmac("sha256", MERCHANT_KEY!).update(hashString).digest("base64");
 
+    console.log("Hash comparison:", { calculatedHash, receivedHash: hash });
+
     if (calculatedHash !== hash) {
-      return NextResponse.json(
-        { success: false, error: "Hash doğrulama hatası" },
-        { status: 400 }
-      );
+      console.error("Hash doğrulama hatası");
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
+      return NextResponse.redirect(`${baseUrl}/company/profile?payment=error&reason=hash_mismatch`);
     }
 
     // Ödeme başarılı mı kontrol et
@@ -41,13 +40,14 @@ export async function POST(request: NextRequest) {
         
         if (!companyIdMatch) {
           console.error("Company ID could not be extracted from order ID:", merchantOid);
-          return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/company/profile?payment=error&reason=invalid_order_id`);
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
+          return NextResponse.redirect(`${baseUrl}/company/profile?payment=error&reason=invalid_order_id`);
         }
 
         const companyId = companyIdMatch[1];
         const amount = parseFloat(totalAmount.toString()) / 100; // Kuruştan TL'ye çevir
         
-        // Plan türünü belirle (order ID'den veya amount'tan)
+        // Plan türünü belirle
         let planType = "monthly";
         if (amount >= 899.99) {
           planType = "yearly";
@@ -67,6 +67,14 @@ export async function POST(request: NextRequest) {
           expiresAt.setFullYear(expiresAt.getFullYear() + 1);
         }
 
+        console.log("Creating subscription:", {
+          companyId,
+          orderId: merchantOid,
+          planType,
+          amount,
+          expiresAt
+        });
+
         // Veritabanında abonelik kaydını oluştur
         await prisma.companySubscription.create({
           data: {
@@ -80,7 +88,7 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        console.log("Abonelik kaydı oluşturuldu:", {
+        console.log("✅ Abonelik kaydı başarıyla oluşturuldu:", {
           merchantOid,
           companyId,
           planType,
@@ -89,19 +97,57 @@ export async function POST(request: NextRequest) {
         });
 
         // Başarı sayfasına yönlendir
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/company/profile?payment=success&order=${merchantOid}`);
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
+        return NextResponse.redirect(`${baseUrl}/company/profile?payment=success&order=${merchantOid}`);
       } catch (dbError) {
-        console.error("Veritabanı kaydı oluşturulamadı:", dbError);
+        console.error("❌ Veritabanı kaydı oluşturulamadı:", dbError);
         // Veritabanı hatası olsa bile ödeme başarılı, kullanıcıyı bilgilendir
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/company/profile?payment=success&order=${merchantOid}&warning=db_error`);
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
+        return NextResponse.redirect(`${baseUrl}/company/profile?payment=success&order=${merchantOid}&warning=db_error`);
       }
     } else {
       // Ödeme başarısız
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/company/profile?payment=failed&order=${merchantOid}`);
+      console.log("❌ Ödeme başarısız:", status);
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
+      return NextResponse.redirect(`${baseUrl}/company/profile?payment=failed&order=${merchantOid}`);
     }
 
   } catch (error) {
-    console.error("PayTR success callback error:", error);
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/company/profile?payment=error`);
+    console.error("❌ PayTR callback error:", error);
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
+    return NextResponse.redirect(`${baseUrl}/company/profile?payment=error`);
+  }
+}
+
+// PayTR hem GET hem POST ile callback gönderebilir
+export async function GET(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const merchantOid = url.searchParams.get("merchant_oid");
+    const status = url.searchParams.get("status");
+    const totalAmount = url.searchParams.get("total_amount");
+    const hash = url.searchParams.get("hash");
+    
+    return await handleCallback(merchantOid, status, totalAmount, hash, request);
+  } catch (error) {
+    console.error("PayTR GET callback error:", error);
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
+    return NextResponse.redirect(`${baseUrl}/company/profile?payment=error`);
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const formData = await request.formData();
+    const merchantOid = formData.get("merchant_oid")?.toString() || null;
+    const status = formData.get("status")?.toString() || null;
+    const totalAmount = formData.get("total_amount")?.toString() || null;
+    const hash = formData.get("hash")?.toString() || null;
+
+    return await handleCallback(merchantOid, status, totalAmount, hash, request);
+  } catch (error) {
+    console.error("PayTR POST callback error:", error);
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
+    return NextResponse.redirect(`${baseUrl}/company/profile?payment=error`);
   }
 }
