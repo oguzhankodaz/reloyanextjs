@@ -8,54 +8,55 @@ datasource db {
 }
 
 model User {
-  id                 String              @id @default(uuid())
-  name               String
-  surname            String?
-  email              String              @unique
-  phone              String?             @unique
-  qrCode             String              @unique
-  createdAt          DateTime            @default(now())
-  password           String
-  verified           Boolean             @default(false) // 👈 ekledik
-  totalEarnings      Float               @default(0) // 🏆 Rozet sistemi için toplam kazanç
-  purchases          Purchase[]
-  userPoints         UserPoints[]
-  pointsUsages       PointsUsage[]
-  verificationTokens   VerificationToken[]   // 👈 ilişki
-  passwordResetTokens  PasswordResetToken[]  // Şifre sıfırlama
-  consents             UserConsent[]         // KVKK rıza kayıtları
-  dsarRequests         DsarRequest[]         // KVKK veri talepleri
+  id                  String               @id @default(uuid())
+  name                String
+  surname             String?
+  email               String               @unique
+  phone               String?              @unique
+  qrCode              String               @unique
+  createdAt           DateTime             @default(now())
+  password            String
+  verified            Boolean              @default(false) // 👈 ekledik
+  totalEarnings       Float                @default(0) // 🏆 Rozet sistemi için toplam kazanç
+  purchases           Purchase[]
+  userPoints          UserPoints[]
+  pointsUsages        PointsUsage[]
+  verificationTokens  VerificationToken[] // 👈 ilişki
+  passwordResetTokens PasswordResetToken[] // Şifre sıfırlama
+  consents            UserConsent[] // KVKK rıza kayıtları
+  dsarRequests        DsarRequest[] // KVKK veri talepleri
 }
 
 model Company {
-  id                 String   @id @default(uuid())
-  name               String
-  email              String   @unique
-  password           String
-  address            String?
-  cashbackPercentage Float    @default(3) // Varsayılan %3
-  createdAt          DateTime @default(now())
-  categories         Category[]
-  products           Product[]
-  purchases          Purchase[]
-  userPoints         UserPoints[]
-  pointsUsages       PointsUsage[]
-  campaigns              Campaign[]
-  verified               Boolean                       @default(false)
-  verificationTokens     CompanyVerificationToken[]
-  passwordResetTokens    CompanyPasswordResetToken[]   // Şifre sıfırlama
-  staff                  CompanyStaff[]
-  consents               CompanyConsent[]              // KVKK rıza kayıtları
+  id                  String                      @id @default(uuid())
+  name                String
+  email               String                      @unique
+  password            String
+  address             String?
+  cashbackPercentage  Float                       @default(3) // Varsayılan %3
+  createdAt           DateTime                    @default(now())
+  categories          Category[]
+  products            Product[]
+  purchases           Purchase[]
+  userPoints          UserPoints[]
+  pointsUsages        PointsUsage[]
+  campaigns           Campaign[]
+  verified            Boolean                     @default(false)
+  verificationTokens  CompanyVerificationToken[]
+  passwordResetTokens CompanyPasswordResetToken[] // Şifre sıfırlama
+  staff               CompanyStaff[]
+  consents            CompanyConsent[] // KVKK rıza kayıtları
+  subscriptions       CompanySubscription[] // Abonelik kayıtları
 }
 
 model CompanyStaff {
-  id        String  @id @default(uuid())
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
-  name     String
-  email    String  @unique
-  password String
-  isActive Boolean @default(true)
+  name      String
+  email     String   @unique
+  password  String
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 
   purchases    Purchase[]
@@ -73,15 +74,15 @@ model Category {
 }
 
 model Product {
-  id        Int      @id @default(autoincrement())
-  name      String
-  price     Float
-  cashback  Float    @default(0) // ✅ artık TL iade alanı
-  createdAt DateTime @default(now())
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId String
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  categoryId Int?
+  id           Int           @id @default(autoincrement())
+  name         String
+  price        Float
+  cashback     Float         @default(0) // ✅ artık TL iade alanı
+  createdAt    DateTime      @default(now())
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId    String
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId   Int?
   purchases    Purchase[]
   pointsUsages PointsUsage[] // ✅ tekrar eklendi
 }
@@ -194,17 +195,17 @@ model CompanyVerificationToken {
 
 /// KVKK - Rıza yönetimi (Consent tracking)
 model UserConsent {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  
-  consentType String  // "marketing", "analytics", "profiling", etc.
-  granted     Boolean @default(false)
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  consentType String // "marketing", "analytics", "profiling", etc.
+  granted     Boolean   @default(false)
   grantedAt   DateTime?
   revokedAt   DateTime?
   ipAddress   String?
   userAgent   String?
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -214,38 +215,38 @@ model UserConsent {
 
 /// KVKK - Veri talebi kayıtları (DSAR - Data Subject Access Requests)
 model DsarRequest {
-  id          String   @id @default(uuid())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  
-  requestType String   // "export", "delete", "rectify"
-  status      String   @default("pending") // "pending", "processing", "completed", "rejected"
-  details     String?  // JSON string with request details
-  response    String?  // Admin response or processing notes
-  
-  requestedAt DateTime @default(now())
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  requestType String // "export", "delete", "rectify"
+  status      String  @default("pending") // "pending", "processing", "completed", "rejected"
+  details     String? // JSON string with request details
+  response    String? // Admin response or processing notes
+
+  requestedAt DateTime  @default(now())
   processedAt DateTime?
   completedAt DateTime?
-  
-  ipAddress   String?
-  
+
+  ipAddress String?
+
   @@index([userId, requestType])
   @@index([status])
 }
 
 /// KVKK - Şirket rıza yönetimi
 model CompanyConsent {
-  id        String   @id @default(uuid())
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  id        String  @id @default(uuid())
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String
-  
-  consentType String  // "terms", "privacy", "marketing", etc.
-  granted     Boolean @default(false)
+
+  consentType String // "terms", "privacy", "marketing", etc.
+  granted     Boolean   @default(false)
   grantedAt   DateTime?
   revokedAt   DateTime?
   ipAddress   String?
   userAgent   String?
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -255,18 +256,43 @@ model CompanyConsent {
 
 /// Audit log için veri değişikliği kayıtları
 model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?  // Nullable - system actions may not have userId
-  action    String   // "user.update", "user.delete", "consent.grant", etc.
-  entityType String  // "User", "Purchase", "Consent", etc.
-  entityId  String
-  changes   String?  // JSON string with before/after values
-  ipAddress String?
-  userAgent String?
-  
+  id         String  @id @default(uuid())
+  userId     String? // Nullable - system actions may not have userId
+  action     String // "user.update", "user.delete", "consent.grant", etc.
+  entityType String // "User", "Purchase", "Consent", etc.
+  entityId   String
+  changes    String? // JSON string with before/after values
+  ipAddress  String?
+  userAgent  String?
+
   createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+/// Şirket abonelik kayıtları
+model CompanySubscription {
+  id        String  @id @default(uuid())
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+
+  orderId  String @unique // PayTR merchant_oid
+  planType String // "monthly", "6months", "yearly"
+  amount   Float // Ödenen tutar (TL)
+  status   String @default("active") // "active", "expired", "cancelled"
+
+  // PayTR işlem detayları
+  paytrTransactionId String? // PayTR'den gelen işlem ID'si
+  paymentDate        DateTime @default(now())
+  expiresAt          DateTime // Abonelik bitiş tarihi
+
+  // İzleme
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, status])
+  @@index([orderId])
+  @@index([expiresAt])
 }

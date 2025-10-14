@@ -32,6 +32,10 @@ export default function CompanyProfilePage() {
   // UI-only: seçili planı göstermek için durum
   const [currentPlanName, setCurrentPlanName] = useState<string | null>(null);
   const [openPlanModal, setOpenPlanModal] = useState(false);
+  const [subscription, setSubscription] = useState<{
+    planType: string;
+    expiresAt: string;
+  } | null>(null);
 
   // Ödeme sonucu bildirimleri
   useEffect(() => {
@@ -94,6 +98,24 @@ export default function CompanyProfilePage() {
         }
       })
       .catch((error) => console.error("Failed to load settings:", error));
+
+    // Abonelik bilgisini getir
+    if (company) {
+      fetch(`/api/company/subscription?companyId=${company.companyId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.subscription) {
+            setSubscription(data.subscription);
+            const planNames = {
+              monthly: "Aylık",
+              "6months": "6 Aylık", 
+              yearly: "Yıllık"
+            };
+            setCurrentPlanName(`${planNames[data.subscription.planType as keyof typeof planNames]} Plan`);
+          }
+        })
+        .catch((error) => console.error("Failed to load subscription:", error));
+    }
   }, [company, router]);
 
   if (!company) {
@@ -232,7 +254,12 @@ export default function CompanyProfilePage() {
             {/* UI-only: Mevcut Plan Rozeti */}
             {currentPlanName && (
               <div className="bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-center sm:text-left">
-                Mevcut Plan: {currentPlanName}
+                <div>Mevcut Plan: {currentPlanName}</div>
+                {subscription && (
+                  <div className="text-xs text-yellow-200 mt-1">
+                    Bitiş: {new Date(subscription.expiresAt).toLocaleDateString('tr-TR')}
+                  </div>
+                )}
               </div>
             )}
           </div>
