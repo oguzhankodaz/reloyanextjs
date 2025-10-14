@@ -7,6 +7,7 @@ import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useRadixToast } from "@/components/notifications/ToastProvider";
+import PlanPurchase from "@/components/company/PlanPurchase";
 
 export default function CompanyProfilePage() {
   const { company } = useCompanyAuth();
@@ -27,6 +28,42 @@ export default function CompanyProfilePage() {
   const toast = useRadixToast();
   const [cashbackPercentage, setCashbackPercentage] = useState<string>("3");
   const [savingCashback, setSavingCashback] = useState(false);
+
+  // UI-only: seçili planı göstermek için durum
+  const [currentPlanName, setCurrentPlanName] = useState<string | null>(null);
+  const [openPlanModal, setOpenPlanModal] = useState(false);
+
+  // Ödeme sonucu bildirimleri
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    const orderId = urlParams.get('order');
+
+    if (paymentStatus === 'success') {
+      toast({
+        title: "Ödeme Başarılı! 🎉",
+        description: `Aboneliğiniz aktif edildi. Sipariş No: ${orderId}`,
+        variant: "success",
+      });
+      // URL'den parametreleri temizle
+      window.history.replaceState({}, '', '/company/profile');
+    } else if (paymentStatus === 'failed') {
+      const reason = urlParams.get('reason') || 'Bilinmeyen hata';
+      toast({
+        title: "Ödeme Başarısız",
+        description: `Ödeme işlemi tamamlanamadı: ${reason}`,
+        variant: "error",
+      });
+      window.history.replaceState({}, '', '/company/profile');
+    } else if (paymentStatus === 'error') {
+      toast({
+        title: "Hata Oluştu",
+        description: "Ödeme işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin.",
+        variant: "error",
+      });
+      window.history.replaceState({}, '', '/company/profile');
+    }
+  }, [toast]);
 
   // Load company data
   useEffect(() => {
@@ -96,8 +133,6 @@ export default function CompanyProfilePage() {
           type: "success",
           text: "Şirket bilgileriniz başarıyla güncellendi!",
         });
-        
-        // Context'i güncelle (sayfa yenilenmeden güncel bilgileri göstermek için)
         window.location.reload();
       } else {
         setMessage({
@@ -187,32 +222,35 @@ export default function CompanyProfilePage() {
         </Link>
 
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Şirket Ayarları</h1>
-          <p className="text-gray-400">
-            Şirket bilgilerinizi görüntüleyin ve güncelleyin
-          </p>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Şirket Ayarları</h1>
+              <p className="text-gray-400 text-sm sm:text-base">Şirket bilgilerinizi görüntüleyin ve güncelleyin</p>
+            </div>
+
+            {/* UI-only: Mevcut Plan Rozeti */}
+            {currentPlanName && (
+              <div className="bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-center sm:text-left">
+                Mevcut Plan: {currentPlanName}
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
           {/* Company Info Card */}
-          <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <svg
-                className="w-6 h-6 mr-2 text-yellow-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold flex items-center">Şirket Bilgileri</h2>
+              {/* UI-only: Plan Satın Alma Butonu */}
+              <button
+                onClick={() => setOpenPlanModal(true)}
+                className="px-3 py-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-600 text-black font-semibold hover:from-yellow-600 hover:to-orange-700 text-sm sm:text-base w-full sm:w-auto"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                />
-              </svg>
-              Şirket Bilgileri
-            </h2>
+                Ödeme Planı Seç
+              </button>
+            </div>
 
             {/* Message Alert */}
             {message && (
@@ -230,10 +268,7 @@ export default function CompanyProfilePage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Company Name */}
               <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-300 mb-2"
-                >
+                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
                   Şirket Adı *
                 </label>
                 <input
@@ -250,10 +285,7 @@ export default function CompanyProfilePage() {
 
               {/* Email */}
               <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-300 mb-2"
-                >
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                   E-posta *
                 </label>
                 <input
@@ -267,9 +299,7 @@ export default function CompanyProfilePage() {
                   className="w-full px-4 py-2 bg-gray-900/30 border border-gray-700 rounded-lg text-gray-500 cursor-not-allowed"
                   placeholder="sirket@email.com"
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  {`E-posta değiştirmek için destek ile iletişime geçin`}
-                </p>
+                <p className="mt-1 text-xs text-gray-500">{`E-posta değiştirmek için destek ile iletişime geçin`}</p>
               </div>
 
               {/* Submit Button */}
@@ -284,33 +314,14 @@ export default function CompanyProfilePage() {
           </div>
 
           {/* Security & Settings Card */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Cashback Settings */}
-            <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <svg
-                  className="w-6 h-6 mr-2 text-yellow-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                Nakit İade Oranı
-              </h2>
-              <p className="text-gray-400 text-sm mb-4">
-                Müşterilere verilecek varsayılan nakit iade yüzdesini belirleyin
-              </p>
+            <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">Nakit İade Oranı</h2>
+              <p className="text-gray-400 text-sm mb-4">Müşterilere verilecek varsayılan nakit iade yüzdesini belirleyin</p>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Yüzde (%)
-                  </label>
+                  <label className="block text-sm font-medium mb-2">Yüzde (%)</label>
                   <div className="flex gap-2 items-center">
                     <input
                       type="number"
@@ -325,8 +336,10 @@ export default function CompanyProfilePage() {
                     <span className="text-xl font-bold text-yellow-400">%</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    Örnek: %{cashbackPercentage || "0"} ile 100₺ harcamada{" "}
-                    {((parseFloat(cashbackPercentage || "0") * 100) / 100).toFixed(2)}₺ iade
+                    Örnek: %{cashbackPercentage || "0"} ile 100₺ harcamada {(
+                      (parseFloat(cashbackPercentage || "0") * 100) /
+                      100
+                    ).toFixed(2)}₺ iade
                   </p>
                 </div>
                 <button
@@ -339,68 +352,15 @@ export default function CompanyProfilePage() {
               </div>
             </div>
 
-            {/* Password Change */}
-            {/* <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <svg
-                  className="w-6 h-6 mr-2 text-yellow-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-                Güvenlik
-              </h2>
-              <p className="text-gray-400 text-sm mb-4">
-                Şifrenizi değiştirmek veya güvenlik ayarlarınızı güncellemek
-                için
-              </p>
-              <button
-                disabled
-                className="w-full bg-gray-700 text-gray-400 cursor-not-allowed font-medium py-2 px-4 rounded-lg"
-              >
-                Yakında Aktif Olacak
-              </button>
-            </div> */}
-
             {/* Data & Privacy */}
-            <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <svg
-                  className="w-6 h-6 mr-2 text-yellow-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                  />
-                </svg>
-                Veri ve Gizlilik
-              </h2>
-              <p className="text-gray-400 text-sm mb-4">
-                KVKK kapsamında şirket verilerinizi yönetin
-              </p>
+            <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">Veri ve Gizlilik</h2>
+              <p className="text-gray-400 text-sm mb-4">KVKK kapsamında şirket verilerinizi yönetin</p>
               <div className="space-y-2">
-                <Link
-                  href="/privacy"
-                  className="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                >
+                <Link href="/privacy" className="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                   KVKK Aydınlatma Metni
                 </Link>
-                <Link
-                  href="/terms"
-                  className="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                >
+                <Link href="/terms" className="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                   Hizmet Koşulları
                 </Link>
               </div>
@@ -409,30 +369,20 @@ export default function CompanyProfilePage() {
         </div>
 
         {/* Info Panel */}
-        <div className="mt-8 bg-yellow-900/20 border border-yellow-800 rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-3 text-yellow-300 flex items-center">
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            Bilgilendirme
-          </h3>
+        <div className="mt-6 sm:mt-8 bg-yellow-900/20 border border-yellow-800 rounded-lg p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold mb-3 text-yellow-300 flex items-center">Bilgilendirme</h3>
           <p className="text-gray-300 text-sm">
-            Şirket hesabınız ile ilgili kritik değişiklikler için lütfen destek
-            ekibi ile iletişime geçin. Tüm değişiklikler güvenlik amacıyla
-            kayıt altına alınır.
+            Şirket hesabınız ile ilgili kritik değişiklikler için lütfen destek ekibi ile iletişime geçin. Tüm değişiklikler güvenlik amacıyla kayıt altına alınır.
           </p>
         </div>
       </div>
+
+      {openPlanModal && (
+        <PlanPurchase
+          onClose={() => setOpenPlanModal(false)}
+          onSelectPlan={(p) => setCurrentPlanName(`${p.name} (${p.period})`) }
+        />
+      )}
     </div>
   );
 }

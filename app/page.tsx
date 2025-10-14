@@ -161,7 +161,7 @@ export default function HomePage() {
       <section className="px-6 py-16 text-center">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Hemen Başla, Kazanmaya Başla!
+            Hemen Kayıt Ol, Kazanmaya Başla!
           </h2>
           <p className="text-xl text-gray-300 mb-8">
             Binlerce kullanıcıya katılın ve harcamalarınızdan kazançlı çıkın

@@ -50,7 +50,7 @@ const nextConfig: NextConfig = {
               "connect-src 'self' https:",
               "frame-ancestors 'self'",
               "base-uri 'self'",
-              "form-action 'self'"
+              "form-action 'self' https://www.paytr.com https://paytr.com"
             ].join('; ')
           }
         ],
