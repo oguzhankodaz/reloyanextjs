@@ -65,8 +65,8 @@ export async function POST(request: NextRequest) {
     const basket = [
       [
         `${planType.toUpperCase()} Plan`,
-        amount.toFixed(2),
-        1,
+        "1", // Adet string olmalı
+        amount.toFixed(2), // Birim fiyat TL string
       ],
     ];
     const basketBase64 = Buffer.from(JSON.stringify(basket)).toString("base64");
@@ -80,17 +80,15 @@ export async function POST(request: NextRequest) {
       paytr_token: "",
       user_basket: basketBase64,
       currency: "TL",
-      test_mode: process.env.NODE_ENV === "development" ? "1" : "0",
+      test_mode: "1",
       no_installment: "0",
       max_installment: "0",
       user_name: "Company User",
       user_address: "Turkey",
       user_phone: "5555555555",
-      // Browser OK/FAIL: kullanıcıyı bilgi sayfasına götürür (DB yazımı S2S callback ile yapılır)
+      // Browser OK/FAIL: kullanıcıyı bilgi sayfasına götürür (DB yazımı panelde tanımlı S2S callback ile yapılır)
       merchant_ok_url: `${baseUrl}/company/profile?payment=success`,
       merchant_fail_url: `${baseUrl}/company/profile?payment=failed`,
-      // Server-to-server doğrulama ve kayıt (POST)
-      callback_url: `${baseUrl}/api/payment/paytr/success`,
       timeout_limit: "30",
       debug_on: "1",
       lang: "tr",
@@ -115,7 +113,27 @@ export async function POST(request: NextRequest) {
     const paytrResult = await paytrResponse.json();
 
     if (paytrResult.status === "success") {
-      // Başarılı response
+      // Başarılı response: DB'de pending kayıt aç (idempotent)
+      try {
+        const { default: prisma } = await import("@/lib/prisma");
+        await prisma.companySubscription.upsert({
+          where: { orderId },
+          create: {
+            companyId: sanitizedCompanyId,
+            orderId,
+            planType,
+            amount,
+            status: "pending",
+            // paymentDate default now(), expiresAt şimdilik plan bazlı tahmini yazmayalım; success callback'te kesinleştiririz
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // geçici; success'te güncellenecek
+          },
+          update: {},
+        });
+      } catch (dbErr) {
+        console.error("Pending subscription create failed:", dbErr);
+        // Devam et; ödeme yine de başlatılacak
+      }
+
       return NextResponse.json({
         success: true,
         token: paytrResult.token,

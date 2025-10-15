@@ -57,13 +57,9 @@ async function handleCallback(merchantOid: string | null, status: string | null,
         const companyId = companyIdMatch[1];
         const amount = parseFloat(totalAmount.toString()) / 100; // Kuruştan TL'ye çevir
         
-        // Plan türünü belirle
-        let planType = "monthly";
-        if (amount >= 899.99) {
-          planType = "yearly";
-        } else if (amount >= 499.99) {
-          planType = "6months";
-        }
+        // Pending kayıttan planType'ı oku (idempotent upsert)
+        const pending = await prisma.companySubscription.findUnique({ where: { orderId: merchantOid.toString() } });
+        const planType = pending?.planType || (amount >= 899.99 ? "yearly" : amount >= 499.99 ? "6months" : "monthly");
 
         // Abonelik bitiş tarihini hesapla
         const paymentDate = new Date();
@@ -85,9 +81,18 @@ async function handleCallback(merchantOid: string | null, status: string | null,
           expiresAt
         });
 
-        // Veritabanında abonelik kaydını oluştur
-        await prisma.companySubscription.create({
-          data: {
+        // Idempotent: varsa güncelle, yoksa oluştur
+        await prisma.companySubscription.upsert({
+          where: { orderId: merchantOid.toString() },
+          update: {
+            companyId: companyId,
+            planType: planType,
+            amount: amount,
+            status: "active",
+            paymentDate: paymentDate,
+            expiresAt: expiresAt,
+          },
+          create: {
             companyId: companyId,
             orderId: merchantOid.toString(),
             planType: planType,
@@ -95,7 +100,7 @@ async function handleCallback(merchantOid: string | null, status: string | null,
             status: "active",
             paymentDate: paymentDate,
             expiresAt: expiresAt,
-          },
+          }
         });
 
         console.log("✅ Abonelik kaydı başarıyla oluşturuldu:", {
