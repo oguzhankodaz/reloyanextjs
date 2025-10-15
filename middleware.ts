@@ -94,6 +94,7 @@ export function middleware(req: NextRequest) {
 // ✅ Burada api/verify hariç tutuluyor
 export const config = {
   matcher: [
-    "/((?!api/verify|_next/static|_next/image|favicon.ico).*)",
+    // Tüm API yollarını hariç tut (özellikle PayTR callback POST'ları 307 görmesin)
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
 };
