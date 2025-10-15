@@ -79,6 +79,7 @@ export default function PlanPurchase({ onClose, onSelectPlan }: PlanPurchaseProp
 	const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const { company } = useCompanyAuth();
+	const [iframeToken, setIframeToken] = useState<string | null>(null);
 
 	const handlePayment = async () => {
 		if (!selectedPlan || !company) return;
@@ -99,15 +100,8 @@ export default function PlanPurchase({ onClose, onSelectPlan }: PlanPurchaseProp
 			const data = await response.json();
 
 			if (data.success) {
-				// PayTR token alındı, tokenize URL ile yeni sekmede aç
-				const paytrUrl = `https://www.paytr.com/odeme/guvenli/${data.token}`;
-				const newWin = window.open(paytrUrl, "_blank");
-				if (!newWin) {
-					// Popup engellenirse mevcut pencerede yönlendirelim
-					window.location.href = paytrUrl;
-				}
-				// Modal'ı kapat
-				onClose();
+				// iFrame için token'ı state'e koy ve modal içinde göster
+				setIframeToken(data.token);
 			} else {
 				alert(`Ödeme başlatılamadı: ${data.error}`);
 			}
@@ -136,7 +130,22 @@ export default function PlanPurchase({ onClose, onSelectPlan }: PlanPurchaseProp
 
 				{/* Plans */}
 				<div className="p-3 sm:p-6">
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+					{/* iFrame ödeme alanı */}
+					{iframeToken ? (
+						<div className="w-full">
+							<div className="mb-3 sm:mb-4 text-sm text-gray-300">Ödeme sayfası yüklendi. İşlemi tamamladıktan sonra bu pencere otomatik kapanabilir.</div>
+							<iframe
+								src={`https://www.paytr.com/odeme/guvenli/${iframeToken}`}
+								title="PayTR Ödeme"
+								style={{ width: "100%", height: "75vh", border: 0 }}
+								allow="payment"
+							/>
+							<div className="mt-3 sm:mt-4 flex justify-end">
+								<button onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700">Kapat</button>
+							</div>
+						</div>
+					) : (
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
 						{plans.map((plan) => {
 							const Icon = plan.icon;
 							const isSelected = selectedPlan?.name === plan.name;
@@ -171,9 +180,9 @@ export default function PlanPurchase({ onClose, onSelectPlan }: PlanPurchaseProp
 												<span className="bg-green-500 text-black px-2 py-0.5 rounded-full text-xs font-bold">
 													{plan.discount} İndirim
 												</span>
-											</div>
-										)}
-									</div>
+						</div>
+					)}
+				</div>
 
 									<ul className="space-y-2 mb-4 sm:mb-5">
 										{plan.features.map((f) => (
@@ -198,8 +207,9 @@ export default function PlanPurchase({ onClose, onSelectPlan }: PlanPurchaseProp
 							);
 						})}
 					</div>
-
-					{/* Footer actions */}
+					)}
+ 
+                     {/* Footer actions */}
 					<div className="mt-4 sm:mt-6 flex flex-col gap-3 sm:gap-4">
 						<div className="text-xs sm:text-sm text-gray-400 text-center">
 							Seçili plan: <span className="font-semibold text-white">{selectedPlan?.name ?? "—"}</span>
@@ -225,7 +235,7 @@ export default function PlanPurchase({ onClose, onSelectPlan }: PlanPurchaseProp
 									"Ödeme Yap"
 								)}
 							</button>
-						</div>
+							</div>
 					</div>
 				</div>
 			</div>
