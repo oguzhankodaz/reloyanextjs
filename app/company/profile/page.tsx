@@ -46,7 +46,7 @@ export default function CompanyProfilePage() {
     if (paymentStatus === 'success') {
       toast({
         title: "Ödeme Başarılı! 🎉",
-        description: `Aboneliğiniz aktif edildi. Sipariş No: ${orderId}`,
+        description: `Aboneliğiniz aktif edildi.`,
         variant: "success",
       });
       // URL'den parametreleri temizle

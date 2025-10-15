@@ -5,6 +5,7 @@ import crypto from "crypto";
 import prisma from "@/lib/prisma";
 
 const MERCHANT_KEY = process.env.PAYTR_MERCHANT_KEY;
+const MERCHANT_SALT = process.env.PAYTR_MERCHANT_SALT;
 
 // Ortak callback işleme fonksiyonu
 async function handleCallback(merchantOid: string | null, status: string | null, totalAmount: string | null, hash: string | null, request: NextRequest) {
@@ -19,9 +20,18 @@ async function handleCallback(merchantOid: string | null, status: string | null,
       return NextResponse.redirect(`${baseUrl}/company/profile?payment=error&reason=missing_params`);
     }
 
-    // Hash doğrulama
-    const hashString = `${merchantOid}${MERCHANT_KEY}${status}${totalAmount}`;
-    const calculatedHash = crypto.createHmac("sha256", MERCHANT_KEY!).update(hashString).digest("base64");
+    // Hash doğrulama (PayTR: HMAC-SHA256 with key=MERCHANT_KEY over merchant_oid + MERCHANT_SALT + status + total_amount)
+    if (!MERCHANT_KEY || !MERCHANT_SALT) {
+      console.error("PAYTR config missing for callback hash validation");
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
+      return NextResponse.redirect(`${baseUrl}/company/profile?payment=error&reason=config_missing`);
+    }
+
+    const hashMessage = `${merchantOid}${MERCHANT_SALT}${status}${totalAmount}`;
+    const calculatedHash = crypto
+      .createHmac("sha256", MERCHANT_KEY)
+      .update(hashMessage)
+      .digest("base64");
 
     console.log("Hash comparison:", { calculatedHash, receivedHash: hash });
 
@@ -144,10 +154,82 @@ export async function POST(request: NextRequest) {
     const totalAmount = formData.get("total_amount")?.toString() || null;
     const hash = formData.get("hash")?.toString() || null;
 
-    return await handleCallback(merchantOid, status, totalAmount, hash, request);
+    // S2S callback: PayTR 'OK' bekler
+    if (!merchantOid || !status || !totalAmount || !hash) {
+      console.error("Eksik callback parametreleri", { merchantOid, status, totalAmount, hash });
+      return new Response("FAILED", { status: 400 });
+    }
+
+    if (!MERCHANT_KEY || !MERCHANT_SALT) {
+      console.error("PAYTR config missing for callback hash validation");
+      return new Response("FAILED", { status: 500 });
+    }
+
+    const hashMessage = `${merchantOid}${MERCHANT_SALT}${status}${totalAmount}`;
+    const calculatedHash = crypto
+      .createHmac("sha256", MERCHANT_KEY)
+      .update(hashMessage)
+      .digest("base64");
+
+    if (calculatedHash !== hash) {
+      console.error("Hash doğrulama hatası (callback)");
+      return new Response("FAILED", { status: 403 });
+    }
+
+    if (status === "success") {
+      try {
+        const orderIdStr = merchantOid.toString();
+        const companyIdMatch = orderIdStr.match(/^ORDER([a-zA-Z0-9]+)\d+$/);
+        if (!companyIdMatch) {
+          console.error("Company ID could not be extracted from order ID:", merchantOid);
+          return new Response("FAILED", { status: 400 });
+        }
+
+        const companyId = companyIdMatch[1];
+        const amount = parseFloat(totalAmount.toString()) / 100;
+
+        let planType = "monthly";
+        if (amount >= 899.99) {
+          planType = "yearly";
+        } else if (amount >= 499.99) {
+          planType = "6months";
+        }
+
+        const paymentDate = new Date();
+        const expiresAt = new Date();
+        if (planType === "monthly") {
+          expiresAt.setMonth(expiresAt.getMonth() + 1);
+        } else if (planType === "6months") {
+          expiresAt.setMonth(expiresAt.getMonth() + 6);
+        } else if (planType === "yearly") {
+          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        }
+
+        await prisma.companySubscription.create({
+          data: {
+            companyId,
+            orderId: merchantOid.toString(),
+            planType,
+            amount,
+            status: "active",
+            paymentDate,
+            expiresAt,
+          },
+        });
+
+        // PayTR'e başarıyı bildir
+        return new Response("OK");
+      } catch (dbError) {
+        console.error("Subscription create failed:", dbError);
+        // Yine de OK döndürmek PayTR tekrar denemelerini engelleyebilir; ancak başarısızlığı bildirmek için FAILED dönüyoruz.
+        return new Response("FAILED", { status: 500 });
+      }
+    }
+
+    // status !== success
+    return new Response("OK"); // PayTR'e alındı bilgisi
   } catch (error) {
     console.error("PayTR POST callback error:", error);
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
-    return NextResponse.redirect(`${baseUrl}/company/profile?payment=error`);
+    return new Response("FAILED", { status: 500 });
   }
 }
