@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     // Base URL (fallback to request origin if env is not set)
     const origin = request.nextUrl.origin;
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || origin;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
 
     // Resolve IP address
     const forwardedFor = request.headers.get("x-forwarded-for");
