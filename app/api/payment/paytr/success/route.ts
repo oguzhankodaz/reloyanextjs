@@ -44,22 +44,19 @@ async function handleCallback(merchantOid: string | null, status: string | null,
     // Ödeme başarılı mı kontrol et
     if (status === "success") {
       try {
-        // Order ID'den company ID'yi çıkar (ORDER{companyId}{timestamp} formatından)
-        const orderIdStr = merchantOid.toString();
-        const companyIdMatch = orderIdStr.match(/^ORDER([a-zA-Z0-9]+)\d+$/);
-        
-        if (!companyIdMatch) {
-          console.error("Company ID could not be extracted from order ID:", merchantOid);
+        // Pending kaydı getir; companyId ve planType buradan alınır
+        const pending = await prisma.companySubscription.findUnique({ where: { orderId: merchantOid.toString() } });
+        if (!pending) {
+          console.error("Pending subscription not found for:", merchantOid);
           const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
-          return NextResponse.redirect(`${baseUrl}/company/profile?payment=error&reason=invalid_order_id`);
+          return NextResponse.redirect(`${baseUrl}/company/profile?payment=error&reason=pending_not_found`);
         }
 
-        const companyId = companyIdMatch[1];
+        const companyId = pending.companyId;
         const amount = parseFloat(totalAmount.toString()) / 100; // Kuruştan TL'ye çevir
         
-        // Pending kayıttan planType'ı oku (idempotent upsert)
-        const pending = await prisma.companySubscription.findUnique({ where: { orderId: merchantOid.toString() } });
-        const planType = pending?.planType || (amount >= 899.99 ? "yearly" : amount >= 499.99 ? "6months" : "monthly");
+        // Plan türü pending kayıttan
+        const planType = pending.planType || (amount >= 899.99 ? "yearly" : amount >= 499.99 ? "6months" : "monthly");
 
         // Abonelik bitiş tarihini hesapla
         const paymentDate = new Date();

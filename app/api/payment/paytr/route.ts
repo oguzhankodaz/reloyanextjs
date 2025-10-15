@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import prisma from "@/lib/prisma";
 
 // PayTR API bilgileri
 const MERCHANT_ID = process.env.PAYTR_MERCHANT_ID;
@@ -49,8 +50,9 @@ export async function POST(request: NextRequest) {
     const merchantSalt = MERCHANT_SALT;
 
     const amount = PLAN_PRICES[planType as keyof typeof PLAN_PRICES];
-    const sanitizedCompanyId = String(companyId).replace(/[^a-zA-Z0-9]/g, "");
-    const orderId = `ORDER${sanitizedCompanyId}${Date.now()}`; // Alfanumerik, ayraç yok
+    const companyIdRaw = String(companyId);
+    const merchantCompanyPart = companyIdRaw.replace(/[^a-zA-Z0-9_]/g, ""); // orderId içinde kullanılacak parça
+    const orderId = `ORDER${merchantCompanyPart}${Date.now()}`; // Alfanumerik/altçizgi, ayraç yok
 
     // Base URL (fallback to request origin if env is not set)
     const origin = request.nextUrl.origin;
@@ -115,19 +117,22 @@ export async function POST(request: NextRequest) {
     if (paytrResult.status === "success") {
       // Başarılı response: DB'de pending kayıt aç (idempotent)
       try {
-        const { default: prisma } = await import("@/lib/prisma");
         await prisma.companySubscription.upsert({
           where: { orderId },
           create: {
-            companyId: sanitizedCompanyId,
+            companyId: companyIdRaw, // gerçek FK değeri (UUID), orderId ise sanitize edilmiş parçayı içerir
             orderId,
             planType,
             amount,
             status: "pending",
-            // paymentDate default now(), expiresAt şimdilik plan bazlı tahmini yazmayalım; success callback'te kesinleştiririz
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // geçici; success'te güncellenecek
+            // geçici placeholder; success callback'te kesin tarih atanacak
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
           },
-          update: {},
+          update: {
+            // idempotent: tekrar istek gelirse en azından dokunup zaman bilgisini güncelle
+            updatedAt: new Date(),
+            status: "pending",
+          },
         });
       } catch (dbErr) {
         console.error("Pending subscription create failed:", dbErr);
