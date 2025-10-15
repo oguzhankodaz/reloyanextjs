@@ -86,10 +86,10 @@ export async function POST(request: NextRequest) {
       user_name: "Company User",
       user_address: "Turkey",
       user_phone: "5555555555",
-      // Browser redirect URLs (bilgilendirme amaçlı). Asıl doğrulama callback_url ile yapılır.
-      merchant_ok_url: `${baseUrl}/company/profile?payment=success&order=${orderId}`,
-      merchant_fail_url: `${baseUrl}/company/profile?payment=failed&order=${orderId}`,
-      // Server-to-server doğrulama ve kayıt
+      // Browser OK/FAIL: API success/fail endpoint'lerine yönlendir (GET)
+      merchant_ok_url: `${baseUrl}/api/payment/paytr/success`,
+      merchant_fail_url: `${baseUrl}/api/payment/paytr/fail`,
+      // Server-to-server doğrulama ve kayıt (POST)
       callback_url: `${baseUrl}/api/payment/paytr/success`,
       timeout_limit: "30",
       debug_on: "1",
