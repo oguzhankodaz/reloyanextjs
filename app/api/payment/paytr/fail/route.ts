@@ -25,3 +25,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/company/profile?payment=error`);
   }
 }
+
+export async function GET(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const merchantOid = url.searchParams.get("merchant_oid") || "";
+    const failedReasonMsg = url.searchParams.get("reason") || "Başarısız işlem";
+    const base = process.env.NEXT_PUBLIC_BASE_URL || `${url.origin}`;
+    return NextResponse.redirect(`${base}/company/profile?payment=failed&order=${merchantOid}&reason=${failedReasonMsg}`);
+  } catch (error) {
+    console.error("PayTR fail GET error:", error);
+    const url = new URL(request.url);
+    const base = process.env.NEXT_PUBLIC_BASE_URL || `${url.origin}`;
+    return NextResponse.redirect(`${base}/company/profile?payment=error`);
+  }
+}
