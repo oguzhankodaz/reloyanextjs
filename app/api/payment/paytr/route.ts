@@ -39,6 +39,68 @@ type PaytrFailure = {
 };
 type PaytrResponse = PaytrSuccess | PaytrFailure;
 
+/* ---- PayTR Callback Handler ---- */
+async function handlePaytrCallback(request: NextRequest): Promise<NextResponse> {
+  try {
+    const formData = await request.formData();
+    const callbackData = Object.fromEntries(formData.entries());
+    
+    console.log("PayTR callback data:", callbackData);
+    
+    const {
+      hash,
+      merchant_oid,
+      status,
+      total_amount,
+      payment_type,
+      payment_amount,
+      currency,
+      installment_count,
+      merchant_id,
+      test_mode
+    } = callbackData;
+    
+    // Hash doğrulaması (güvenlik için)
+    if (!hash || !merchant_oid) {
+      console.error("Missing required callback fields");
+      return NextResponse.json({ success: false, error: "Eksik callback parametreleri" }, { status: 400 });
+    }
+    
+    // Ödeme başarılı mı kontrol et
+    if (status !== "success") {
+      console.error("Payment failed:", status);
+      return NextResponse.json({ success: false, error: "Ödeme başarısız" }, { status: 400 });
+    }
+    
+    // Subscription'ı güncelle
+    try {
+      const orderId = merchant_oid as string;
+      const amount = parseFloat(total_amount as string) / 100; // PayTR kuruş cinsinden gönderir
+      
+      await prisma.companySubscription.update({
+        where: { orderId },
+        data: {
+          status: "completed",
+          updatedAt: new Date(),
+        },
+      });
+      
+      console.log("Subscription updated successfully:", orderId);
+      
+      // PayTR'ye başarılı response döndür (PayTR bunu bekler)
+      return new NextResponse("OK", { status: 200 });
+      
+    } catch (dbError) {
+      console.error("Database update error:", dbError);
+      return NextResponse.json({ success: false, error: "Veritabanı güncelleme hatası" }, { status: 500 });
+    }
+    
+  } catch (error) {
+    console.error("PayTR callback error:", error);
+    return NextResponse.json({ success: false, error: "Callback işleme hatası" }, { status: 500 });
+  }
+}
+
 /* ---- Helpers ---- */
 function getClientIPv4(req: NextRequest): string {
   const cf = req.headers.get("cf-connecting-ip");
@@ -69,8 +131,17 @@ function makeOrderId(companyId: string) {
 /* ---- Handler ---- */
 export async function POST(request: NextRequest) {
   try {
-    // Debug: Request headers ve body'yi logla
-    console.log("Request headers:", Object.fromEntries(request.headers.entries()));
+    const contentType = request.headers.get("content-type");
+    console.log("Content-Type:", contentType);
+    
+    // PayTR callback mi yoksa token request mi kontrol et
+    if (contentType?.includes("application/x-www-form-urlencoded")) {
+      console.log("PayTR callback detected, handling payment notification");
+      return await handlePaytrCallback(request);
+    }
+    
+    // JSON request (token creation)
+    console.log("Token creation request detected");
     
     let body: { planType?: PlanKey; companyId?: string } | null = null;
     
@@ -78,30 +149,31 @@ export async function POST(request: NextRequest) {
       const text = await request.text();
       console.log("Raw request body:", text);
       
-      if (text) {
-        body = JSON.parse(text);
-        console.log("Parsed body:", body);
+      if (!text || text.trim() === "") {
+        return NextResponse.json({ 
+          success: false, 
+          error: "Request body boş"
+        }, { status: 400 });
       }
+      
+      body = JSON.parse(text);
+      console.log("Parsed body:", body);
+      
     } catch (parseError) {
       console.error("JSON parse error:", parseError);
       return NextResponse.json({ 
         success: false, 
-        error: "Geçersiz JSON formatı",
-        details: "Request body JSON olarak parse edilemedi"
+        error: "Geçersiz JSON formatı"
       }, { status: 400 });
     }
 
     const planType = body?.planType as PlanKey || null;
     const companyId = body?.companyId ?? null;
 
-    console.log("Extracted values - planType:", planType, "companyId:", companyId);
-
     if (!planType || !companyId) {
-      console.error("Missing required fields:", { planType, companyId });
       return NextResponse.json({ 
         success: false, 
-        error: "Plan türü ve şirket ID'si gerekli",
-        details: { receivedPlanType: planType, receivedCompanyId: companyId }
+        error: "Plan türü ve şirket ID'si gerekli"
       }, { status: 400 });
     }
 
