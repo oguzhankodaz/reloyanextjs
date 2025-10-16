@@ -242,7 +242,7 @@ export async function POST(request: NextRequest) {
       merchant_id: MERCHANT_ID,
       user_ip: userIp,
       merchant_oid: orderId,
-      email: "company@example.com",
+      email: "no-reply@reloya.com",
       payment_amount: Math.round(amount * 100).toString(),
       user_basket: basketBase64,
       no_installment: "0",
@@ -275,18 +275,14 @@ export async function POST(request: NextRequest) {
 
     // Response body'sini text olarak oku, sonra JSON parse et
     const responseText = await res.text();
-    console.log("PayTR response status:", res.status);
-    console.log("PayTR response headers:", Object.fromEntries(res.headers.entries()));
-    console.log("PayTR response body:", responseText.substring(0, 500)); // İlk 500 karakter
     
     let data: PaytrResponse;
     
     try {
       data = JSON.parse(responseText) as PaytrResponse;
     } catch {
-      console.error("JSON parse failed. Response:", responseText);
       return NextResponse.json(
-        { success: false, error: "PayTR yanıtı JSON değil", details: responseText.substring(0, 200) },
+        { success: false, error: "PayTR yanıtı JSON değil" },
         { status: 502 }
       );
     }
