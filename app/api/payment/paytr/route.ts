@@ -1,168 +1,187 @@
-/** @format */
+/** @format
+ *  Token endpoint (PayTR get-token)
+ *  Path: app/api/payment/paytr/route.ts
+ */
 
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import prisma from "@/lib/prisma";
 
-// PayTR API bilgileri
-const MERCHANT_ID = process.env.PAYTR_MERCHANT_ID;
-const MERCHANT_KEY = process.env.PAYTR_MERCHANT_KEY;
-const MERCHANT_SALT = process.env.PAYTR_MERCHANT_SALT;
+/* Next.js – crypto için Node runtime kullan */
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+/* ==== CONFIG ==== */
+const MERCHANT_ID  = process.env.PAYTR_MERCHANT_ID!;
+const MERCHANT_KEY = (process.env.PAYTR_MERCHANT_KEY || "").trim(); // boşluk temizle
+const MERCHANT_SALT = process.env.PAYTR_MERCHANT_SALT!;
 const PAYTR_URL = process.env.PAYTR_URL || "https://www.paytr.com/odeme/api/get-token";
 
-// Plan fiyatları (TL cinsinden)
+/* Geliştirmede IP fallback */
+const TEST_PUBLIC_IP = process.env.TEST_PUBLIC_IP || "84.51.26.82";
+
+/* Plan fiyatları (TL) */
 const PLAN_PRICES = {
   monthly: 99.99,
   "6months": 499.99,
   yearly: 899.99,
-};
+} as const;
 
+type PlanKey = keyof typeof PLAN_PRICES;
+
+/* ---- Helpers ---- */
+function getClientIPv4(req: NextRequest): string {
+  const cf = req.headers.get("cf-connecting-ip");          // Cloudflare
+  const trueClient = req.headers.get("true-client-ip");     // bazı proxyler
+  const fwd = req.headers.get("x-forwarded-for");           // "ip1, ip2"
+  const real = req.headers.get("x-real-ip");
+
+  let ip = (cf || trueClient || (fwd ? fwd.split(",")[0] : "") || real || "").trim();
+
+  const isIPv6 = ip.includes(":");
+  const isLocal =
+    !ip ||
+    ip === "127.0.0.1" ||
+    ip === "::1" ||
+    ip.startsWith("10.") ||
+    ip.startsWith("192.168.") ||
+    ip.startsWith("172.16.");
+
+  if (isIPv6 || isLocal) ip = TEST_PUBLIC_IP; // PayTR IPv4 ister
+  return ip;
+}
+
+function makeOrderId(companyId: string) {
+  const safe = String(companyId).replace(/[^a-zA-Z0-9_]/g, "");
+  return `ORDER${safe}${Date.now()}`;
+}
+
+/* ---- Handler ---- */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { planType, companyId } = body;
+    /* Body */
+    const body = await request.json().catch(() => null);
+    const planType = (body?.planType as PlanKey) || null;
+    const companyId = body?.companyId as string | null;
 
-    if (!planType || !companyId) {
-      return NextResponse.json(
-        { success: false, error: "Plan türü ve şirket ID'si gerekli" },
-        { status: 400 }
-      );
-    }
+    if (!planType || !companyId)
+      return NextResponse.json({ success: false, error: "Plan türü ve şirket ID'si gerekli" }, { status: 400 });
 
-    // Plan türünü kontrol et
-    if (!PLAN_PRICES[planType as keyof typeof PLAN_PRICES]) {
-      return NextResponse.json(
-        { success: false, error: "Geçersiz plan türü" },
-        { status: 400 }
-      );
-    }
+    if (!(planType in PLAN_PRICES))
+      return NextResponse.json({ success: false, error: "Geçersiz plan türü" }, { status: 400 });
 
-    // Validate required envs
-    if (!MERCHANT_ID || !MERCHANT_KEY || !MERCHANT_SALT) {
+    if (!MERCHANT_ID || !MERCHANT_KEY || !MERCHANT_SALT)
       return NextResponse.json(
-        { success: false, error: "PAYTR config eksik: MERCHANT_ID/KEY/SALT tanımlı değil" },
+        { success: false, error: "PAYTR config eksik (MERCHANT_ID/KEY/SALT)" },
         { status: 500 }
       );
-    }
 
-    const merchantId = MERCHANT_ID;
-    const merchantKey = MERCHANT_KEY;
-    const merchantSalt = MERCHANT_SALT;
-
-    const amount = PLAN_PRICES[planType as keyof typeof PLAN_PRICES];
-    const companyIdRaw = String(companyId);
-    const merchantCompanyPart = companyIdRaw.replace(/[^a-zA-Z0-9_]/g, ""); // orderId içinde kullanılacak parça
-    const orderId = `ORDER${merchantCompanyPart}${Date.now()}`; // Alfanumerik/altçizgi, ayraç yok
-
-    // Base URL (fallback to request origin if env is not set)
+    /* Base URL (OK/FAIL için) */
     const origin = request.nextUrl.origin;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
 
-    // Resolve IP address
-    const forwardedFor = request.headers.get("x-forwarded-for");
-    const realIp = request.headers.get("x-real-ip");
-    const userIp = (forwardedFor?.split(",")[0] || realIp || "127.0.0.1").trim();
-    
-    // PayTR için gerekli parametreler
-    const basket = [
-      [
-        `${planType.toUpperCase()} Plan`,
-        "1", // Adet string olmalı
-        amount.toFixed(2), // Birim fiyat TL string
-      ],
-    ];
+    /* IP */
+    const userIp = getClientIPv4(request);
+
+    /* Sipariş */
+    const amount = PLAN_PRICES[planType];
+    const orderId = makeOrderId(companyId);
+
+    /* Sepet */
+    const basket = [[`${planType.toUpperCase()} Plan`, "1", amount.toFixed(2)]];
     const basketBase64 = Buffer.from(JSON.stringify(basket)).toString("base64");
 
-    const paytrParams: Record<string, string> = {
-      merchant_id: merchantId,
+    /* PayTR parametreleri */
+    const p: Record<string, string> = {
+      merchant_id: MERCHANT_ID,
       user_ip: userIp,
       merchant_oid: orderId,
-      email: "company@example.com", // Şirket email'i burada olacak
-      payment_amount: Math.round(amount * 100).toString(), // Kuruş cinsinden
-      paytr_token: "",
+      email: "company@example.com",              // TODO: gerçek e-posta
+      payment_amount: Math.round(amount * 100).toString(), // kuruş
       user_basket: basketBase64,
-      currency: "TL",
-      test_mode: "1",
       no_installment: "0",
       max_installment: "0",
+      currency: "TL",
+      test_mode: "1",                            // canlıda 0 yap
       user_name: "Company User",
       user_address: "Turkey",
       user_phone: "5555555555",
-      // Browser OK/FAIL: kullanıcıyı bilgi sayfasına götürür (DB yazımı panelde tanımlı S2S callback ile yapılır)
       merchant_ok_url: `${baseUrl}/company/profile?payment=success`,
       merchant_fail_url: `${baseUrl}/company/profile?payment=failed`,
       timeout_limit: "30",
       debug_on: "1",
       lang: "tr",
+      paytr_token: "", // birazdan hesaplanacak
     };
 
-    // Token oluşturma
-    const hashString =
-      `${merchantId}${paytrParams.user_ip}${paytrParams.merchant_oid}${paytrParams.email}${paytrParams.payment_amount}${paytrParams.user_basket}${paytrParams.no_installment}${paytrParams.max_installment}${paytrParams.currency}${paytrParams.test_mode}${merchantSalt}`;
-    
-    const token = crypto.createHmac("sha256", merchantKey).update(hashString).digest("base64");
-    paytrParams.paytr_token = token;
+    /* Token (HMAC-SHA256 base64) */
+    const tokenStr =
+      `${MERCHANT_ID}${p.user_ip}${p.merchant_oid}${p.email}${p.payment_amount}` +
+      `${p.user_basket}${p.no_installment}${p.max_installment}${p.currency}${p.test_mode}${MERCHANT_SALT}`;
 
-    // PayTR'ye istek gönder
-    const paytrResponse = await fetch(PAYTR_URL, {
+    p.paytr_token = crypto.createHmac("sha256", MERCHANT_KEY).update(tokenStr).digest("base64");
+
+    /* İstek */
+    const res = await fetch(PAYTR_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams(paytrParams).toString(),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(p).toString(),
+      // Next.js fetch cache kapalı olsun
+      cache: "no-store",
     });
 
-    const paytrResult = await paytrResponse.json();
-
-    if (paytrResult.status === "success") {
-      // Başarılı response: DB'de pending kayıt aç (idempotent)
-      try {
-        await prisma.companySubscription.upsert({
-          where: { orderId },
-          create: {
-            companyId: companyIdRaw, // gerçek FK değeri (UUID), orderId ise sanitize edilmiş parçayı içerir
-            orderId,
-            planType,
-            amount,
-            status: "pending",
-            // geçici placeholder; success callback'te kesin tarih atanacak
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          },
-          update: {
-            // idempotent: tekrar istek gelirse en azından dokunup zaman bilgisini güncelle
-            updatedAt: new Date(),
-            status: "pending",
-          },
-        });
-      } catch (dbErr) {
-        console.error("Pending subscription create failed:", dbErr);
-        // Devam et; ödeme yine de başlatılacak
-      }
-
-      return NextResponse.json({
-        success: true,
-        token: paytrResult.token,
-        orderId,
-        amount,
-        planType,
-      });
-    } else {
-      // PayTR hatası
+    let data: any = null;
+    try {
+      data = await res.json();
+    } catch {
+      const text = await res.text();
       return NextResponse.json(
-        { 
-          success: false, 
-          error: paytrResult.reason || "PayTR ödeme başlatılamadı",
-          details: paytrResult
-        },
+        { success: false, error: "PayTR yanıtı JSON değil", details: text },
+        { status: 502 }
+      );
+    }
+
+    if (data?.status !== "success") {
+      // PayTR detaylarını logla ama kullanıcıya minimal döndür
+      console.error("PayTR token failed:", data);
+      return NextResponse.json(
+        { success: false, error: data?.reason || "PayTR ödeme başlatılamadı", details: data },
         { status: 400 }
       );
     }
 
-  } catch (error) {
-    console.error("PayTR payment error:", error);
-    return NextResponse.json(
-      { success: false, error: "Ödeme işlemi başlatılamadı" },
-      { status: 500 }
-    );
+    /* DB: pending upsert (idempotent) */
+    try {
+      await prisma.companySubscription.upsert({
+        where: { orderId },
+        create: {
+          companyId: companyId,
+          orderId,
+          planType,
+          amount,
+          status: "pending",
+          // başarı callback’inde kesinlenecek
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+        update: {
+          status: "pending",
+          updatedAt: new Date(),
+        },
+      });
+    } catch (e) {
+      console.error("Pending subscription upsert error:", e);
+      // ödeme yine de başlatılacak; devam.
+    }
+
+    return NextResponse.json({
+      success: true,
+      token: data.token,
+      orderId,
+      amount,
+      planType,
+    });
+  } catch (err) {
+    console.error("PayTR token endpoint error:", err);
+    return NextResponse.json({ success: false, error: "Ödeme işlemi başlatılamadı" }, { status: 500 });
   }
 }
