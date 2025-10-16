@@ -15,7 +15,6 @@ const MERCHANT_ID = process.env.PAYTR_MERCHANT_ID!;
 const MERCHANT_KEY = (process.env.PAYTR_MERCHANT_KEY || "").trim();
 const MERCHANT_SALT = process.env.PAYTR_MERCHANT_SALT!;
 const PAYTR_URL = process.env.PAYTR_URL || "https://www.paytr.com/odeme/api/get-token";
-const TEST_PUBLIC_IP = process.env.TEST_PUBLIC_IP || "84.51.26.82";
 
 /* Plan fiyatları (TL) */
 const PLAN_PRICES = {
@@ -142,16 +141,18 @@ function getClientIPv4(req: NextRequest): string {
 
   let ip = (cf || trueClient || (fwd ? fwd.split(",")[0] : "") || real || "").trim();
 
-  const isIPv6 = ip.includes(":");
-  const isLocal =
-    !ip ||
-    ip === "127.0.0.1" ||
-    ip === "::1" ||
-    ip.startsWith("10.") ||
-    ip.startsWith("192.168.") ||
-    ip.startsWith("172.16.");
+  // IPv6'yı IPv4'e çevir veya varsayılan IP kullan
+  if (ip.includes(":")) {
+    // IPv6 adresini basitçe handle et - PayTR IPv4 bekliyor
+    return "127.0.0.1";
+  }
 
-  if (isIPv6 || isLocal) ip = TEST_PUBLIC_IP;
+  // Local IP'ler için varsayılan
+  if (!ip || ip === "127.0.0.1" || ip === "::1" || 
+      ip.startsWith("10.") || ip.startsWith("192.168.") || ip.startsWith("172.16.")) {
+    return "127.0.0.1";
+  }
+
   return ip;
 }
 
@@ -230,8 +231,17 @@ export async function POST(request: NextRequest) {
     const origin = request.nextUrl.origin;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
 
-    const userIp = getClientIPv4(request);
+    // Şirket bilgilerini al
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { name: true, email: true }
+    });
 
+    if (!company) {
+      return NextResponse.json({ success: false, error: "Şirket bulunamadı" }, { status: 404 });
+    }
+
+    const userIp = getClientIPv4(request);
     const amount = PLAN_PRICES[planType];
     const orderId = makeOrderId(companyId);
 
@@ -242,14 +252,14 @@ export async function POST(request: NextRequest) {
       merchant_id: MERCHANT_ID,
       user_ip: userIp,
       merchant_oid: orderId,
-      email: "no-reply@reloya.com",
+      email: company.email,
       payment_amount: Math.round(amount * 100).toString(),
       user_basket: basketBase64,
       no_installment: "0",
       max_installment: "0",
       currency: "TL",
       test_mode: "1",
-      user_name: "Company User",
+      user_name: company.name,
       user_address: "Turkey",
       user_phone: "5555555555",
       merchant_ok_url: `${baseUrl}/company/profile?payment=success`,
