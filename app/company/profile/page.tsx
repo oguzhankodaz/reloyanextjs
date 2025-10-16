@@ -35,6 +35,18 @@ export default function CompanyProfilePage() {
   const [subscription, setSubscription] = useState<{
     planType: string;
     expiresAt: string;
+    status: string;
+    amount: number;
+    createdAt: string;
+    orderId: string;
+  } | null>(null);
+
+  const [trialInfo, setTrialInfo] = useState<{
+    isActive: boolean;
+    daysLeft: number;
+    startDate: string;
+    endDate: string;
+    hasExpired: boolean;
   } | null>(null);
 
   // Ödeme sonucu bildirimleri
@@ -104,14 +116,21 @@ export default function CompanyProfilePage() {
       fetch(`/api/company/subscription?companyId=${company.companyId}`)
         .then((res) => res.json())
         .then((data) => {
-          if (data.success && data.subscription) {
-            setSubscription(data.subscription);
-            const planNames = {
-              monthly: "Aylık",
-              "6months": "6 Aylık", 
-              yearly: "Yıllık"
-            };
-            setCurrentPlanName(`${planNames[data.subscription.planType as keyof typeof planNames]} Plan`);
+          if (data.success) {
+            if (data.subscription) {
+              setSubscription(data.subscription);
+              const planNames = {
+                monthly: "Aylık",
+                "6months": "6 Aylık", 
+                yearly: "Yıllık"
+              };
+              setCurrentPlanName(`${planNames[data.subscription.planType as keyof typeof planNames]} Plan`);
+            }
+            
+            // Deneme süresi bilgilerini set et
+            if (data.trial) {
+              setTrialInfo(data.trial);
+            }
           }
         })
         .catch((error) => console.error("Failed to load subscription:", error));
@@ -251,13 +270,87 @@ export default function CompanyProfilePage() {
               <p className="text-gray-400 text-sm sm:text-base">Şirket bilgilerinizi görüntüleyin ve güncelleyin</p>
             </div>
 
-            {/* UI-only: Mevcut Plan Rozeti */}
-            {currentPlanName && (
-              <div className="bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-center sm:text-left">
-                <div>Mevcut Plan: {currentPlanName}</div>
-                {subscription && (
-                  <div className="text-xs text-yellow-200 mt-1">
-                    Bitiş: {new Date(subscription.expiresAt).toLocaleDateString('tr-TR')}
+            {/* Premium Üyelik Bilgi Kartı */}
+            {subscription && (
+              <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/40 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                    <span className="text-yellow-300 font-semibold text-sm">
+                      {subscription.status === 'completed' ? 'Premium Aktif' : 'Premium Üyelik'}
+                    </span>
+                  </div>
+                  <span className="text-xs text-yellow-200 bg-yellow-500/20 px-2 py-1 rounded">
+                    {currentPlanName}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-yellow-200">
+                  <div>
+                    <span className="text-yellow-300">Başlangıç:</span><br/>
+                    {new Date(subscription.createdAt).toLocaleDateString('tr-TR')}
+                  </div>
+                  <div>
+                    <span className="text-yellow-300">Bitiş:</span><br/>
+                    {new Date(subscription.expiresAt).toLocaleDateString('tr-TR')}
+                  </div>
+                </div>
+             
+                <div className="mt-2 pt-2 border-t border-yellow-500/20">
+                  <div className="text-xs text-yellow-200">
+                    <div className="flex justify-between">
+                      <span>Durum:</span>
+                      <span className="font-semibold text-green-400">Aktif</span>
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span>Kalan Süre:</span>
+                      <span className="font-semibold">
+                        {Math.ceil((new Date(subscription.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} gün
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Deneme Süresi Bilgi Kartı */}
+            {trialInfo && !subscription && (
+              <div className={`rounded-lg p-4 border ${
+                trialInfo.hasExpired 
+                  ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 border-red-500/40'
+                  : 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-500/40'
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${
+                      trialInfo.hasExpired ? 'bg-red-400' : 'bg-blue-400 animate-pulse'
+                    }`}></div>
+                    <span className={`font-semibold text-sm ${
+                      trialInfo.hasExpired ? 'text-red-300' : 'text-blue-300'
+                    }`}>
+                      {trialInfo.hasExpired ? 'Deneme Süresi Doldu' : 'Deneme Sürümü'}
+                    </span>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    trialInfo.hasExpired 
+                      ? 'text-red-200 bg-red-500/20' 
+                      : 'text-blue-200 bg-blue-500/20'
+                  }`}>
+                    {trialInfo.daysLeft} gün kaldı
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className={trialInfo.hasExpired ? 'text-red-200' : 'text-blue-200'}>
+                    <span className={trialInfo.hasExpired ? 'text-red-300' : 'text-blue-300'}>Başlangıç:</span><br/>
+                    {new Date(trialInfo.startDate).toLocaleDateString('tr-TR')}
+                  </div>
+                  <div className={trialInfo.hasExpired ? 'text-red-200' : 'text-blue-200'}>
+                    <span className={trialInfo.hasExpired ? 'text-red-300' : 'text-blue-300'}>Bitiş:</span><br/>
+                    {new Date(trialInfo.endDate).toLocaleDateString('tr-TR')}
+                  </div>
+                </div>
+                {trialInfo.hasExpired && (
+                  <div className="mt-2 text-xs text-red-300">
+                    ⚠️ Deneme süreniz doldu. Premium'a geçerek devam edin.
                   </div>
                 )}
               </div>
@@ -340,57 +433,40 @@ export default function CompanyProfilePage() {
             </form>
           </div>
 
-          {/* Security & Settings Card */}
-          <div className="space-y-4 sm:space-y-6">
-            {/* Cashback Settings */}
-            <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">Nakit İade Oranı</h2>
-              <p className="text-gray-400 text-sm mb-4">Müşterilere verilecek varsayılan nakit iade yüzdesini belirleyin</p>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Yüzde (%)</label>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value={cashbackPercentage}
-                      onChange={(e) => setCashbackPercentage(e.target.value)}
-                      className="flex-1 px-4 py-2 bg-gray-900/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                      placeholder="Örn: 3"
-                    />
-                    <span className="text-xl font-bold text-yellow-400">%</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Örnek: %{cashbackPercentage || "0"} ile 100₺ harcamada {(
-                      (parseFloat(cashbackPercentage || "0") * 100) /
-                      100
-                    ).toFixed(2)}₺ iade
-                  </p>
+          {/* Cashback Settings Card */}
+          <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">Nakit İade Oranı</h2>
+            <p className="text-gray-400 text-sm mb-4">Müşterilere verilecek varsayılan nakit iade yüzdesini belirleyin</p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-2">Yüzde (%)</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={cashbackPercentage}
+                    onChange={(e) => setCashbackPercentage(e.target.value)}
+                    className="flex-1 px-4 py-2 bg-gray-900/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    placeholder="Örn: 3"
+                  />
+                  <span className="text-xl font-bold text-yellow-400">%</span>
                 </div>
-                <button
-                  onClick={handleSaveCashback}
-                  disabled={savingCashback}
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-medium py-2 px-4 rounded-lg transition-colors"
-                >
-                  {savingCashback ? "Kaydediliyor..." : "Oranı Kaydet"}
-                </button>
+                <p className="text-xs text-gray-500 mt-1">
+                  Örnek: %{cashbackPercentage || "0"} ile 100₺ harcamada {(
+                    (parseFloat(cashbackPercentage || "0") * 100) /
+                    100
+                  ).toFixed(2)}₺ iade
+                </p>
               </div>
-            </div>
-
-            {/* Data & Privacy */}
-            <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">Veri ve Gizlilik</h2>
-              <p className="text-gray-400 text-sm mb-4">KVKK kapsamında şirket verilerinizi yönetin</p>
-              <div className="space-y-2">
-                <Link href="/privacy" className="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                  KVKK Aydınlatma Metni
-                </Link>
-                <Link href="/terms" className="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                  Hizmet Koşulları
-                </Link>
-              </div>
+              <button
+                onClick={handleSaveCashback}
+                disabled={savingCashback}
+                className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                {savingCashback ? "Kaydediliyor..." : "Oranı Kaydet"}
+              </button>
             </div>
           </div>
         </div>

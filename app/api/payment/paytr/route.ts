@@ -45,7 +45,6 @@ async function handlePaytrCallback(request: NextRequest): Promise<NextResponse> 
     const formData = await request.formData();
     const callbackData = Object.fromEntries(formData.entries());
     
-    console.log("PayTR callback data:", callbackData);
     
     const {
       hash,
@@ -77,15 +76,48 @@ async function handlePaytrCallback(request: NextRequest): Promise<NextResponse> 
       const orderId = merchant_oid as string;
       const amount = parseFloat(total_amount as string) / 100; // PayTR kuruş cinsinden gönderir
       
+      // Mevcut subscription'ı al ve plan tipini kontrol et
+      const existingSubscription = await prisma.companySubscription.findUnique({
+        where: { orderId }
+      });
+      
+      if (!existingSubscription) {
+        console.error("Subscription not found:", orderId);
+        return NextResponse.json({ success: false, error: "Abonelik bulunamadı" }, { status: 404 });
+      }
+      
+      // Premium satın alındığında expiresAt'ı şu andan itibaren hesapla
+      // Deneme süresini geçersiz kılar ve premium süresini başlatır
+      const now = new Date();
+      
+      // Plan tipine göre şu andan itibaren süre hesapla
+      let planDurationMs = 0;
+      switch (existingSubscription.planType) {
+        case "monthly":
+          planDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 gün
+          break;
+        case "6months":
+          planDurationMs = 180 * 24 * 60 * 60 * 1000; // 6 ay
+          break;
+        case "yearly":
+          planDurationMs = 365 * 24 * 60 * 60 * 1000; // 1 yıl
+          break;
+        default:
+          planDurationMs = 30 * 24 * 60 * 60 * 1000; // varsayılan 30 gün
+      }
+      
+      const premiumExpirationDate = new Date(now.getTime() + planDurationMs);
+
       await prisma.companySubscription.update({
         where: { orderId },
         data: {
           status: "completed",
           updatedAt: new Date(),
+          // Premium satın alma tarihinden itibaren doğru süreyi hesapla
+          expiresAt: premiumExpirationDate,
         },
       });
       
-      console.log("Subscription updated successfully:", orderId);
       
       // PayTR'ye başarılı response döndür (PayTR bunu bekler)
       return new NextResponse("OK", { status: 200 });
@@ -128,26 +160,36 @@ function makeOrderId(companyId: string) {
   return `ORDER${safe}${Date.now()}`;
 }
 
+function calculateExpirationDate(planType: PlanKey): Date {
+  const now = new Date();
+  
+  switch (planType) {
+    case "monthly":
+      return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 gün
+    case "6months":
+      return new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000); // 6 ay (180 gün)
+    case "yearly":
+      return new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 yıl (365 gün)
+    default:
+      return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // Varsayılan 30 gün
+  }
+}
+
 /* ---- Handler ---- */
 export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get("content-type");
-    console.log("Content-Type:", contentType);
-    
     // PayTR callback mi yoksa token request mi kontrol et
     if (contentType?.includes("application/x-www-form-urlencoded")) {
-      console.log("PayTR callback detected, handling payment notification");
       return await handlePaytrCallback(request);
     }
     
     // JSON request (token creation)
-    console.log("Token creation request detected");
     
     let body: { planType?: PlanKey; companyId?: string } | null = null;
     
     try {
       const text = await request.text();
-      console.log("Raw request body:", text);
       
       if (!text || text.trim() === "") {
         return NextResponse.json({ 
@@ -157,7 +199,6 @@ export async function POST(request: NextRequest) {
       }
       
       body = JSON.parse(text);
-      console.log("Parsed body:", body);
       
     } catch (parseError) {
       console.error("JSON parse error:", parseError);
@@ -262,7 +303,7 @@ export async function POST(request: NextRequest) {
           planType,
           amount,
           status: "pending",
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          expiresAt: calculateExpirationDate(planType),
         },
         update: {
           status: "pending",
