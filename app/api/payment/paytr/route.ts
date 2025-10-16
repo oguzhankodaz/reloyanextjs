@@ -15,7 +15,7 @@ const MERCHANT_ID = process.env.PAYTR_MERCHANT_ID!;
 const MERCHANT_KEY = (process.env.PAYTR_MERCHANT_KEY || "").trim();
 const MERCHANT_SALT = process.env.PAYTR_MERCHANT_SALT!;
 const PAYTR_URL = process.env.PAYTR_URL || "https://www.paytr.com/odeme/api/get-token";
-const TEST_PUBLIC_IP = process.env.TEST_PUBLIC_IP || "1.1.1.1";
+const TEST_PUBLIC_IP = process.env.TEST_PUBLIC_IP || "84.51.26.82";
 
 /* Plan fiyatları (TL) */
 const PLAN_PRICES = {
@@ -69,15 +69,41 @@ function makeOrderId(companyId: string) {
 /* ---- Handler ---- */
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json().catch(() => null)) as
-      | { planType?: PlanKey; companyId?: string }
-      | null;
+    // Debug: Request headers ve body'yi logla
+    console.log("Request headers:", Object.fromEntries(request.headers.entries()));
+    
+    let body: { planType?: PlanKey; companyId?: string } | null = null;
+    
+    try {
+      const text = await request.text();
+      console.log("Raw request body:", text);
+      
+      if (text) {
+        body = JSON.parse(text);
+        console.log("Parsed body:", body);
+      }
+    } catch (parseError) {
+      console.error("JSON parse error:", parseError);
+      return NextResponse.json({ 
+        success: false, 
+        error: "Geçersiz JSON formatı",
+        details: "Request body JSON olarak parse edilemedi"
+      }, { status: 400 });
+    }
 
-    const planType = (body?.planType as PlanKey) || null;
+    const planType = body?.planType as PlanKey || null;
     const companyId = body?.companyId ?? null;
 
-    if (!planType || !companyId)
-      return NextResponse.json({ success: false, error: "Plan türü ve şirket ID'si gerekli" }, { status: 400 });
+    console.log("Extracted values - planType:", planType, "companyId:", companyId);
+
+    if (!planType || !companyId) {
+      console.error("Missing required fields:", { planType, companyId });
+      return NextResponse.json({ 
+        success: false, 
+        error: "Plan türü ve şirket ID'si gerekli",
+        details: { receivedPlanType: planType, receivedCompanyId: companyId }
+      }, { status: 400 });
+    }
 
     if (!(planType in PLAN_PRICES))
       return NextResponse.json({ success: false, error: "Geçersiz plan türü" }, { status: 400 });
