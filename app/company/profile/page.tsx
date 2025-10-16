@@ -53,7 +53,6 @@ export default function CompanyProfilePage() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
-    const orderId = urlParams.get('order');
 
     if (paymentStatus === 'success') {
       toast({
@@ -227,7 +226,7 @@ export default function CompanyProfilePage() {
           variant: "error",
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Hata",
         description: "Bir hata oluştu",
@@ -350,7 +349,7 @@ export default function CompanyProfilePage() {
                 </div>
                 {trialInfo.hasExpired && (
                   <div className="mt-2 text-xs text-red-300">
-                    ⚠️ Deneme süreniz doldu. Premium'a geçerek devam edin.
+                    ⚠️ Deneme süreniz doldu. Premium&apos;a geçerek devam edin.
                   </div>
                 )}
               </div>

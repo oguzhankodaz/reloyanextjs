@@ -19,9 +19,9 @@ const TEST_PUBLIC_IP = process.env.TEST_PUBLIC_IP || "84.51.26.82";
 
 /* Plan fiyatları (TL) */
 const PLAN_PRICES = {
-  monthly: 99.99,
-  "6months": 499.99,
-  yearly: 899.99,
+  monthly: 649,
+  "6months": 2999,
+  yearly: 4999,
 } as const;
 
 type PlanKey = keyof typeof PLAN_PRICES;
@@ -273,18 +273,23 @@ export async function POST(request: NextRequest) {
       cache: "no-store",
     });
 
-    // ---- burada ANY yok ----
-    let dataUnknown: unknown;
+    // Response body'sini text olarak oku, sonra JSON parse et
+    const responseText = await res.text();
+    console.log("PayTR response status:", res.status);
+    console.log("PayTR response headers:", Object.fromEntries(res.headers.entries()));
+    console.log("PayTR response body:", responseText.substring(0, 500)); // İlk 500 karakter
+    
+    let data: PaytrResponse;
+    
     try {
-      dataUnknown = await res.json();
+      data = JSON.parse(responseText) as PaytrResponse;
     } catch {
-      const text = await res.text();
+      console.error("JSON parse failed. Response:", responseText);
       return NextResponse.json(
-        { success: false, error: "PayTR yanıtı JSON değil", details: text },
+        { success: false, error: "PayTR yanıtı JSON değil", details: responseText.substring(0, 200) },
         { status: 502 }
       );
     }
-    const data = dataUnknown as PaytrResponse;
 
     if (data.status !== "success") {
       console.error("PayTR token failed:", data);

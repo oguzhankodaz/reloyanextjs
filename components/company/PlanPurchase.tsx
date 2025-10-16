@@ -26,7 +26,7 @@ type PlanPurchaseProps = {
 const plans: Plan[] = [
 	{
 		name: "Aylık",
-		price: "99.99",
+		price: "649",
 		period: "ay",
 		planType: "monthly",
 		features: [
@@ -41,11 +41,11 @@ const plans: Plan[] = [
 	},
 	{
 		name: "6 Aylık",
-		price: "499.99",
+		price: "2 999",
 		period: "6 ay",
 		planType: "6months",
-		originalPrice: "599.94",
-		discount: "17%",
+		originalPrice: "3 894",
+		discount: "23%",
 		features: [
 			"Aylık planın tüm özellikleri",
 			"Öncelikli müşteri desteği",
@@ -58,11 +58,11 @@ const plans: Plan[] = [
 	},
 	{
 		name: "Yıllık",
-		price: "899.99",
+		price: "4 999",
 		period: "yıl",
 		planType: "yearly",
-		originalPrice: "1199.88",
-		discount: "25%",
+		originalPrice: "7 788",
+		discount: "36%",
 		features: [
 			"6 aylık planın tüm özellikleri",
 			"VIP müşteri desteği",
@@ -171,12 +171,12 @@ export default function PlanPurchase({ onClose, onSelectPlan }: PlanPurchaseProp
 										</div>
 										<h3 className="text-base sm:text-lg font-bold mb-1">{plan.name}</h3>
 										<div className="mb-2">
-											<span className="text-2xl sm:text-3xl font-extrabold">€{plan.price}</span>
+											<span className="text-2xl sm:text-3xl font-extrabold">₺{plan.price}</span>
 											<span className="text-gray-400 text-sm sm:text-base">/{plan.period}</span>
 										</div>
 										{plan.originalPrice && (
 											<div className="flex items-center justify-center gap-2">
-												<span className="text-xs sm:text-sm text-gray-400 line-through">€{plan.originalPrice}</span>
+												<span className="text-xs sm:text-sm text-gray-400 line-through">₺{plan.originalPrice}</span>
 												<span className="bg-green-500 text-black px-2 py-0.5 rounded-full text-xs font-bold">
 													{plan.discount} İndirim
 												</span>

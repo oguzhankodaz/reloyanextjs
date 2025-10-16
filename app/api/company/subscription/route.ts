@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     const trialDaysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 
     // Response oluştur
-    const response: any = {
+    const response = {
       success: true,
       subscription: latestSubscription,
       trial: {
