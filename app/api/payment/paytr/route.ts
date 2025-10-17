@@ -117,10 +117,6 @@ async function handlePaytrCallback(request: NextRequest): Promise<NextResponse> 
         orderBy: { expiresAt: 'desc' } // En uzun süreli
       });
 
-      console.log("DEBUG MAIN - Existing active subscription:", existingActiveSubscription);
-      console.log("DEBUG MAIN - Company ID:", companyId);
-      console.log("DEBUG MAIN - Order ID:", orderId);
-      console.log("DEBUG MAIN - Current date:", new Date().toISOString());
       
       const now = new Date();
       

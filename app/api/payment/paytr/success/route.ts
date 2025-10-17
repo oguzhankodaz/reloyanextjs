@@ -83,23 +83,6 @@ async function handleCallback(merchantOid: string | null, status: string | null,
           orderBy: { expiresAt: 'desc' } // En uzun süreli
         });
 
-        console.log("DEBUG GET - Existing active subscription:", existingActiveSubscription);
-        console.log("DEBUG GET - Company ID:", companyId);
-        console.log("DEBUG GET - Merchant OID:", merchantOid.toString());
-        
-        // Debug bilgilerini response'a ekle
-        const debugInfo = {
-          existingActiveSubscription: existingActiveSubscription ? {
-            id: existingActiveSubscription.id,
-            orderId: existingActiveSubscription.orderId,
-            planType: existingActiveSubscription.planType,
-            expiresAt: existingActiveSubscription.expiresAt.toISOString(),
-            status: existingActiveSubscription.status
-          } : null,
-          companyId: companyId,
-          merchantOid: merchantOid.toString(),
-          currentDate: new Date().toISOString()
-        };
 
         const paymentDate = new Date();
         let expiresAt = new Date();
@@ -163,14 +146,9 @@ async function handleCallback(merchantOid: string | null, status: string | null,
           expiresAt,
         });
 
-        // Başarı sayfasına yönlendir (debug bilgileri ile)
+        // Başarı sayfasına yönlendir
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
-        const debugParams = new URLSearchParams({
-          payment: 'success',
-          order: merchantOid.toString(),
-          debug: JSON.stringify(debugInfo)
-        });
-        return NextResponse.redirect(`${baseUrl}/company/profile?${debugParams.toString()}`);
+        return NextResponse.redirect(`${baseUrl}/company/profile?payment=success&order=${merchantOid}`);
       } catch (dbError) {
         console.error("❌ Veritabanı kaydı oluşturulamadı:", dbError);
         // Veritabanı hatası olsa bile ödeme başarılı, kullanıcıyı bilgilendir
@@ -268,23 +246,6 @@ export async function POST(request: NextRequest) {
           orderBy: { expiresAt: 'desc' } // En uzun süreli
         });
 
-        console.log("DEBUG POST - Existing active subscription:", existingActiveSubscription);
-        console.log("DEBUG POST - Company ID:", companyId);
-        console.log("DEBUG POST - Merchant OID:", merchantOid.toString());
-        
-        // Debug bilgilerini response'a ekle
-        const debugInfo = {
-          existingActiveSubscription: existingActiveSubscription ? {
-            id: existingActiveSubscription.id,
-            orderId: existingActiveSubscription.orderId,
-            planType: existingActiveSubscription.planType,
-            expiresAt: existingActiveSubscription.expiresAt.toISOString(),
-            status: existingActiveSubscription.status
-          } : null,
-          companyId: companyId,
-          merchantOid: merchantOid.toString(),
-          currentDate: new Date().toISOString()
-        };
 
         const paymentDate = new Date();
         let expiresAt = new Date();
