@@ -3,21 +3,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import prisma from "@/lib/prisma";
+import { addMonths, addYears } from "date-fns";
 
 const MERCHANT_KEY = process.env.PAYTR_MERCHANT_KEY;
 const MERCHANT_SALT = process.env.PAYTR_MERCHANT_SALT;
 
-// Plan süre hesaplama fonksiyonu
-function calculatePlanDuration(planType: string): number {
+// Plan fiyatları (kuruş cinsinden)
+const PLAN_PRICES = {
+  monthly: 64900, // 649 TL
+  "6months": 299900, // 2999 TL
+  yearly: 899900 // 8999 TL
+} as const;
+
+// Plan doğrulama fonksiyonu
+function validatePlanAmount(planType: string, amount: number): boolean {
+  const expectedAmount = PLAN_PRICES[planType as keyof typeof PLAN_PRICES];
+  return expectedAmount === amount;
+}
+
+// Plan süre hesaplama fonksiyonu (date-fns ile)
+function calculatePlanExpiration(baseDate: Date, planType: string): Date {
   switch (planType) {
     case "monthly":
-      return 30 * 24 * 60 * 60 * 1000; // 30 gün
+      return addMonths(baseDate, 1);
     case "6months":
-      return 180 * 24 * 60 * 60 * 1000; // 6 ay
+      return addMonths(baseDate, 6);
     case "yearly":
-      return 365 * 24 * 60 * 60 * 1000; // 1 yıl
+      return addYears(baseDate, 1);
     default:
-      return 30 * 24 * 60 * 60 * 1000; // varsayılan 30 gün
+      return addMonths(baseDate, 1); // varsayılan 1 ay
   }
 }
 
@@ -49,8 +63,13 @@ async function handleCallback(merchantOid: string | null, status: string | null,
 
     console.log("Hash comparison:", { calculatedHash, receivedHash: hash });
 
-    if (calculatedHash !== hash) {
-      console.error("Hash doğrulama hatası");
+    // Timing-safe hash karşılaştırması
+    const calculatedHashBuffer = Buffer.from(calculatedHash, 'base64');
+    const receivedHashBuffer = Buffer.from(hash, 'base64');
+    
+    if (calculatedHashBuffer.length !== receivedHashBuffer.length || 
+        !crypto.timingSafeEqual(calculatedHashBuffer, receivedHashBuffer)) {
+      console.error("Hash doğrulama hatası - güvenlik ihlali");
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
       return NextResponse.redirect(`${baseUrl}/company/profile?payment=error&reason=hash_mismatch`);
     }
@@ -58,92 +77,94 @@ async function handleCallback(merchantOid: string | null, status: string | null,
     // Ödeme başarılı mı kontrol et
     if (status === "success") {
       try {
-        // Pending kaydı getir; companyId ve planType buradan alınır
-        const pending = await prisma.companySubscription.findUnique({ where: { orderId: merchantOid.toString() } });
-        if (!pending) {
-          console.error("Pending subscription not found for:", merchantOid);
+        const amount = parseFloat(totalAmount.toString()); // Kuruş cinsinden
+        const amountInTL = amount / 100; // TL'ye çevir
+        
+        // Plan türünü tutardan belirle
+        const planType = amountInTL >= 899.99 ? "yearly" : amountInTL >= 499.99 ? "6months" : "monthly";
+        
+        // Plan tutarını doğrula
+        if (!validatePlanAmount(planType, amount)) {
+          console.error("Plan amount validation failed:", { planType, amount, expected: PLAN_PRICES[planType as keyof typeof PLAN_PRICES] });
           const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
-          return NextResponse.redirect(`${baseUrl}/company/profile?payment=error&reason=pending_not_found`);
+          return NextResponse.redirect(`${baseUrl}/company/profile?payment=error&reason=amount_mismatch`);
         }
 
-        const companyId = pending.companyId;
-        const amount = parseFloat(totalAmount.toString()) / 100; // Kuruştan TL'ye çevir
-        
-        // Plan türü pending kayıttan
-        const planType = pending.planType || (amount >= 899.99 ? "yearly" : amount >= 499.99 ? "6months" : "monthly");
-
-        // Mevcut aktif aboneliği kontrol et (yeni ödeme kaydı hariç)
-        const existingActiveSubscription = await prisma.companySubscription.findFirst({
-          where: { 
-            companyId: companyId,
-            status: "completed",
-            expiresAt: { gt: new Date() }, // Hala aktif olan
-            orderId: { not: merchantOid.toString() } // Yeni ödeme hariç
-          },
-          orderBy: { expiresAt: 'desc' } // En uzun süreli
-        });
-
-
-        const paymentDate = new Date();
-        let expiresAt = new Date();
-        
-        // Plan süresini hesapla
-        if (planType === "monthly") {
-          expiresAt.setMonth(expiresAt.getMonth() + 1);
-        } else if (planType === "6months") {
-          expiresAt.setMonth(expiresAt.getMonth() + 6);
-        } else if (planType === "yearly") {
-          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-        }
-
-        // Eğer mevcut aktif abonelik varsa, süreyi uzat
-        if (existingActiveSubscription) {
-          const planDurationMs = calculatePlanDuration(planType);
-          expiresAt = new Date(existingActiveSubscription.expiresAt.getTime() + planDurationMs);
-          console.log(`Mevcut abonelik uzatılıyor: ${existingActiveSubscription.expiresAt.toISOString()} -> ${expiresAt.toISOString()}`);
-        } else {
-          console.log(`Yeni abonelik başlatılıyor: ${expiresAt.toISOString()}`);
-        }
-
-        console.log("Creating subscription:", {
-          companyId,
-          orderId: merchantOid,
-          planType,
-          amount,
-          expiresAt
-        });
-
-        // Idempotent: varsa güncelle, yoksa oluştur
-        await prisma.companySubscription.upsert({
-          where: { orderId: merchantOid.toString() },
-          update: {
-            companyId: companyId,
-            planType: planType,
-            amount: amount,
-            status: "completed",
-            paymentDate: paymentDate,
-            expiresAt: expiresAt,
-            updatedAt: new Date(),
-          },
-          create: {
-            companyId: companyId,
-            orderId: merchantOid.toString(),
-            planType: planType,
-            amount: amount,
-            status: "completed",
-            paymentDate: paymentDate,
-            expiresAt: expiresAt,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+        // Tek transaction içinde tüm işlemleri yap
+        const result = await prisma.$transaction(async (tx) => {
+          // 1. Pending kaydı çek
+          const pending = await tx.companySubscription.findUnique({ 
+            where: { orderId: merchantOid.toString() } 
+          });
+          
+          if (!pending) {
+            throw new Error("Pending subscription not found");
           }
+          
+          // 2. Idempotency kontrolü - zaten completed ise erken çık
+          if (pending.status === "completed") {
+            console.log("Payment already processed for order:", merchantOid);
+            return { alreadyProcessed: true };
+          }
+
+          // 3. Şirketin son completed aboneliğini bul
+          const lastCompletedSubscription = await tx.companySubscription.findFirst({
+            where: { 
+              companyId: pending.companyId,
+              status: "completed",
+              orderId: { not: merchantOid.toString() } // Yeni ödeme hariç
+            },
+            orderBy: { expiresAt: 'desc' } // En son biten
+          });
+
+          const paymentDate = new Date();
+          
+          // 4. Baz tarihini hesapla: max(şu an, son tamamlanan aboneliğin bitiş tarihi)
+          const baseDate = lastCompletedSubscription 
+            ? new Date(Math.max(paymentDate.getTime(), lastCompletedSubscription.expiresAt.getTime()))
+            : paymentDate;
+          
+          // 5. Süreyi date-fns ile ekle
+          const expiresAt = calculatePlanExpiration(baseDate, planType);
+          
+          if (lastCompletedSubscription) {
+            console.log(`Abonelik uzatılıyor: ${lastCompletedSubscription.expiresAt.toISOString()} -> ${expiresAt.toISOString()}`);
+          } else {
+            console.log(`Yeni abonelik başlatılıyor: ${expiresAt.toISOString()}`);
+          }
+
+          // 6. Kaydı completed yap
+          await tx.companySubscription.update({
+            where: { orderId: merchantOid.toString() },
+            data: {
+              status: "completed",
+              paymentDate: paymentDate,
+              expiresAt: expiresAt,
+              updatedAt: new Date(),
+            }
+          });
+
+          return { 
+            alreadyProcessed: false, 
+            companyId: pending.companyId,
+            planType,
+            amount,
+            expiresAt 
+          };
         });
+
+        // Zaten işlenmişse erken çık
+        if (result.alreadyProcessed) {
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
+          return NextResponse.redirect(`${baseUrl}/company/profile?payment=success&order=${merchantOid}&already_processed=true`);
+        }
 
         console.log("✅ Abonelik kaydı başarıyla oluşturuldu:", {
           merchantOid,
-          companyId,
-          planType,
-          amount,
-          expiresAt,
+          companyId: result.companyId,
+          planType: result.planType,
+          amount: result.amount,
+          expiresAt: result.expiresAt,
         });
 
         // Başarı sayfasına yönlendir
@@ -226,71 +247,89 @@ export async function POST(request: NextRequest) {
         }
 
         const companyId = companyIdMatch[1];
-        const amount = parseFloat(totalAmount.toString()) / 100;
+        const amount = parseFloat(totalAmount.toString()); // Kuruş cinsinden
+        const amountInTL = amount / 100; // TL'ye çevir
 
         let planType = "monthly";
-        if (amount >= 899.99) {
+        if (amountInTL >= 899.99) {
           planType = "yearly";
-        } else if (amount >= 499.99) {
+        } else if (amountInTL >= 499.99) {
           planType = "6months";
         }
-
-        // Mevcut aktif aboneliği kontrol et (yeni ödeme kaydı hariç)
-        const existingActiveSubscription = await prisma.companySubscription.findFirst({
-          where: { 
-            companyId: companyId,
-            status: "completed",
-            expiresAt: { gt: new Date() }, // Hala aktif olan
-            orderId: { not: merchantOid.toString() } // Yeni ödeme hariç
-          },
-          orderBy: { expiresAt: 'desc' } // En uzun süreli
-        });
-
-
-        const paymentDate = new Date();
-        let expiresAt = new Date();
         
-        // Plan süresini hesapla
-        if (planType === "monthly") {
-          expiresAt.setMonth(expiresAt.getMonth() + 1);
-        } else if (planType === "6months") {
-          expiresAt.setMonth(expiresAt.getMonth() + 6);
-        } else if (planType === "yearly") {
-          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        // Plan tutarını doğrula
+        if (!validatePlanAmount(planType, amount)) {
+          console.error("POST Callback - Plan amount validation failed:", { planType, amount, expected: PLAN_PRICES[planType as keyof typeof PLAN_PRICES] });
+          return new Response("FAILED", { status: 400 });
         }
 
-        // Eğer mevcut aktif abonelik varsa, süreyi uzat
-        if (existingActiveSubscription) {
-          const planDurationMs = calculatePlanDuration(planType);
-          expiresAt = new Date(existingActiveSubscription.expiresAt.getTime() + planDurationMs);
-          console.log(`POST Callback - Mevcut abonelik uzatılıyor: ${existingActiveSubscription.expiresAt.toISOString()} -> ${expiresAt.toISOString()}`);
-        } else {
-          console.log(`POST Callback - Yeni abonelik başlatılıyor: ${expiresAt.toISOString()}`);
-        }
+        // Tek transaction içinde tüm işlemleri yap
+        const result = await prisma.$transaction(async (tx) => {
+          // 1. Pending kaydı çek
+          const pending = await tx.companySubscription.findUnique({ 
+            where: { orderId: merchantOid.toString() } 
+          });
+          
+          if (!pending) {
+            throw new Error("Pending subscription not found");
+          }
+          
+          // 2. Idempotency kontrolü - zaten completed ise erken çık
+          if (pending.status === "completed") {
+            console.log("POST Callback - Payment already processed for order:", merchantOid);
+            return { alreadyProcessed: true };
+          }
 
-        await prisma.companySubscription.upsert({
-          where: { orderId: merchantOid.toString() },
-          update: {
-            companyId,
+          // 3. Şirketin son completed aboneliğini bul
+          const lastCompletedSubscription = await tx.companySubscription.findFirst({
+            where: { 
+              companyId: pending.companyId,
+              status: "completed",
+              orderId: { not: merchantOid.toString() } // Yeni ödeme hariç
+            },
+            orderBy: { expiresAt: 'desc' } // En son biten
+          });
+
+          const paymentDate = new Date();
+          
+          // 4. Baz tarihini hesapla: max(şu an, son tamamlanan aboneliğin bitiş tarihi)
+          const baseDate = lastCompletedSubscription 
+            ? new Date(Math.max(paymentDate.getTime(), lastCompletedSubscription.expiresAt.getTime()))
+            : paymentDate;
+          
+          // 5. Süreyi date-fns ile ekle
+          const expiresAt = calculatePlanExpiration(baseDate, planType);
+          
+          if (lastCompletedSubscription) {
+            console.log(`POST Callback - Abonelik uzatılıyor: ${lastCompletedSubscription.expiresAt.toISOString()} -> ${expiresAt.toISOString()}`);
+          } else {
+            console.log(`POST Callback - Yeni abonelik başlatılıyor: ${expiresAt.toISOString()}`);
+          }
+
+          // 6. Kaydı completed yap
+          await tx.companySubscription.update({
+            where: { orderId: merchantOid.toString() },
+            data: {
+              status: "completed",
+              paymentDate: paymentDate,
+              expiresAt: expiresAt,
+              updatedAt: new Date(),
+            }
+          });
+
+          return { 
+            alreadyProcessed: false, 
+            companyId: pending.companyId,
             planType,
             amount,
-            status: "completed",
-            paymentDate,
-            expiresAt,
-            updatedAt: new Date(),
-          },
-          create: {
-            companyId,
-            orderId: merchantOid.toString(),
-            planType,
-            amount,
-            status: "completed",
-            paymentDate,
-            expiresAt,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
+            expiresAt 
+          };
         });
+
+        // Zaten işlenmişse sadece OK dön
+        if (result.alreadyProcessed) {
+          return new Response("OK");
+        }
 
         // PayTR'e başarıyı bildir
         return new Response("OK");

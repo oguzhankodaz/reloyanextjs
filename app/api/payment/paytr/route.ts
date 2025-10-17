@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import prisma from "@/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
+import { addMonths, addYears } from "date-fns";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,7 +78,12 @@ async function handlePaytrCallback(request: NextRequest): Promise<NextResponse> 
       .update(hashMessage)
       .digest("base64");
 
-    if (calculatedHash !== hash) {
+    // Timing-safe hash karşılaştırması
+    const calculatedHashBuffer = Buffer.from(calculatedHash, 'base64');
+    const receivedHashBuffer = Buffer.from(hash.toString(), 'base64');
+    
+    if (calculatedHashBuffer.length !== receivedHashBuffer.length || 
+        !crypto.timingSafeEqual(calculatedHashBuffer, receivedHashBuffer)) {
       console.error("Hash doğrulama hatası - güvenlik ihlali");
       return NextResponse.json({ success: false, error: "Güvenlik doğrulama hatası" }, { status: 403 });
     }
@@ -242,20 +248,28 @@ function calculateExpirationDate(planType: PlanKey): Date {
   
   switch (planType) {
     case "monthly":
-      return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 gün
+      return addMonths(now, 1);
     case "6months":
-      return new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000); // 6 ay (180 gün)
+      return addMonths(now, 6);
     case "yearly":
-      return new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 yıl (365 gün)
+      return addYears(now, 1);
     default:
-      return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // Varsayılan 30 gün
+      return addMonths(now, 1); // Varsayılan 1 ay
   }
 }
 
-// Abonelik uzatma hesaplama fonksiyonu
+// Abonelik uzatma hesaplama fonksiyonu (date-fns ile)
 function calculateExtensionDate(currentExpiration: Date, planType: PlanKey): Date {
-  const planDurationMs = calculateExpirationDate(planType).getTime() - new Date().getTime();
-  return new Date(currentExpiration.getTime() + planDurationMs);
+  switch (planType) {
+    case "monthly":
+      return addMonths(currentExpiration, 1);
+    case "6months":
+      return addMonths(currentExpiration, 6);
+    case "yearly":
+      return addYears(currentExpiration, 1);
+    default:
+      return addMonths(currentExpiration, 1);
+  }
 }
 
 /* ---- Handler ---- */

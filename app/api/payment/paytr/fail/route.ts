@@ -19,7 +19,12 @@ function validateHash(merchantOid: string, status: string, totalAmount: string, 
     .update(hashMessage)
     .digest("base64");
 
-  return calculatedHash === hash;
+  // Timing-safe hash karşılaştırması
+  const calculatedHashBuffer = Buffer.from(calculatedHash, 'base64');
+  const receivedHashBuffer = Buffer.from(hash, 'base64');
+  
+  return calculatedHashBuffer.length === receivedHashBuffer.length && 
+         crypto.timingSafeEqual(calculatedHashBuffer, receivedHashBuffer);
 }
 
 export async function POST(request: NextRequest) {
