@@ -1,90 +1,100 @@
 /** @format */
 
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 
-export async function GET(request: NextRequest) {
-  try {
-    // Company auth kontrolü yapılmalı, şimdilik basit implementasyon
-    const url = new URL(request.url);
-    const companyId = url.searchParams.get("companyId");
+interface CompanyPayload extends jwt.JwtPayload {
+  companyId: string;
+  email: string;
+  name: string;
+}
 
-    if (!companyId) {
-      return NextResponse.json(
-        { success: false, error: "Company ID gerekli" },
-        { status: 400 }
-      );
+export async function GET(request: NextRequest) {
+  const store = await cookies();
+  const cookie = store.get("cmp_sess_z71f8")?.value;
+
+  if (!cookie) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  // JWT_SECRET kontrolü
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error("❌ JWT_SECRET environment variable is not set");
+    return NextResponse.json({ success: false, error: "Server configuration error" }, { status: 500 });
+  }
+
+  try {
+    const decoded = jwt.verify(cookie, secret) as CompanyPayload;
+    const companyId = decoded.companyId;
+
+    // URL'den companyId parametresini al (fallback)
+    const url = new URL(request.url);
+    const urlCompanyId = url.searchParams.get("companyId");
+    const finalCompanyId = urlCompanyId || companyId;
+
+    // En uzun süreli aktif aboneliği bul
+    const activeSubscription = await prisma.companySubscription.findFirst({
+      where: {
+        companyId: finalCompanyId,
+        status: "completed",
+        expiresAt: { gt: new Date() } // Hala aktif olan
+      },
+      orderBy: { expiresAt: 'desc' } // En uzun süreli olanı al
+    });
+
+    // Eğer aktif abonelik yoksa, en son completed aboneliği kontrol et
+    let subscription = activeSubscription;
+    if (!subscription) {
+      subscription = await prisma.companySubscription.findFirst({
+        where: {
+          companyId: finalCompanyId,
+          status: "completed"
+        },
+        orderBy: { expiresAt: 'desc' }
+      });
     }
 
-    // Şirket bilgilerini al (kayıt tarihi için)
+    // Deneme süresi bilgilerini hesapla
     const company = await prisma.company.findUnique({
-      where: { id: companyId },
+      where: { id: finalCompanyId },
       select: { createdAt: true }
     });
 
-    if (!company) {
-      return NextResponse.json(
-        { success: false, error: "Şirket bulunamadı" },
-        { status: 404 }
-      );
+    let trialInfo = null;
+    if (company) {
+      const trialStartDate = new Date(company.createdAt);
+      const trialEndDate = new Date(trialStartDate.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 gün deneme
+      const now = new Date();
+      
+      const daysLeft = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      trialInfo = {
+        isActive: !subscription && daysLeft > 0,
+        daysLeft: Math.max(0, daysLeft),
+        startDate: trialStartDate.toISOString(),
+        endDate: trialEndDate.toISOString(),
+        hasExpired: daysLeft <= 0
+      };
     }
 
-
-    // Aktif veya tamamlanmış aboneliği getir
-    const activeSubscription = await prisma.companySubscription.findFirst({
-      where: {
-        companyId: companyId,
-        status: {
-          in: ["active", "completed"] // Hem aktif hem tamamlanmış abonelikleri getir
-        },
-        // expiresAt kontrolünü geçici olarak kaldırdık - debug için
-        // expiresAt: {
-        //   gt: new Date(), // Henüz süresi dolmamış
-        // },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    // Eğer aktif abonelik yoksa, en son tamamlanmış aboneliği getir
-    const latestSubscription = activeSubscription || await prisma.companySubscription.findFirst({
-      where: {
-        companyId: companyId,
-        status: "completed",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    // Deneme süresi hesaplama
-    const trialStartDate = company.createdAt;
-    const trialEndDate = new Date(trialStartDate.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 gün
-    const now = new Date();
-    const isTrialActive = now < trialEndDate;
-    const trialDaysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-
-    // Response oluştur
-    const response = {
+    return NextResponse.json({
       success: true,
-      subscription: latestSubscription,
-      trial: {
-        isActive: isTrialActive,
-        daysLeft: trialDaysLeft,
-        startDate: trialStartDate,
-        endDate: trialEndDate,
-        hasExpired: !isTrialActive
-      }
-    };
-
-    return NextResponse.json(response);
+      subscription: subscription ? {
+        planType: subscription.planType,
+        expiresAt: subscription.expiresAt.toISOString(),
+        status: subscription.status,
+        amount: subscription.amount,
+        createdAt: subscription.createdAt.toISOString(),
+        orderId: subscription.orderId
+      } : null,
+      trial: trialInfo
+    });
 
   } catch (error) {
     console.error("Subscription fetch error:", error);
-    return NextResponse.json(
-      { success: false, error: "Abonelik bilgisi alınamadı" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: "Failed to fetch subscription" }, { status: 500 });
   }
 }

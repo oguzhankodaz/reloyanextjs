@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import prisma from "@/lib/prisma";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,10 +59,27 @@ async function handlePaytrCallback(request: NextRequest): Promise<NextResponse> 
       test_mode
     } = callbackData;
     
-    // Hash doğrulaması (güvenlik için)
-    if (!hash || !merchant_oid) {
+    // Temel alan kontrolü
+    if (!hash || !merchant_oid || !status || !total_amount) {
       console.error("Missing required callback fields");
       return NextResponse.json({ success: false, error: "Eksik callback parametreleri" }, { status: 400 });
+    }
+
+    // Hash doğrulaması (PayTR güvenlik kontrolü)
+    if (!MERCHANT_KEY || !MERCHANT_SALT) {
+      console.error("PAYTR config missing for callback hash validation");
+      return NextResponse.json({ success: false, error: "Sunucu yapılandırma hatası" }, { status: 500 });
+    }
+
+    const hashMessage = `${merchant_oid}${MERCHANT_SALT}${status}${total_amount}`;
+    const calculatedHash = crypto
+      .createHmac("sha256", MERCHANT_KEY)
+      .update(hashMessage)
+      .digest("base64");
+
+    if (calculatedHash !== hash) {
+      console.error("Hash doğrulama hatası - güvenlik ihlali");
+      return NextResponse.json({ success: false, error: "Güvenlik doğrulama hatası" }, { status: 403 });
     }
     
     // Ödeme başarılı mı kontrol et
@@ -70,28 +88,45 @@ async function handlePaytrCallback(request: NextRequest): Promise<NextResponse> 
       return NextResponse.json({ success: false, error: "Ödeme başarısız" }, { status: 400 });
     }
     
-    // Subscription'ı güncelle
+    // Subscription'ı güncelle veya uzat
     try {
       const orderId = merchant_oid as string;
       const amount = parseFloat(total_amount as string) / 100; // PayTR kuruş cinsinden gönderir
       
-      // Mevcut subscription'ı al ve plan tipini kontrol et
-      const existingSubscription = await prisma.companySubscription.findUnique({
+      // Pending subscription'ı al (yeni ödeme için)
+      const pendingSubscription = await prisma.companySubscription.findUnique({
         where: { orderId }
       });
       
-      if (!existingSubscription) {
-        console.error("Subscription not found:", orderId);
+      if (!pendingSubscription) {
+        console.error("Pending subscription not found:", orderId);
         return NextResponse.json({ success: false, error: "Abonelik bulunamadı" }, { status: 404 });
       }
+
+      const companyId = pendingSubscription.companyId;
+      const planType = pendingSubscription.planType;
       
-      // Premium satın alındığında expiresAt'ı şu andan itibaren hesapla
-      // Deneme süresini geçersiz kılar ve premium süresini başlatır
+      // Mevcut aktif aboneliği bul
+      const existingActiveSubscription = await prisma.companySubscription.findFirst({
+        where: { 
+          companyId: companyId,
+            status: "completed",
+          expiresAt: { gt: new Date() }, // Hala aktif olan
+          orderId: { not: orderId } // Yeni ödeme hariç
+        },
+        orderBy: { expiresAt: 'desc' } // En uzun süreli
+      });
+
+      console.log("DEBUG MAIN - Existing active subscription:", existingActiveSubscription);
+      console.log("DEBUG MAIN - Company ID:", companyId);
+      console.log("DEBUG MAIN - Order ID:", orderId);
+      console.log("DEBUG MAIN - Current date:", new Date().toISOString());
+      
       const now = new Date();
       
-      // Plan tipine göre şu andan itibaren süre hesapla
+      // Plan tipine göre süre hesapla
       let planDurationMs = 0;
-      switch (existingSubscription.planType) {
+      switch (planType) {
         case "monthly":
           planDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 gün
           break;
@@ -105,15 +140,25 @@ async function handlePaytrCallback(request: NextRequest): Promise<NextResponse> 
           planDurationMs = 30 * 24 * 60 * 60 * 1000; // varsayılan 30 gün
       }
       
-      const premiumExpirationDate = new Date(now.getTime() + planDurationMs);
+      // Mevcut abonelik bitiş tarihini kontrol et
+      let newExpirationDate: Date;
+      
+      if (existingActiveSubscription) {
+        // Mevcut aktif abonelik var - süreyi uzat
+        newExpirationDate = new Date(existingActiveSubscription.expiresAt.getTime() + planDurationMs);
+        console.log(`Abonelik uzatılıyor: ${existingActiveSubscription.expiresAt.toISOString()} -> ${newExpirationDate.toISOString()}`);
+      } else {
+        // Mevcut aktif abonelik yok - şu andan itibaren başlat
+        newExpirationDate = new Date(now.getTime() + planDurationMs);
+        console.log(`Yeni abonelik başlatılıyor: ${newExpirationDate.toISOString()}`);
+      }
 
       await prisma.companySubscription.update({
         where: { orderId },
         data: {
-          status: "completed",
+            status: "completed",
           updatedAt: new Date(),
-          // Premium satın alma tarihinden itibaren doğru süreyi hesapla
-          expiresAt: premiumExpirationDate,
+          expiresAt: newExpirationDate,
         },
       });
       
@@ -123,7 +168,11 @@ async function handlePaytrCallback(request: NextRequest): Promise<NextResponse> 
       
     } catch (dbError) {
       console.error("Database update error:", dbError);
-      return NextResponse.json({ success: false, error: "Veritabanı güncelleme hatası" }, { status: 500 });
+      // Veritabanı hatası durumunda ödeme işlemini iptal et
+      return NextResponse.json({ 
+        success: false, 
+        error: "Ödeme işlemi tamamlanamadı. Lütfen tekrar deneyin." 
+      }, { status: 500 });
     }
     
   } catch (error) {
@@ -141,15 +190,46 @@ function getClientIPv4(req: NextRequest): string {
 
   let ip = (cf || trueClient || (fwd ? fwd.split(",")[0] : "") || real || "").trim();
 
-  // IPv6'yı IPv4'e çevir veya varsayılan IP kullan
+  // IPv6 adreslerini handle et
   if (ip.includes(":")) {
-    // IPv6 adresini basitçe handle et - PayTR IPv4 bekliyor
+    // IPv6 adresini IPv4'e çevirmeye çalış
+    if (ip.startsWith("::ffff:")) {
+      ip = ip.substring(7); // ::ffff: prefix'ini kaldır
+    } else {
+      // Diğer IPv6 adresleri için varsayılan IP kullan
+      console.warn("IPv6 address detected, using fallback IP:", ip);
+      return "127.0.0.1";
+    }
+  }
+
+  // Geçersiz IP'ler için kontrol
+  if (!ip || ip === "::1" || ip === "localhost") {
+    console.warn("Invalid IP address, using fallback IP:", ip);
     return "127.0.0.1";
   }
 
-  // Local IP'ler için varsayılan
-  if (!ip || ip === "127.0.0.1" || ip === "::1" || 
-      ip.startsWith("10.") || ip.startsWith("192.168.") || ip.startsWith("172.16.")) {
+  // Private IP'ler için sadece development ortamında varsayılan kullan
+  const isPrivateIP = ip.startsWith("10.") || 
+                     ip.startsWith("192.168.") || 
+                     ip.startsWith("172.16.") || 
+                     ip.startsWith("172.17.") || 
+                     ip.startsWith("172.18.") || 
+                     ip.startsWith("172.19.") || 
+                     ip.startsWith("172.20.") || 
+                     ip.startsWith("172.21.") || 
+                     ip.startsWith("172.22.") || 
+                     ip.startsWith("172.23.") || 
+                     ip.startsWith("172.24.") || 
+                     ip.startsWith("172.25.") || 
+                     ip.startsWith("172.26.") || 
+                     ip.startsWith("172.27.") || 
+                     ip.startsWith("172.28.") || 
+                     ip.startsWith("172.29.") || 
+                     ip.startsWith("172.30.") || 
+                     ip.startsWith("172.31.");
+
+  if (isPrivateIP && process.env.NODE_ENV === "production") {
+    console.warn("Private IP in production, using fallback IP:", ip);
     return "127.0.0.1";
   }
 
@@ -176,13 +256,41 @@ function calculateExpirationDate(planType: PlanKey): Date {
   }
 }
 
+// Abonelik uzatma hesaplama fonksiyonu
+function calculateExtensionDate(currentExpiration: Date, planType: PlanKey): Date {
+  const planDurationMs = calculateExpirationDate(planType).getTime() - new Date().getTime();
+  return new Date(currentExpiration.getTime() + planDurationMs);
+}
+
 /* ---- Handler ---- */
 export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get("content-type");
+    
     // PayTR callback mi yoksa token request mi kontrol et
     if (contentType?.includes("application/x-www-form-urlencoded")) {
       return await handlePaytrCallback(request);
+    }
+    
+    // Rate limiting kontrolü (sadece token request'ler için)
+    const clientIp = getClientIp(request);
+    const rateLimitResult = checkRateLimit(clientIp, "api");
+    
+    if (!rateLimitResult.allowed) {
+      console.warn(`Rate limit exceeded for IP: ${clientIp}`);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: "Çok fazla istek gönderildi. Lütfen biraz bekleyin.",
+          retryAfter: rateLimitResult.retryAfter
+        }, 
+        { 
+          status: 429,
+          headers: {
+            "Retry-After": rateLimitResult.retryAfter?.toString() || "60"
+          }
+        }
+      );
     }
     
     // JSON request (token creation)
@@ -222,11 +330,27 @@ export async function POST(request: NextRequest) {
     if (!(planType in PLAN_PRICES))
       return NextResponse.json({ success: false, error: "Geçersiz plan türü" }, { status: 400 });
 
-    if (!MERCHANT_ID || !MERCHANT_KEY || !MERCHANT_SALT)
+    // PayTR konfigürasyon kontrolü
+    if (!MERCHANT_ID || !MERCHANT_KEY || !MERCHANT_SALT) {
+      console.error("PAYTR configuration missing:", {
+        hasMerchantId: !!MERCHANT_ID,
+        hasMerchantKey: !!MERCHANT_KEY,
+        hasMerchantSalt: !!MERCHANT_SALT
+      });
       return NextResponse.json(
-        { success: false, error: "PAYTR config eksik (MERCHANT_ID/KEY/SALT)" },
+        { success: false, error: "Ödeme sistemi yapılandırma hatası" },
         { status: 500 }
       );
+    }
+
+    // Merchant key ve salt güçlülük kontrolü
+    if (MERCHANT_KEY.length < 16 || MERCHANT_SALT.length < 16) {
+      console.error("PAYTR credentials too weak");
+      return NextResponse.json(
+        { success: false, error: "Ödeme sistemi güvenlik hatası" },
+        { status: 500 }
+      );
+    }
 
     const origin = request.nextUrl.origin;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
@@ -305,6 +429,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Mevcut aktif aboneliği kontrol et
+    const existingActiveSubscription = await prisma.companySubscription.findFirst({
+      where: { 
+        companyId: companyId,
+            status: "completed",
+        expiresAt: { gt: new Date() } // Hala aktif olan
+      },
+      orderBy: { expiresAt: 'desc' } // En son biten
+    });
+
+    let subscriptionInfo = {
+      isExtension: false,
+      currentExpiration: null as Date | null,
+      newExpiration: null as Date | null
+    };
+
+    if (existingActiveSubscription) {
+      // Mevcut abonelik var - uzatma yapılacak
+      const newExpiration = calculateExtensionDate(existingActiveSubscription.expiresAt, planType);
+      
+      subscriptionInfo = {
+        isExtension: true,
+        currentExpiration: existingActiveSubscription.expiresAt,
+        newExpiration: newExpiration
+      };
+      
+      console.log(`Abonelik uzatma işlemi: ${existingActiveSubscription.expiresAt.toISOString()} -> ${newExpiration.toISOString()}`);
+    }
+
     try {
       await prisma.companySubscription.upsert({
         where: { orderId },
@@ -333,6 +486,11 @@ export async function POST(request: NextRequest) {
       orderId,
       amount,
       planType,
+      subscriptionInfo: {
+        isExtension: subscriptionInfo.isExtension,
+        currentExpiration: subscriptionInfo.currentExpiration?.toISOString() || null,
+        newExpiration: subscriptionInfo.newExpiration?.toISOString() || null
+      }
     });
   } catch (err) {
     // eslint-disable-next-line no-console

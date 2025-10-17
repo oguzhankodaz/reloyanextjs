@@ -7,6 +7,20 @@ import prisma from "@/lib/prisma";
 const MERCHANT_KEY = process.env.PAYTR_MERCHANT_KEY;
 const MERCHANT_SALT = process.env.PAYTR_MERCHANT_SALT;
 
+// Plan süre hesaplama fonksiyonu
+function calculatePlanDuration(planType: string): number {
+  switch (planType) {
+    case "monthly":
+      return 30 * 24 * 60 * 60 * 1000; // 30 gün
+    case "6months":
+      return 180 * 24 * 60 * 60 * 1000; // 6 ay
+    case "yearly":
+      return 365 * 24 * 60 * 60 * 1000; // 1 yıl
+    default:
+      return 30 * 24 * 60 * 60 * 1000; // varsayılan 30 gün
+  }
+}
+
 // Ortak callback işleme fonksiyonu
 async function handleCallback(merchantOid: string | null, status: string | null, totalAmount: string | null, hash: string | null, request: NextRequest) {
   try {
@@ -58,16 +72,54 @@ async function handleCallback(merchantOid: string | null, status: string | null,
         // Plan türü pending kayıttan
         const planType = pending.planType || (amount >= 899.99 ? "yearly" : amount >= 499.99 ? "6months" : "monthly");
 
-        // Abonelik bitiş tarihini hesapla
-        const paymentDate = new Date();
-        const expiresAt = new Date();
+        // Mevcut aktif aboneliği kontrol et (yeni ödeme kaydı hariç)
+        const existingActiveSubscription = await prisma.companySubscription.findFirst({
+          where: { 
+            companyId: companyId,
+            status: "completed",
+            expiresAt: { gt: new Date() }, // Hala aktif olan
+            orderId: { not: merchantOid.toString() } // Yeni ödeme hariç
+          },
+          orderBy: { expiresAt: 'desc' } // En uzun süreli
+        });
+
+        console.log("DEBUG GET - Existing active subscription:", existingActiveSubscription);
+        console.log("DEBUG GET - Company ID:", companyId);
+        console.log("DEBUG GET - Merchant OID:", merchantOid.toString());
         
+        // Debug bilgilerini response'a ekle
+        const debugInfo = {
+          existingActiveSubscription: existingActiveSubscription ? {
+            id: existingActiveSubscription.id,
+            orderId: existingActiveSubscription.orderId,
+            planType: existingActiveSubscription.planType,
+            expiresAt: existingActiveSubscription.expiresAt.toISOString(),
+            status: existingActiveSubscription.status
+          } : null,
+          companyId: companyId,
+          merchantOid: merchantOid.toString(),
+          currentDate: new Date().toISOString()
+        };
+
+        const paymentDate = new Date();
+        let expiresAt = new Date();
+        
+        // Plan süresini hesapla
         if (planType === "monthly") {
           expiresAt.setMonth(expiresAt.getMonth() + 1);
         } else if (planType === "6months") {
           expiresAt.setMonth(expiresAt.getMonth() + 6);
         } else if (planType === "yearly") {
           expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        }
+
+        // Eğer mevcut aktif abonelik varsa, süreyi uzat
+        if (existingActiveSubscription) {
+          const planDurationMs = calculatePlanDuration(planType);
+          expiresAt = new Date(existingActiveSubscription.expiresAt.getTime() + planDurationMs);
+          console.log(`Mevcut abonelik uzatılıyor: ${existingActiveSubscription.expiresAt.toISOString()} -> ${expiresAt.toISOString()}`);
+        } else {
+          console.log(`Yeni abonelik başlatılıyor: ${expiresAt.toISOString()}`);
         }
 
         console.log("Creating subscription:", {
@@ -85,18 +137,21 @@ async function handleCallback(merchantOid: string | null, status: string | null,
             companyId: companyId,
             planType: planType,
             amount: amount,
-            status: "active",
+            status: "completed",
             paymentDate: paymentDate,
             expiresAt: expiresAt,
+            updatedAt: new Date(),
           },
           create: {
             companyId: companyId,
             orderId: merchantOid.toString(),
             planType: planType,
             amount: amount,
-            status: "active",
+            status: "completed",
             paymentDate: paymentDate,
             expiresAt: expiresAt,
+            createdAt: new Date(),
+            updatedAt: new Date(),
           }
         });
 
@@ -108,9 +163,14 @@ async function handleCallback(merchantOid: string | null, status: string | null,
           expiresAt,
         });
 
-        // Başarı sayfasına yönlendir
+        // Başarı sayfasına yönlendir (debug bilgileri ile)
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${request.nextUrl.origin}`;
-        return NextResponse.redirect(`${baseUrl}/company/profile?payment=success&order=${merchantOid}`);
+        const debugParams = new URLSearchParams({
+          payment: 'success',
+          order: merchantOid.toString(),
+          debug: JSON.stringify(debugInfo)
+        });
+        return NextResponse.redirect(`${baseUrl}/company/profile?${debugParams.toString()}`);
       } catch (dbError) {
         console.error("❌ Veritabanı kaydı oluşturulamadı:", dbError);
         // Veritabanı hatası olsa bile ödeme başarılı, kullanıcıyı bilgilendir
@@ -197,8 +257,39 @@ export async function POST(request: NextRequest) {
           planType = "6months";
         }
 
+        // Mevcut aktif aboneliği kontrol et (yeni ödeme kaydı hariç)
+        const existingActiveSubscription = await prisma.companySubscription.findFirst({
+          where: { 
+            companyId: companyId,
+            status: "completed",
+            expiresAt: { gt: new Date() }, // Hala aktif olan
+            orderId: { not: merchantOid.toString() } // Yeni ödeme hariç
+          },
+          orderBy: { expiresAt: 'desc' } // En uzun süreli
+        });
+
+        console.log("DEBUG POST - Existing active subscription:", existingActiveSubscription);
+        console.log("DEBUG POST - Company ID:", companyId);
+        console.log("DEBUG POST - Merchant OID:", merchantOid.toString());
+        
+        // Debug bilgilerini response'a ekle
+        const debugInfo = {
+          existingActiveSubscription: existingActiveSubscription ? {
+            id: existingActiveSubscription.id,
+            orderId: existingActiveSubscription.orderId,
+            planType: existingActiveSubscription.planType,
+            expiresAt: existingActiveSubscription.expiresAt.toISOString(),
+            status: existingActiveSubscription.status
+          } : null,
+          companyId: companyId,
+          merchantOid: merchantOid.toString(),
+          currentDate: new Date().toISOString()
+        };
+
         const paymentDate = new Date();
-        const expiresAt = new Date();
+        let expiresAt = new Date();
+        
+        // Plan süresini hesapla
         if (planType === "monthly") {
           expiresAt.setMonth(expiresAt.getMonth() + 1);
         } else if (planType === "6months") {
@@ -207,15 +298,36 @@ export async function POST(request: NextRequest) {
           expiresAt.setFullYear(expiresAt.getFullYear() + 1);
         }
 
-        await prisma.companySubscription.create({
-          data: {
+        // Eğer mevcut aktif abonelik varsa, süreyi uzat
+        if (existingActiveSubscription) {
+          const planDurationMs = calculatePlanDuration(planType);
+          expiresAt = new Date(existingActiveSubscription.expiresAt.getTime() + planDurationMs);
+          console.log(`POST Callback - Mevcut abonelik uzatılıyor: ${existingActiveSubscription.expiresAt.toISOString()} -> ${expiresAt.toISOString()}`);
+        } else {
+          console.log(`POST Callback - Yeni abonelik başlatılıyor: ${expiresAt.toISOString()}`);
+        }
+
+        await prisma.companySubscription.upsert({
+          where: { orderId: merchantOid.toString() },
+          update: {
+            companyId,
+            planType,
+            amount,
+            status: "completed",
+            paymentDate,
+            expiresAt,
+            updatedAt: new Date(),
+          },
+          create: {
             companyId,
             orderId: merchantOid.toString(),
             planType,
             amount,
-            status: "active",
+            status: "completed",
             paymentDate,
             expiresAt,
+            createdAt: new Date(),
+            updatedAt: new Date(),
           },
         });
 
