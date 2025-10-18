@@ -84,15 +84,15 @@ export function usePremiumStatus(): PremiumStatus {
   const trial = data.trial as TrialData | null;
 
   // Aktif abonelik kontrolü - süresi de kontrol edilir
-  const hasActiveSubscription = subscription && 
+  const hasActiveSubscription = Boolean(subscription && 
     subscription.status === 'completed' && 
-    new Date(subscription.expiresAt) > new Date();
+    new Date(subscription.expiresAt) > new Date());
 
   // Aktif deneme süresi kontrolü
-  const hasActiveTrial = trial && 
+  const hasActiveTrial = Boolean(trial && 
     trial.isActive && 
     !trial.hasExpired && 
-    trial.daysLeft > 0;
+    trial.daysLeft > 0);
 
   // Premium durumu: aktif abonelik VEYA aktif deneme süresi
   const isPremium = hasActiveSubscription || hasActiveTrial;
