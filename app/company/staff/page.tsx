@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import { registerStaffAction } from "@/actions/auth";
 import {
@@ -9,6 +10,7 @@ import {
   toggleStaffActiveAction,
 } from "@/actions/staff-admin";
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
+import { ArrowLeft } from "lucide-react";
 
 type Staff = {
   id: string;
@@ -19,6 +21,7 @@ type Staff = {
 
 export default function StaffPage() {
   const { company } = useCompanyAuth();
+  const router = useRouter();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(true);
@@ -92,6 +95,14 @@ export default function StaffPage() {
     <CompanyNavbar></CompanyNavbar>
       <div className="p-4 sm:p-6 bg-white rounded-lg shadow text-gray-800 mx-2 sm:mx-0 mt-4 sm:mt-0">
       
+      {/* Geri Tuşu */}
+      <button
+        onClick={() => router.back()}
+        className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors group mb-6"
+      >
+        <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+        <span className="text-sm font-medium">Geri Dön</span>
+      </button>
 
       <h1 className="text-2xl font-bold mb-4 text-gray-900">
         👨‍💼 Personel Yönetimi

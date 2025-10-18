@@ -3,6 +3,7 @@
 
 import CompanyNavbar from "@/components/company/Navbar/Navbar";
 import BackButton from "@/components/company/BackButton";
+import PremiumGuard from "@/components/company/PremiumGuard";
 import CustomersSkeleton from "./CustomersSkeleton";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -52,9 +53,10 @@ const CustomersPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col"> {/* p-6 ve text-gray kaldırıldı, yapı aynı */}
-      <CompanyNavbar />
-      <BackButton />
+    <PremiumGuard featureName="Müşteri Yönetimi">
+      <div className="min-h-screen flex flex-col"> {/* p-6 ve text-gray kaldırıldı, yapı aynı */}
+        <CompanyNavbar />
+        <BackButton />
 
       {/* 🔧 SAĞ/SOL SIKIŞMAYI GİDEREN SARMALAYICI */}
       <div className="w-full mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
@@ -178,7 +180,8 @@ const CustomersPage = () => {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </PremiumGuard>
   );
 };
 

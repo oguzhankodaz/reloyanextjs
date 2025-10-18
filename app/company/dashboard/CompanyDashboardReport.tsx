@@ -5,10 +5,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCompanyMiniStatsAction } from "@/actions/companyStats";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
+import { usePremiumStatus } from "@/hooks/usePremiumStatus";
 import { formatCurrency } from "@/lib/helpers";
+import Link from "next/link";
 
 export default function CompanyDashboardReport() {
   const { company } = useCompanyAuth();
+  const { isPremium, hasActiveSubscription, hasActiveTrial, subscription, trial, isLoading: premiumLoading } = usePremiumStatus();
 
   const { data: stats, isLoading, isError } = useQuery({
     queryKey: ["company-stats", company?.companyId],
@@ -17,9 +20,59 @@ export default function CompanyDashboardReport() {
       const res = await getCompanyMiniStatsAction(company.companyId);
       return res.success ? res.stats : null;
     },
-    enabled: !!company,
+    enabled: !!company && isPremium, // Sadece premium kullanıcılar için çalıştır
     staleTime: 1000 * 60 * 5,
   });
+
+  // Premium yükleme durumu
+  if (premiumLoading) {
+    return (
+      <div className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
+        <div className="bg-gray-800 rounded-lg p-4 text-center">
+          <div className="h-6 bg-gray-700 rounded animate-pulse mb-2"></div>
+          <div className="h-4 bg-gray-700 rounded animate-pulse w-2/3 mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Premium değilse - erişim engellendi mesajı
+  if (!isPremium) {
+    return (
+      <div className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
+        <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/40 rounded-lg p-6 text-center">
+          <div className="mb-4">
+            <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="text-3xl">🔒</span>
+            </div>
+            <h3 className="text-xl font-bold text-yellow-300 mb-2">Premium Özellik</h3>
+            <p className="text-yellow-200 text-sm mb-4">
+              Günlük raporları görüntülemek için Premium üyelik gereklidir.
+            </p>
+          </div>
+          
+          <div className="space-y-3">
+            <Link
+              href="/company/profile"
+              className="inline-block bg-gradient-to-r from-yellow-500 to-orange-600 text-black font-semibold px-6 py-3 rounded-lg hover:from-yellow-600 hover:to-orange-700 transition-all transform hover:scale-105"
+            >
+              Premium'a Geç
+            </Link>
+            
+            <div className="text-xs text-yellow-300">
+              {hasActiveTrial ? (
+                <span>Deneme süreniz: {trial?.daysLeft} gün kaldı</span>
+              ) : hasActiveSubscription ? (
+                <span>Aboneliğiniz: {subscription ? Math.ceil((new Date(subscription.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0} gün kaldı</span>
+              ) : (
+                <span>7 günlük deneme sürenizi başlatın</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

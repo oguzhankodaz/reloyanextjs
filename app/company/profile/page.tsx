@@ -29,8 +29,6 @@ export default function CompanyProfilePage() {
   const [cashbackPercentage, setCashbackPercentage] = useState<string>("3");
   const [savingCashback, setSavingCashback] = useState(false);
 
-  // UI-only: seçili planı göstermek için durum
-  const [currentPlanName, setCurrentPlanName] = useState<string | null>(null);
   const [openPlanModal, setOpenPlanModal] = useState(false);
   const [subscription, setSubscription] = useState<{
     planType: string;
@@ -118,12 +116,6 @@ export default function CompanyProfilePage() {
           if (data.success) {
             if (data.subscription) {
               setSubscription(data.subscription);
-              const planNames = {
-                monthly: "Aylık",
-                "6months": "6 Aylık", 
-                yearly: "Yıllık"
-              };
-              setCurrentPlanName(`${planNames[data.subscription.planType as keyof typeof planNames]} Plan`);
             }
             
             // Deneme süresi bilgilerini set et
@@ -269,107 +261,13 @@ export default function CompanyProfilePage() {
               <p className="text-gray-400 text-sm sm:text-base">Şirket bilgilerinizi görüntüleyin ve güncelleyin</p>
             </div>
 
-            {/* Premium Üyelik Bilgi Kartı */}
-            {subscription && (
-              <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/40 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-                    <span className="text-yellow-300 font-semibold text-sm">
-                      {subscription.status === 'completed' ? 'Premium Aktif' : 'Premium Üyelik'}
-                    </span>
-                  </div>
-                  <span className="text-xs text-yellow-200 bg-yellow-500/20 px-2 py-1 rounded">
-                    {currentPlanName}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs text-yellow-200">
-                  <div>
-                    <span className="text-yellow-300">Başlangıç:</span><br/>
-                    {new Date(subscription.createdAt).toLocaleDateString('tr-TR')}
-                  </div>
-                  <div>
-                    <span className="text-yellow-300">Bitiş:</span><br/>
-                    {new Date(subscription.expiresAt).toLocaleDateString('tr-TR')}
-                  </div>
-                </div>
-             
-                <div className="mt-2 pt-2 border-t border-yellow-500/20">
-                  <div className="text-xs text-yellow-200">
-                    <div className="flex justify-between">
-                      <span>Durum:</span>
-                      <span className="font-semibold text-green-400">Aktif</span>
-                    </div>
-                    <div className="flex justify-between mt-1">
-                      <span>Kalan Süre:</span>
-                      <span className="font-semibold">
-                        {Math.ceil((new Date(subscription.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} gün
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Deneme Süresi Bilgi Kartı */}
-            {trialInfo && !subscription && (
-              <div className={`rounded-lg p-4 border ${
-                trialInfo.hasExpired 
-                  ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 border-red-500/40'
-                  : 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-500/40'
-              }`}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${
-                      trialInfo.hasExpired ? 'bg-red-400' : 'bg-blue-400 animate-pulse'
-                    }`}></div>
-                    <span className={`font-semibold text-sm ${
-                      trialInfo.hasExpired ? 'text-red-300' : 'text-blue-300'
-                    }`}>
-                      {trialInfo.hasExpired ? 'Deneme Süresi Doldu' : 'Deneme Sürümü'}
-                    </span>
-                  </div>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    trialInfo.hasExpired 
-                      ? 'text-red-200 bg-red-500/20' 
-                      : 'text-blue-200 bg-blue-500/20'
-                  }`}>
-                    {trialInfo.daysLeft} gün kaldı
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className={trialInfo.hasExpired ? 'text-red-200' : 'text-blue-200'}>
-                    <span className={trialInfo.hasExpired ? 'text-red-300' : 'text-blue-300'}>Başlangıç:</span><br/>
-                    {new Date(trialInfo.startDate).toLocaleDateString('tr-TR')}
-                  </div>
-                  <div className={trialInfo.hasExpired ? 'text-red-200' : 'text-blue-200'}>
-                    <span className={trialInfo.hasExpired ? 'text-red-300' : 'text-blue-300'}>Bitiş:</span><br/>
-                    {new Date(trialInfo.endDate).toLocaleDateString('tr-TR')}
-                  </div>
-                </div>
-                {trialInfo.hasExpired && (
-                  <div className="mt-2 text-xs text-red-300">
-                    ⚠️ Deneme süreniz doldu. Premium&apos;a geçerek devam edin.
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Company Info Card */}
-          <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <h2 className="text-lg sm:text-xl font-semibold flex items-center">Şirket Bilgileri</h2>
-              {/* UI-only: Plan Satın Alma Butonu */}
-              <button
-                onClick={() => setOpenPlanModal(true)}
-                className="px-3 py-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-600 text-black font-semibold hover:from-yellow-600 hover:to-orange-700 text-sm sm:text-base w-full sm:w-auto"
-              >
-                Ödeme Planı Seç
-              </button>
-            </div>
+          <div className="lg:col-span-2 bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold flex items-center mb-4">Şirket Bilgileri</h2>
 
             {/* Message Alert */}
             {message && (
@@ -432,8 +330,128 @@ export default function CompanyProfilePage() {
             </form>
           </div>
 
+          {/* Premium Status Card */}
+          <div className="lg:col-span-1">
+            <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-sm border border-gray-700 rounded-xl p-6 h-full">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">👑</span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Abonelik Bilgileri</h3>
+                <p className="text-gray-400 text-sm">Premium durumu ve deneme süresi</p>
+              </div>
+
+              {/* Premium Status Content */}
+              <div className="space-y-4">
+                {/* Premium Subscription Status */}
+                {subscription && (() => {
+                  const now = new Date();
+                  const expiresAt = new Date(subscription.expiresAt);
+                  const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                  const isActive = subscription.status === 'completed' && daysLeft > 0;
+                  
+                  return (
+                    <div className={`rounded-lg p-4 border ${
+                      isActive 
+                        ? 'bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/30'
+                        : 'bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/30'
+                    }`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'}`}></div>
+                          <span className={`font-semibold text-sm ${isActive ? 'text-yellow-300' : 'text-red-300'}`}>
+                            {isActive ? 'Premium Aktif' : 'Premium Süresi Doldu'}
+                          </span>
+                        </div>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          isActive ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
+                        }`}>
+                          {isActive ? 'Aktif' : 'Süresi Doldu'}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Plan:</span>
+                          <span className={`font-medium ${isActive ? 'text-yellow-200' : 'text-red-200'}`}>
+                            {subscription.planType === 'monthly' ? 'Aylık' : 
+                             subscription.planType === '6months' ? '6 Aylık' : 'Yıllık'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Bitiş:</span>
+                          <span className={`font-medium ${isActive ? 'text-yellow-200' : 'text-red-200'}`}>
+                            {expiresAt.toLocaleDateString('tr-TR')}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Kalan:</span>
+                          <span className={`font-bold ${isActive ? 'text-yellow-300' : 'text-red-300'}`}>
+                            {daysLeft > 0 ? `${daysLeft} gün` : 'Süresi doldu'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Trial Status */}
+                {trialInfo && !subscription && (
+                  <div className={`rounded-lg p-4 border ${
+                    trialInfo.hasExpired 
+                      ? 'bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/30'
+                      : 'bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/30'
+                  }`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${trialInfo.hasExpired ? 'bg-red-400' : 'bg-blue-400 animate-pulse'}`}></div>
+                        <span className={`font-semibold text-sm ${trialInfo.hasExpired ? 'text-red-300' : 'text-blue-300'}`}>
+                          {trialInfo.hasExpired ? 'Deneme Süresi Doldu' : 'Deneme Sürümü'}
+                        </span>
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        trialInfo.hasExpired ? 'bg-red-500/20 text-red-300' : 'bg-blue-500/20 text-blue-300'
+                      }`}>
+                        {trialInfo.daysLeft} gün
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Başlangıç:</span>
+                        <span className={`font-medium ${trialInfo.hasExpired ? 'text-red-200' : 'text-blue-200'}`}>
+                          {new Date(trialInfo.startDate).toLocaleDateString('tr-TR')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Bitiş:</span>
+                        <span className={`font-medium ${trialInfo.hasExpired ? 'text-red-200' : 'text-blue-200'}`}>
+                          {new Date(trialInfo.endDate).toLocaleDateString('tr-TR')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Premium Action Button */}
+                <div className="pt-4 border-t border-gray-700">
+                  <button
+                    onClick={() => setOpenPlanModal(true)}
+                    className="w-full bg-gradient-to-r from-yellow-500 to-orange-600 text-black font-bold py-3 px-4 rounded-lg hover:from-yellow-600 hover:to-orange-700 transition-all transform hover:scale-105 text-sm"
+                  >
+                    {subscription || trialInfo ? 'Aboneliği Yönet' : 'Premium\'a Geç'}
+                  </button>
+                  
+                  <p className="text-xs text-gray-500 text-center mt-2">
+                    {subscription || trialInfo ? 'Aboneliğinizi uzatın veya değiştirin' : '7 günlük deneme sürenizi başlatın'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Cashback Settings Card */}
-          <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6">
+          <div className="lg:col-span-2 bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">Nakit İade Oranı</h2>
             <p className="text-gray-400 text-sm mb-4">Müşterilere verilecek varsayılan nakit iade yüzdesini belirleyin</p>
             <div className="space-y-3">
@@ -482,7 +500,6 @@ export default function CompanyProfilePage() {
       {openPlanModal && (
         <PlanPurchase
           onClose={() => setOpenPlanModal(false)}
-          onSelectPlan={(p) => setCurrentPlanName(`${p.name} (${p.period})`) }
         />
       )}
     </div>
