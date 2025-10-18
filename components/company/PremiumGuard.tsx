@@ -96,7 +96,7 @@ export default function PremiumGuard({
                 href="/company/profile"
                 className="inline-block bg-gradient-to-r from-yellow-500 to-orange-600 text-black font-bold px-8 py-4 rounded-xl hover:from-yellow-600 hover:to-orange-700 transition-all transform hover:scale-105 text-lg"
               >
-                Premium'a Geç
+                Premium&apos;a Geç
               </Link>
               
               <div className="text-sm text-gray-400">

@@ -56,7 +56,7 @@ export default function CompanyDashboardReport() {
               href="/company/profile"
               className="inline-block bg-gradient-to-r from-yellow-500 to-orange-600 text-black font-semibold px-6 py-3 rounded-lg hover:from-yellow-600 hover:to-orange-700 transition-all transform hover:scale-105"
             >
-              Premium'a Geç
+              Premium&apos;a Geç
             </Link>
             
             <div className="text-xs text-yellow-300">
