@@ -76,6 +76,7 @@ model Category {
 model Product {
   id           Int           @id @default(autoincrement())
   name         String
+  description  String?       // Ürün içeriği/açıklaması
   price        Float
   cashback     Float         @default(0) // ✅ artık TL iade alanı
   createdAt    DateTime      @default(now())

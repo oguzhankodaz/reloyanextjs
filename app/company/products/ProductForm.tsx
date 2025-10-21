@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { createProduct } from "@/actions/product";
 import { useRadixToast } from "@/components/notifications/ToastProvider";
 
@@ -10,15 +10,35 @@ type Props = {
   companyId: string;
 };
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 export default function ProductForm({ companyId }: Props) {
   const queryClient = useQueryClient();
 
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [categoryId, setCategoryId] = useState<number | null>(null);
   const [price, setPrice] = useState<string>("");
   const [cashback, setCashback] = useState<string>("");
   const [cashbackPercentage, setCashbackPercentage] = useState<number | null>(null); // Başlangıçta null
   const [loadingPercentage, setLoadingPercentage] = useState(true);
   const toast = useRadixToast();
+
+  const MAX_DESCRIPTION_LENGTH = 500; // Maksimum karakter sınırı
+
+  // Kategorileri yükle
+  const { data: categoriesData } = useQuery({
+    queryKey: ["categories", companyId],
+    queryFn: async () => {
+      const response = await fetch("/api/categories");
+      return response.json();
+    },
+  });
+
+  const categories: Category[] = categoriesData?.categories || [];
 
   // Şirketin cashback oranını yükle
   useEffect(() => {
@@ -43,6 +63,8 @@ export default function ProductForm({ companyId }: Props) {
   const mutation = useMutation({
     mutationFn: (newProduct: {
       name: string;
+      description?: string;
+      categoryId?: number | null;
       price: number;
       cashback: number;
       companyId: string;
@@ -50,6 +72,8 @@ export default function ProductForm({ companyId }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products", companyId] });
       setName("");
+      setDescription("");
+      setCategoryId(null);
       setPrice("");
       setCashback("");
     },
@@ -72,6 +96,8 @@ export default function ProductForm({ companyId }: Props) {
 
     mutation.mutate({
       name,
+      description: description.trim() || undefined,
+      categoryId: categoryId || undefined,
       price: priceValue,
       cashback: isNaN(cashbackValue) ? 0 : cashbackValue,
       companyId,
@@ -93,20 +119,66 @@ export default function ProductForm({ companyId }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 mb-6">
-      <input
-        type="text"
-        placeholder="Ürün adı"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="w-full border rounded px-3 py-2"
-      />
-      <input
-        type="number"
-        placeholder="Fiyat (₺)"
-        value={price}
-        onChange={(e) => handlePriceChange(e.target.value)}
-        className="w-full border rounded px-3 py-2"
-      />
+      <div>
+        <input
+          type="text"
+          placeholder="Ürün adı *"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full border rounded px-3 py-2"
+          required
+        />
+      </div>
+      
+      <div>
+        <textarea
+          placeholder="Ürün açıklaması (opsiyonel)"
+          value={description}
+          onChange={(e) => {
+            if (e.target.value.length <= MAX_DESCRIPTION_LENGTH) {
+              setDescription(e.target.value);
+            }
+          }}
+          className="w-full border rounded px-3 py-2 h-20 resize-none"
+          rows={3}
+          maxLength={MAX_DESCRIPTION_LENGTH}
+        />
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <span>Ürün içeriği, malzemeler, özellikler hakkında bilgi</span>
+          <span className={`${description.length > MAX_DESCRIPTION_LENGTH * 0.8 ? 'text-orange-500' : ''} ${description.length === MAX_DESCRIPTION_LENGTH ? 'text-red-500' : ''}`}>
+            {description.length}/{MAX_DESCRIPTION_LENGTH}
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <select
+          value={categoryId || ""}
+          onChange={(e) => setCategoryId(e.target.value ? parseInt(e.target.value) : null)}
+          className="w-full border rounded px-3 py-2"
+        >
+          <option value="">Kategori seçin (opsiyonel)</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <input
+          type="number"
+          placeholder="Fiyat (₺) *"
+          value={price}
+          onChange={(e) => handlePriceChange(e.target.value)}
+          className="w-full border rounded px-3 py-2"
+          step="0.01"
+          min="0"
+          required
+        />
+      </div>
+      
       <div>
         <input
           type="number"
@@ -114,6 +186,8 @@ export default function ProductForm({ companyId }: Props) {
           value={cashback}
           onChange={(e) => setCashback(e.target.value)} // kullanıcı isterse değiştirir
           className="w-full border rounded px-3 py-2"
+          step="0.01"
+          min="0"
         />
         <p className="text-xs text-gray-500 mt-1">
           {loadingPercentage ? (
@@ -127,6 +201,7 @@ export default function ProductForm({ companyId }: Props) {
           )}
         </p>
       </div>
+      
       <button
         type="submit"
         disabled={mutation.isPending}

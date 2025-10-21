@@ -27,7 +27,9 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => 
   });
 
   const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
+    p.name.toLowerCase().includes(search.toLowerCase()) ||
+    (p.description && p.description.toLowerCase().includes(search.toLowerCase())) ||
+    (p.category && p.category.name.toLowerCase().includes(search.toLowerCase()))
   );
 
   return (
@@ -54,8 +56,18 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => 
               key={product.id}
               className="flex justify-between items-center border p-3 rounded"
             >
-              <div>
-                <p className="font-medium">{product.name}</p>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-medium">{product.name}</p>
+                  {product.category && (
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                      {product.category.name}
+                    </span>
+                  )}
+                </div>
+                {product.description && (
+                  <p className="text-xs text-gray-500 mb-1">{product.description}</p>
+                )}
                 <p className="text-sm text-gray-600">
                   {product.price} ₺ • Nakit iade: {product.cashback} ₺
                 </p>

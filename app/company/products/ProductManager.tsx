@@ -4,6 +4,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getProductsByCompanyAction } from "@/actions/product";
 import ProductForm from "./ProductForm";
+import CategoryForm from "./CategoryForm";
 import ProductSkeleton from "./ProductSkeleton";
 import { useCompanyAuth } from "@/context/CompanyAuthContext";
 import { ProductList } from "./ProductList";
@@ -32,7 +33,10 @@ const ProductManager = () => {
     <div className="bg-white text-black rounded-xl p-6 shadow">
       <h2 className="text-lg font-bold mb-4">Ürünler</h2>
 
-      {/* ✅ Form */}
+      {/* ✅ Kategori Formu */}
+      {company?.companyId && <CategoryForm companyId={company.companyId} />}
+
+      {/* ✅ Ürün Formu */}
       {company?.companyId && <ProductForm companyId={company.companyId} />}
 
       {isLoading ? (
