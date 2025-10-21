@@ -160,10 +160,15 @@ export type UserDashboardData = {
 export type Product = {
   id: number;
   name: string;
+  description?: string | null;
   price: number;
   cashback: number; // ✅ ürün başına verilecek iade
   createdAt?: Date;
   companyId?: string;
   categoryId?: number | null;
+  category?: {
+    id: number;
+    name: string;
+  } | null;
 };
 export type ReportFilter = "day" | "month" | "year" | "all";
