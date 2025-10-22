@@ -82,7 +82,7 @@ export default function ProductListView({ products, companyId }: Props) {
       {/* Kategori Filtreleri */}
       <div className="bg-gray-700 rounded-lg p-4">
         <h3 className="text-sm font-medium text-gray-300 mb-3">Kategori Filtresi</h3>
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <button
             onClick={() => setSelectedCategory(null)}
             className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
