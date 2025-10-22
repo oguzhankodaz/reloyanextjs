@@ -68,11 +68,25 @@ export async function POST(req: Request) {
       );
     }
 
+    // Türkçe duyarlı Title Case normalize
+    const toTitleCaseTr = (value: string) =>
+      value
+        .trim()
+        .split(/\s+/)
+        .map((w) =>
+          w.length === 0
+            ? w
+            : w.charAt(0).toLocaleUpperCase("tr-TR") + w.slice(1).toLocaleLowerCase("tr-TR")
+        )
+        .join(" ");
+
+    const normalizedName = toTitleCaseTr(name);
+
     // Aynı şirkette aynı isimde kategori var mı kontrol et
     const existingCategory = await prisma.category.findFirst({
       where: {
         companyId,
-        name: name.trim(),
+        name: normalizedName,
       },
     });
 
@@ -85,7 +99,7 @@ export async function POST(req: Request) {
 
     const category = await prisma.category.create({
       data: {
-        name: name.trim(),
+        name: normalizedName,
         companyId,
       },
     });

@@ -28,6 +28,7 @@ export default function ProductForm({ companyId }: Props) {
   const toast = useRadixToast();
 
   const MAX_DESCRIPTION_LENGTH = 500; // Maksimum karakter sınırı
+  const MAX_NAME_LENGTH = 40; // Ürün adı maksimum karakter sınırı
 
   // Kategorileri yükle
   const { data: categoriesData } = useQuery({
@@ -124,10 +125,21 @@ export default function ProductForm({ companyId }: Props) {
           type="text"
           placeholder="Ürün adı *"
           value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full border rounded px-3 py-2"
+          onChange={(e) => {
+            if (e.target.value.length <= MAX_NAME_LENGTH) {
+              setName(e.target.value);
+            }
+          }}
+          className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          maxLength={MAX_NAME_LENGTH}
           required
         />
+        <div className="flex justify-between text-xs text-gray-400 mt-1">
+          <span>Kısa ve açıklayıcı ürün adı girin</span>
+          <span className={`${name.length > MAX_NAME_LENGTH * 0.8 ? 'text-orange-500' : ''} ${name.length === MAX_NAME_LENGTH ? 'text-red-500' : ''}`}>
+            {name.length}/{MAX_NAME_LENGTH}
+          </span>
+        </div>
       </div>
       
       <div>
@@ -139,11 +151,11 @@ export default function ProductForm({ companyId }: Props) {
               setDescription(e.target.value);
             }
           }}
-          className="w-full border rounded px-3 py-2 h-20 resize-none"
+          className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 h-20 resize-none text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
           rows={3}
           maxLength={MAX_DESCRIPTION_LENGTH}
         />
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
+        <div className="flex justify-between text-xs text-gray-400 mt-1">
           <span>Ürün içeriği, malzemeler, özellikler hakkında bilgi</span>
           <span className={`${description.length > MAX_DESCRIPTION_LENGTH * 0.8 ? 'text-orange-500' : ''} ${description.length === MAX_DESCRIPTION_LENGTH ? 'text-red-500' : ''}`}>
             {description.length}/{MAX_DESCRIPTION_LENGTH}
@@ -155,7 +167,7 @@ export default function ProductForm({ companyId }: Props) {
         <select
           value={categoryId || ""}
           onChange={(e) => setCategoryId(e.target.value ? parseInt(e.target.value) : null)}
-          className="w-full border rounded px-3 py-2"
+          className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
         >
           <option value="">Kategori seçin (opsiyonel)</option>
           {categories.map((category) => (
@@ -172,7 +184,7 @@ export default function ProductForm({ companyId }: Props) {
           placeholder="Fiyat (₺) *"
           value={price}
           onChange={(e) => handlePriceChange(e.target.value)}
-          className="w-full border rounded px-3 py-2"
+          className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
           step="0.01"
           min="0"
           required
@@ -185,17 +197,17 @@ export default function ProductForm({ companyId }: Props) {
           placeholder="Nakit İade (₺)"
           value={cashback}
           onChange={(e) => setCashback(e.target.value)} // kullanıcı isterse değiştirir
-          className="w-full border rounded px-3 py-2"
+          className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
           step="0.01"
           min="0"
         />
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-gray-400 mt-1">
           {loadingPercentage ? (
             <span className="text-gray-400">Oran yükleniyor...</span>
           ) : (
             <>
               Otomatik hesaplanan oran:{" "}
-              <span className="font-semibold text-green-600">%{cashbackPercentage}</span>
+              <span className="font-semibold text-green-400">%{cashbackPercentage}</span>
               {" "}(İsterseniz manuel değiştirebilirsiniz)
             </>
           )}

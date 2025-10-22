@@ -16,6 +16,7 @@ type Props = {
 export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => {
   const [search, setSearch] = useState("");
   const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
+  const [expandedDescriptions, setExpandedDescriptions] = useState<{ [key: number]: boolean }>({});
   const queryClient = useQueryClient();
 
   // ✅ Silme işlemi
@@ -51,45 +52,89 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => 
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-8">
-          <div className="text-gray-400 text-4xl mb-2">🔍</div>
-          <p className="text-gray-400 text-sm">
+        <div className="text-center py-12">
+          <div className="text-gray-400 text-6xl mb-4">🔍</div>
+          <p className="text-gray-400 text-lg">
             {search ? "Arama kriterlerinize uygun ürün bulunamadı." : "Henüz ürün eklenmedi."}
           </p>
         </div>
       ) : (
-        <div className="max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-          <div className="space-y-3">
+        <div className="max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+          {/* Desktop: Grid Layout, Mobile: Stack Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map((product) => (
               <div
                 key={product.id}
-                className="bg-gray-700 rounded-lg p-4 border border-gray-600 hover:border-green-500/50 transition-all duration-200"
+                className="bg-gray-700 rounded-xl p-5 border border-gray-600 hover:border-green-500/50 hover:shadow-lg transition-all duration-300 group"
               >
-                <div className="flex flex-col gap-3">
-                  {/* Ürün bilgileri */}
+                {/* Ürün Header */}
+                <div className="flex items-start justify-between mb-4">
                   <div className="flex-1 min-w-0">
-                    <div className="mb-2">
-                      <h3 className="font-semibold text-white text-base mb-1 break-words">{product.name}</h3>
-                      {product.category && (
-                        <span className="bg-blue-600 text-blue-100 text-xs px-2 py-1 rounded-full inline-block">
-                          {product.category.name}
-                        </span>
-                      )}
+                    <h3 className="font-bold text-white text-lg mb-2 group-hover:text-green-400 transition-colors">
+                      {product.name.length > 40 
+                        ? `${product.name.substring(0, 40)}...` 
+                        : product.name
+                      }
+                    </h3>
+                    {product.category && (
+                      <span className="inline-flex items-center bg-blue-600 text-blue-100 text-xs px-3 py-1 rounded-full font-medium">
+                        {product.category.name}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Ürün Açıklaması */}
+                {product.description && (
+                  <div className="mb-4">
+                    <p className="text-gray-300 text-sm">
+                      {expandedDescriptions[product.id] 
+                        ? product.description 
+                        : product.description.length > 100 
+                          ? `${product.description.substring(0, 100)}...` 
+                          : product.description
+                      }
+                    </p>
+                    {product.description.length > 100 && (
+                      <button
+                        onClick={() => setExpandedDescriptions(prev => ({
+                          ...prev,
+                          [product.id]: !prev[product.id]
+                        }))}
+                        className="text-green-400 text-xs mt-1 hover:text-green-300 transition-colors"
+                      >
+                        {expandedDescriptions[product.id] ? "Daha az göster" : "Devamını oku"}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Fiyat Bilgileri */}
+                <div className="bg-gray-600 rounded-lg p-3 mb-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-2xl">💵</span>
+                      <div className="flex-1">
+                        <div className="text-gray-400 text-xs">Fiyat</div>
+                        <div className="text-white font-bold text-lg break-all">{product.price} ₺</div>
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-1 text-sm">
-                      <span className="text-gray-300">
-                        💵 <span className="font-medium">{product.price} ₺</span>
-                      </span>
-                      <span className="text-green-400">
-                        🎯 <span className="font-medium">{product.cashback} ₺ iade</span>
-                      </span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-2xl">🎯</span>
+                      <div className="flex-1">
+                        <div className="text-gray-400 text-xs">İade</div>
+                        <div className="text-green-400 font-bold text-lg break-all">{product.cashback} ₺</div>
+                      </div>
                     </div>
                   </div>
+                </div>
 
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-2">
                   {/* Eğer onAdd varsa → sepete ekle modu */}
                   {onAdd && (
-                    <div className="flex items-center justify-end gap-2 flex-shrink-0">
-                      <div className="flex items-center bg-gray-600 rounded-lg">
+                    <>
+                      <div className="flex items-center bg-gray-600 rounded-lg flex-1">
                         <button
                           onClick={() => {
                             const current = quantities[product.id] || 1;
@@ -100,7 +145,7 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => 
                               });
                             }
                           }}
-                          className="p-2 text-gray-300 hover:text-white transition-colors"
+                          className="p-2 text-gray-300 hover:text-white transition-colors disabled:opacity-50"
                           disabled={(quantities[product.id] || 1) <= 1}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,20 +187,19 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => 
                             quantity: quantities[product.id] || 1,
                           })
                         }
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 flex-1 sm:flex-none"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        <span className="hidden sm:inline">Ekle</span>
+                        <span>Ekle</span>
                       </button>
-                    </div>
+                    </>
                   )}
 
                   {/* Yönetici modu → silme */}
                   {!onAdd && (
-                    <div className="flex justify-end">
-                      <button
+                    <button
                       onClick={() => {
                         const confirmed = confirm(
                           "Bu ürünü silmek istediğinize emin misiniz?"
@@ -164,16 +208,15 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => 
                         deleteMutation.mutate(product.id);
                       }}
                       disabled={deleteMutation.isPending}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2 w-full"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
-                      <span className="hidden sm:inline">
+                      <span>
                         {deleteMutation.isPending ? "Siliniyor..." : "Sil"}
                       </span>
                     </button>
-                    </div>
                   )}
                 </div>
               </div>
