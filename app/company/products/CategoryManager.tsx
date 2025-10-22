@@ -185,13 +185,15 @@ export default function CategoryManager() {
             {categories.map((category) => (
               <div
                 key={category.id}
-                className="flex items-center justify-between bg-gray-600 rounded-lg p-3 border border-gray-500"
+                className="flex items-center justify-between bg-gray-600 rounded-lg p-3 border border-gray-500 min-h-[60px]"
               >
-                <span className="text-white font-medium">{category.name}</span>
+                <span className="text-white font-medium flex-1 min-w-0 pr-2 line-clamp-2">
+                  {category.name}
+                </span>
                 <button
                   onClick={() => handleDelete(category.id, category.name)}
                   disabled={deleteMutation.isPending}
-                  className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 disabled:opacity-50"
+                  className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 disabled:opacity-50 flex-shrink-0"
                 >
                   {deleteMutation.isPending ? "Siliniyor..." : "🗑️ Sil"}
                 </button>

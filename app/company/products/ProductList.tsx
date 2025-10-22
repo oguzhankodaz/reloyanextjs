@@ -144,21 +144,23 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId, simpl
                       </div>
                     )}
 
-                    {/* Fiyat Bilgileri */}
-                    <div className="bg-gray-600 rounded-lg p-3 mb-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-2xl">💵</span>
-                          <div className="flex-1">
+                    {/* Fiyat Bilgileri - Yan yana kompakt */}
+                    <div className="flex gap-2 mb-4">
+                      <div className="flex-1 bg-gray-600 rounded-lg p-2">
+                        <div className="flex items-center space-x-1">
+                          <span className="text-sm">💵</span>
+                          <div className="flex-1 min-w-0">
                             <div className="text-gray-400 text-xs">Fiyat</div>
-                            <div className="text-white font-bold text-lg break-all">{product.price} ₺</div>
+                            <div className="text-white font-bold text-sm truncate">{product.price} ₺</div>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-2xl">🎯</span>
-                          <div className="flex-1">
+                      </div>
+                      <div className="flex-1 bg-gray-600 rounded-lg p-2">
+                        <div className="flex items-center space-x-1">
+                          <span className="text-sm">🎯</span>
+                          <div className="flex-1 min-w-0">
                             <div className="text-gray-400 text-xs">İade</div>
-                            <div className="text-green-400 font-bold text-lg break-all">{product.cashback} ₺</div>
+                            <div className="text-green-400 font-bold text-sm truncate">{product.cashback} ₺</div>
                           </div>
                         </div>
                       </div>
