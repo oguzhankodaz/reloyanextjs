@@ -305,14 +305,14 @@ export default function QRResultPage() {
             </div>
 
             {/* Product Search and Cart - Responsive Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               {/* Product Search */}
-              <div className="order-2 lg:order-1">
+              <div className="order-2 xl:order-1">
                 <ProductSelector products={products} onAdd={addToCart} />
               </div>
 
               {/* Cart */}
-              <div className="order-1 lg:order-2">
+              <div className="order-1 xl:order-2">
                 <Cart
                   cartItems={cartItems}
                   products={products}

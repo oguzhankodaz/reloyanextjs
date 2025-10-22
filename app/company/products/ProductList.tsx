@@ -5,19 +5,22 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteProductAction } from "@/actions/product";
 import { Product } from "@/lib/types"; // ✅ Artık Product tipini buradan alıyoruz
+import { useRadixToast } from "@/components/notifications/ToastProvider";
 
 // ✅ Props tanımı buraya
 type Props = {
   products: Product[];
   companyId?: string | null;
   onAdd?: (item: { id: number; name: string; quantity: number }) => void;
+  simplified?: boolean; // QR-result için sadeleştirilmiş görünüm
 };
 
-export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => {
+export const ProductList: React.FC<Props> = ({ products, onAdd, companyId, simplified = false }) => {
   const [search, setSearch] = useState("");
   const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
   const [expandedDescriptions, setExpandedDescriptions] = useState<{ [key: number]: boolean }>({});
   const queryClient = useQueryClient();
+  const toast = useRadixToast();
 
   // ✅ Silme işlemi
   const deleteMutation = useMutation({
@@ -59,75 +62,109 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => 
           </p>
         </div>
       ) : (
-        <div className="max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+        <div className="max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800 min-w-0">
           {/* Desktop: Grid Layout, Mobile: Stack Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 w-full">
             {filtered.map((product) => (
               <div
                 key={product.id}
                 className="bg-gray-700 rounded-xl p-5 border border-gray-600 hover:border-green-500/50 hover:shadow-lg transition-all duration-300 group"
               >
-                {/* Ürün Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-white text-lg mb-2 group-hover:text-green-400 transition-colors">
+                {/* Ürün Bilgileri */}
+                {simplified ? (
+                  // QR-result için sadeleştirilmiş görünüm
+                  <div className="mb-4">
+                    <h3 className="font-bold text-white text-lg mb-3 group-hover:text-green-400 transition-colors">
                       {product.name.length > 40 
                         ? `${product.name.substring(0, 40)}...` 
                         : product.name
                       }
                     </h3>
-                    {product.category && (
-                      <span className="inline-flex items-center bg-blue-600 text-blue-100 text-xs px-3 py-1 rounded-full font-medium">
-                        {product.category.name}
-                      </span>
-                    )}
+                    
+                    {/* Fiyat ve İade - Yan yana */}
+                    <div className="flex items-center justify-between bg-gray-600 rounded-lg p-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-2xl">💵</span>
+                        <div>
+                          <div className="text-gray-400 text-xs">Fiyat</div>
+                          <div className="text-white font-bold text-lg">{product.price} ₺</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-2xl">🎯</span>
+                        <div className="text-right">
+                          <div className="text-gray-400 text-xs">İade</div>
+                          <div className="text-green-400 font-bold text-lg">{product.cashback} ₺</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  // Company/products için tam detaylı görünüm
+                  <>
+                    {/* Ürün Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-white text-lg mb-2 group-hover:text-green-400 transition-colors">
+                          {product.name.length > 40 
+                            ? `${product.name.substring(0, 40)}...` 
+                            : product.name
+                          }
+                        </h3>
+                        {product.category && (
+                          <span className="inline-flex items-center bg-blue-600 text-blue-100 text-xs px-3 py-1 rounded-full font-medium">
+                            {product.category.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
-                {/* Ürün Açıklaması */}
-                {product.description && (
-                  <div className="mb-4">
-                    <p className="text-gray-300 text-sm">
-                      {expandedDescriptions[product.id] 
-                        ? product.description 
-                        : product.description.length > 100 
-                          ? `${product.description.substring(0, 100)}...` 
-                          : product.description
-                      }
-                    </p>
-                    {product.description.length > 100 && (
-                      <button
-                        onClick={() => setExpandedDescriptions(prev => ({
-                          ...prev,
-                          [product.id]: !prev[product.id]
-                        }))}
-                        className="text-green-400 text-xs mt-1 hover:text-green-300 transition-colors"
-                      >
-                        {expandedDescriptions[product.id] ? "Daha az göster" : "Devamını oku"}
-                      </button>
+                    {/* Ürün Açıklaması */}
+                    {product.description && (
+                      <div className="mb-4">
+                        <p className="text-gray-300 text-sm">
+                          {expandedDescriptions[product.id] 
+                            ? product.description 
+                            : product.description.length > 100 
+                              ? `${product.description.substring(0, 100)}...` 
+                              : product.description
+                          }
+                        </p>
+                        {product.description.length > 100 && (
+                          <button
+                            onClick={() => setExpandedDescriptions(prev => ({
+                              ...prev,
+                              [product.id]: !prev[product.id]
+                            }))}
+                            className="text-green-400 text-xs mt-1 hover:text-green-300 transition-colors"
+                          >
+                            {expandedDescriptions[product.id] ? "Daha az göster" : "Devamını oku"}
+                          </button>
+                        )}
+                      </div>
                     )}
-                  </div>
+
+                    {/* Fiyat Bilgileri */}
+                    <div className="bg-gray-600 rounded-lg p-3 mb-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">💵</span>
+                          <div className="flex-1">
+                            <div className="text-gray-400 text-xs">Fiyat</div>
+                            <div className="text-white font-bold text-lg break-all">{product.price} ₺</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">🎯</span>
+                          <div className="flex-1">
+                            <div className="text-gray-400 text-xs">İade</div>
+                            <div className="text-green-400 font-bold text-lg break-all">{product.cashback} ₺</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
                 )}
-
-                {/* Fiyat Bilgileri */}
-                <div className="bg-gray-600 rounded-lg p-3 mb-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl">💵</span>
-                      <div className="flex-1">
-                        <div className="text-gray-400 text-xs">Fiyat</div>
-                        <div className="text-white font-bold text-lg break-all">{product.price} ₺</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl">🎯</span>
-                      <div className="flex-1">
-                        <div className="text-gray-400 text-xs">İade</div>
-                        <div className="text-green-400 font-bold text-lg break-all">{product.cashback} ₺</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-2">
@@ -180,13 +217,19 @@ export const ProductList: React.FC<Props> = ({ products, onAdd, companyId }) => 
                         </button>
                       </div>
                       <button
-                        onClick={() =>
+                        onClick={() => {
+                          const quantity = quantities[product.id] || 1;
                           onAdd?.({
                             id: product.id,
                             name: product.name,
-                            quantity: quantities[product.id] || 1,
-                          })
-                        }
+                            quantity: quantity,
+                          });
+                          toast({
+                            title: "Ürün eklendi",
+                            description: `${product.name} (${quantity} adet) sepete eklendi`,
+                            variant: "success",
+                          });
+                        }}
                         className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 flex-1 sm:flex-none"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

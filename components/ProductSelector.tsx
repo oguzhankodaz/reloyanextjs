@@ -22,7 +22,7 @@ export function ProductSelector({ products, onAdd }: Props) {
         </p>
       </div>
       <div className="p-4">
-        <ProductList products={products} onAdd={onAdd} />
+        <ProductList products={products} onAdd={onAdd} simplified={true} />
       </div>
     </div>
   );
