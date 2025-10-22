@@ -220,42 +220,49 @@ export default function QRResultPage() {
   return (
     <div className="bg-gray-950 min-h-screen">
       <CompanyNavbar />
-      <div className="flex flex-col items-center justify-start p-4 space-y-6">
+      <div className="flex flex-col items-center justify-start p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
         <UserInfoCard user={user} totalCashback={totalCashback} />
         
         {/* Main Action Selection */}
-        <div className="w-full max-w-md">
-          <div className="flex gap-2 mb-6">
+        <div className="w-full max-w-2xl">
+          <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <button
               onClick={() => setSelectedAction("cashback")}
-              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+              className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-200 ${
                 selectedAction === "cashback"
-                  ? "bg-green-600 text-white shadow-lg"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  ? "bg-green-600 text-white shadow-lg transform scale-105"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:scale-105"
               }`}
             >
-              💰 İade Ver
+              <span className="flex items-center justify-center gap-2">
+                <span>💰</span>
+                <span>İade Ver</span>
+              </span>
             </button>
             <button
               onClick={() => setSelectedAction("points")}
-              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+              className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-200 ${
                 selectedAction === "points"
-                  ? "bg-blue-600 text-white shadow-lg"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  ? "bg-blue-600 text-white shadow-lg transform scale-105"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:scale-105"
               }`}
             >
-              🎯 Para Puan Kullan
+              <span className="flex items-center justify-center gap-2">
+                <span>🎯</span>
+                <span>Para Puan Kullan</span>
+              </span>
             </button>
           </div>
         </div>
 
         {/* Cashback Section */}
         {selectedAction === "cashback" && (
-          <div className="w-full max-w-md space-y-6">
+          <div className="w-full max-w-4xl space-y-6">
             {/* Total Cashback Give */}
             <div className="bg-gray-800 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">
-                💰 Toplam Nakit İade Ver
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <span className="mr-2">💰</span>
+                Toplam Nakit İade Ver
               </h3>
               <div className="space-y-4">
                 <div>
@@ -266,13 +273,13 @@ export default function QRResultPage() {
                     type="number"
                     value={totalSpendInput}
                     onChange={(e) => setTotalSpendInput(e.target.value)}
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                     placeholder="0.00"
                   />
                 </div>
              
                 {totalSpendInput && parseFloat(totalSpendInput) > 0 && (
-                  <div className="bg-green-900/20 border border-green-600 rounded-lg p-3">
+                  <div className="bg-green-900/20 border border-green-600 rounded-lg p-4">
                     <p className="text-green-300 text-sm">
                       <strong>İade Tutarı:</strong> {formatCurrency(cashbackPreview)}
                     </p>
@@ -297,22 +304,24 @@ export default function QRResultPage() {
               </div>
             </div>
 
-            {/* Product Search and Cart */}
-            <div className="bg-gray-800 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">
-                🛒 Ürün Ara & Sepetiniz
-              </h3>
-              <ProductSelector products={products} onAdd={addToCart} />
-            </div>
+            {/* Product Search and Cart - Responsive Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Product Search */}
+              <div className="order-2 lg:order-1">
+                <ProductSelector products={products} onAdd={addToCart} />
+              </div>
 
-            {/* Cart */}
-            <Cart
-              cartItems={cartItems}
-              products={products}
-              onRemove={removeFromCart}
-              onSave={handleSave}
-              saving={saving}
-            />
+              {/* Cart */}
+              <div className="order-1 lg:order-2">
+                <Cart
+                  cartItems={cartItems}
+                  products={products}
+                  onRemove={removeFromCart}
+                  onSave={handleSave}
+                  saving={saving}
+                />
+              </div>
+            </div>
           </div>
         )}
 

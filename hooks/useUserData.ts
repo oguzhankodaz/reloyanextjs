@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { getUserByIdAction } from "@/actions/users";
 import { getUserCashbackAction } from "@/actions/purchases";
-import { getProductsByCompanyAction } from "@/actions/product";
+import { getCompanyProductsForUsers } from "@/actions/product";
 import { User } from "@/types/user";
 import { Product } from "@/types/product";
 
@@ -30,7 +30,7 @@ export function useUserData(userId: string | null, companyId: string | null) {
           setTotalCashback(cashbackRes.totalCashback);
         }
 
-        const prodRes = await getProductsByCompanyAction(companyId);
+        const prodRes = await getCompanyProductsForUsers(companyId);
         if (prodRes.success) {
           setProducts(prodRes.products);
         }

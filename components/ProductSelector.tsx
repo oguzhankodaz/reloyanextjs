@@ -11,8 +11,19 @@ type Props = {
 
 export function ProductSelector({ products, onAdd }: Props) {
   return (
-    <div className="bg-white text-black p-3 sm:p-4 rounded-lg shadow-md w-full max-w-3xl mx-auto">
-      <ProductList products={products} onAdd={onAdd} />
+    <div className="bg-gray-800 rounded-xl shadow-lg w-full">
+      <div className="p-4 border-b border-gray-700">
+        <h3 className="text-lg font-semibold text-white flex items-center">
+          <span className="mr-2">🔍</span>
+          Ürün Ara & Sepete Ekle
+        </h3>
+        <p className="text-gray-400 text-sm mt-1">
+          Ürünleri arayın ve sepete ekleyin
+        </p>
+      </div>
+      <div className="p-4">
+        <ProductList products={products} onAdd={onAdd} />
+      </div>
     </div>
   );
 }

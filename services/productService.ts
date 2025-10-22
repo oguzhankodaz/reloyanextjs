@@ -1,6 +1,6 @@
 // services/productService.ts
-import { getProductsByCompanyAction } from "@/actions/product";
+import { getCompanyProductsForUsers } from "@/actions/product";
 
 export async function fetchProducts(companyId: string) {
-  return await getProductsByCompanyAction(companyId);
+  return await getCompanyProductsForUsers(companyId);
 }
