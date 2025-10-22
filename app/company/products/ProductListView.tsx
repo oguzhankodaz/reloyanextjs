@@ -28,7 +28,7 @@ export default function ProductListView({ products, companyId }: Props) {
     enabled: !!companyId,
   });
 
-  const categories = categoriesData?.categories || [];
+  const categories: { id: number; name: string }[] = categoriesData?.categories || [];
 
   // Silme işlemi
   const deleteMutation = useMutation({
@@ -93,7 +93,7 @@ export default function ProductListView({ products, companyId }: Props) {
           >
             Tümü
           </button>
-          {categories.map((category: any) => (
+          {categories.map((category) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
