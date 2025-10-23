@@ -32,8 +32,9 @@ const CustomersPage = () => {
     enabled: !!company?.companyId,
     staleTime: 1000 * 60 * 5,
     // ✅ Logout sırasında hata ekranı gösterme
-    retry: (failureCount, error: any) => {
-      if (error?.status === 401 || error?.response?.status === 401) {
+    retry: (failureCount, error: unknown) => {
+      const err = error as { status?: number; response?: { status?: number } };
+      if (err?.status === 401 || err?.response?.status === 401) {
         return false;
       }
       return failureCount < 3;
@@ -54,8 +55,9 @@ const CustomersPage = () => {
     enabled: !!openUserId && !!company?.companyId,
     staleTime: 1000 * 60 * 2,
     // ✅ Logout sırasında hata ekranı gösterme
-    retry: (failureCount, error: any) => {
-      if (error?.status === 401 || error?.response?.status === 401) {
+    retry: (failureCount, error: unknown) => {
+      const err = error as { status?: number; response?: { status?: number } };
+      if (err?.status === 401 || err?.response?.status === 401) {
         return false;
       }
       return failureCount < 3;

@@ -30,9 +30,10 @@ const ReportsPage = () => {
     enabled: !!company?.companyId,
     staleTime: 1000 * 60 * 10,
     // ✅ Logout sırasında hata ekranı gösterme
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: unknown) => {
       // 401 Unauthorized ise retry yapma
-      if (error?.status === 401 || error?.response?.status === 401) {
+      const err = error as { status?: number; response?: { status?: number } };
+      if (err?.status === 401 || err?.response?.status === 401) {
         return false;
       }
       return failureCount < 3;
@@ -106,11 +107,11 @@ const ReportsPage = () => {
           </div>
 
           {/* Özet kartlar (filtreli) */}
-          <SummaryCards data={data} />
+          {data && <SummaryCards data={data} />}
           {/* Aylık iade grafiği (ALL-TIME) */}
-          <MonthlyPointsChart data={data.chartData} filter={filter} />
+          {data && <MonthlyPointsChart data={data.chartData} filter={filter} />}
           {/* Müşteri cashback tablosu (ALL-TIME) */}
-          <CustomerPointsTable cashback={data.customerCashback} />
+          {data && <CustomerPointsTable cashback={data.customerCashback} />}
         </div>
       </div>
     </PremiumGuard>

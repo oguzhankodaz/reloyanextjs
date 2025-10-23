@@ -53,11 +53,11 @@ export function usePremiumStatus(): PremiumStatus {
     },
     enabled: !!company,
     staleTime: 1000 * 60 * 2, // 2 dakika cache
-    retry: 2,
     // ✅ Logout sırasında hata ekranı gösterme
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: unknown) => {
       // 401 Unauthorized ise retry yapma
-      if (error?.status === 401 || error?.response?.status === 401) {
+      const err = error as { status?: number; response?: { status?: number } };
+      if (err?.status === 401 || err?.response?.status === 401) {
         return false;
       }
       return failureCount < 2;
