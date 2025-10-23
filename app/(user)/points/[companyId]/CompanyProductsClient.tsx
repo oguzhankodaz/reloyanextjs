@@ -164,7 +164,7 @@ export default function CompanyProductsClient({
           {/* Kategori Filtreleri */}
           {categories.length > 0 && (
             <div className="mb-6">
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+              <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800 pb-2">
                 <button
                   onClick={() => setSelectedCategory(null)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
