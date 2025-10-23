@@ -82,30 +82,33 @@ export default function ProductListView({ products, companyId }: Props) {
       {/* Kategori Filtreleri */}
       <div className="bg-gray-700 rounded-lg p-4">
         <h3 className="text-sm font-medium text-gray-300 mb-3">Kategori Filtresi</h3>
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-600 pb-2">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+            className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
               selectedCategory === null
                 ? "bg-green-600 text-white"
                 : "bg-gray-600 text-gray-300 hover:bg-gray-500"
             }`}
           >
-            Tümü
+            Tümü ({products.length})
           </button>
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === category.id
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-600 text-gray-300 hover:bg-gray-500"
-              }`}
-            >
-              {category.name}
-            </button>
-          ))}
+          {categories.map((category) => {
+            const categoryProductCount = products.filter(p => p.categoryId === category.id).length;
+            return (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
+                  selectedCategory === category.id
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-600 text-gray-300 hover:bg-gray-500"
+                }`}
+              >
+                {category.name} ({categoryProductCount})
+              </button>
+            );
+          })}
         </div>
       </div>
 

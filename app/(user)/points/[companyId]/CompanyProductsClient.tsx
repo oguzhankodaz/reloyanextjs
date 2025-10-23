@@ -3,10 +3,9 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Search, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getCompanyProductsForUsers } from "@/actions/product";
-import { Product } from "@/lib/types";
 
 interface Category {
   id: number;
@@ -22,6 +21,7 @@ export default function CompanyProductsClient({
 }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [showFullDescription, setShowFullDescription] = useState<{ [key: number]: boolean }>({});
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["company-products", companyId],
@@ -46,10 +46,29 @@ export default function CompanyProductsClient({
   const companyName = data?.companyName;
   const categories: Category[] = categoriesData?.categories || [];
 
-  // Kategoriye göre filtreleme
-  const filteredProducts = selectedCategory 
-    ? products.filter(product => product.category?.id === selectedCategory)
-    : products;
+  // Arama ve kategori filtreleme
+  const searchAndFilterProducts = () => {
+    let filtered = products;
+
+    // Kategori filtresi
+    if (selectedCategory) {
+      filtered = filtered.filter(product => product.category?.id === selectedCategory);
+    }
+
+    // Arama filtresi
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(searchLower) ||
+        product.description?.toLowerCase().includes(searchLower) ||
+        product.category?.name.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return filtered;
+  };
+
+  const finalFilteredProducts = searchAndFilterProducts();
 
   const toggleDescription = (productId: number) => {
     setShowFullDescription(prev => ({
@@ -161,6 +180,28 @@ export default function CompanyProductsClient({
 
       {/* Ürünler */}
         <div className="max-w-5xl mx-auto">
+          {/* Arama Çubuğu */}
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Ürün ara... (isim, açıklama, kategori)"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-10 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Kategori Filtreleri */}
           {categories.length > 0 && (
             <div className="mb-6">
@@ -199,14 +240,24 @@ export default function CompanyProductsClient({
             <p className="text-gray-400 text-center mt-10">
               Bu şirkete ait ürün bulunamadı 🙁
             </p>
-          ) : filteredProducts.length === 0 ? (
-            <p className="text-gray-400 text-center mt-10">
-              Bu kategoride ürün bulunamadı 🙁
-            </p>
+          ) : finalFilteredProducts.length === 0 ? (
+            <div className="text-center mt-10">
+              <p className="text-gray-400 mb-2">
+                {searchTerm ? `"${searchTerm}" için sonuç bulunamadı` : "Bu kategoride ürün bulunamadı"}
+              </p>
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="text-green-400 hover:text-green-300 text-sm transition-colors"
+                >
+                  Aramayı temizle
+                </button>
+              )}
+            </div>
           ) : (
             <div className="h-[75vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 rounded-xl p-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredProducts.map((product) => (
+              {finalFilteredProducts.map((product) => (
                 <div
                   key={product.id}
                   className="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-lg hover:shadow-yellow-400/10 transition-all duration-200 flex flex-col justify-between"
