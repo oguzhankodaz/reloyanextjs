@@ -54,7 +54,28 @@ export function usePremiumStatus(): PremiumStatus {
     enabled: !!company,
     staleTime: 1000 * 60 * 2, // 2 dakika cache
     retry: 2,
+    // ✅ Logout sırasında hata ekranı gösterme
+    retry: (failureCount, error: any) => {
+      // 401 Unauthorized ise retry yapma
+      if (error?.status === 401 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
+
+  // ✅ Company yoksa loading döndür (logout sırasında)
+  if (!company) {
+    return {
+      hasActiveSubscription: false,
+      hasActiveTrial: false,
+      isPremium: false,
+      subscription: null,
+      trial: null,
+      isLoading: true,
+      isError: false,
+    };
+  }
 
   if (isLoading) {
     return {
@@ -68,7 +89,8 @@ export function usePremiumStatus(): PremiumStatus {
     };
   }
 
-  if (isError || !data) {
+  // ✅ Sadece gerçek hatalar için error state döndür
+  if (isError && company) {
     return {
       hasActiveSubscription: false,
       hasActiveTrial: false,

@@ -44,6 +44,13 @@ export default function StaffDashboardPage() {
         const res = await fetch("/api/staff/activity", {
           credentials: "include",
         });
+        
+        // 401 Unauthorized kontrolü
+        if (res.status === 401) {
+          setLoading(false);
+          return;
+        }
+        
         const data = await res.json();
         if (data?.staff && data?.company) {
           setHeader({
@@ -52,6 +59,8 @@ export default function StaffDashboardPage() {
           });
         }
         setActivitiesByDate(data?.activitiesByDate ?? {});
+      } catch (error) {
+        console.error("Staff activity fetch error:", error);
       } finally {
         setLoading(false);
       }

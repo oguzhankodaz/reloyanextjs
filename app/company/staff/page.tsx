@@ -34,7 +34,14 @@ export default function StaffPage() {
     
     setIsLoading(true);
     fetch(`/api/staff`, { credentials: "include" })
-      .then((res) => res.json())
+      .then((res) => {
+        // 401 Unauthorized kontrolü
+        if (res.status === 401) {
+          setStaff([]);
+          return { staff: [] };
+        }
+        return res.json();
+      })
       .then((data) => {
         // API { staff: [] } formatında döndürüyor
         if (data && Array.isArray(data.staff)) {

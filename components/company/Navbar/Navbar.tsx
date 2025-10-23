@@ -1,9 +1,9 @@
 /** @format */
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Home, Settings } from "lucide-react";
+import { Home, Settings, Loader2 } from "lucide-react";
 import CompanyLogoutButton from "../CompanyLogoutButton";
 import Image from "next/image";
 import { useStaffAuth } from "@/context/StaffAuthContext";
@@ -11,9 +11,11 @@ import { useStaffAuth } from "@/context/StaffAuthContext";
 
 const CompanyNavbar = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const { staff } = useStaffAuth();
   // company kaldırıldı (kullanılmıyor)
   const [forceStaffOnQR, setForceStaffOnQR] = useState(false);
+  const [navigating, setNavigating] = useState<string | null>(null);
 
   // On qr-result, detect staff session via API to avoid context race
   useEffect(() => {
@@ -34,6 +36,18 @@ const CompanyNavbar = () => {
       cancelled = true;
     };
   }, [pathname]);
+
+  const handleNavigate = (href: string) => {
+    setNavigating(href);
+    router.push(href);
+  };
+
+  // Navigation tamamlandığında loading state'i temizle
+  useEffect(() => {
+    if (navigating && pathname === navigating) {
+      setNavigating(null);
+    }
+  }, [pathname, navigating]);
 
   const navItems = [
     { href: "/company/dashboard", label: "Ana Sayfa", icon: Home },
@@ -60,17 +74,22 @@ const CompanyNavbar = () => {
             />
           </div>
           <div className="flex items-center gap-6">
-            <Link
-              href="/company/staff/dashboard"
-              className={`flex items-center gap-2 hover:text-yellow-400 transition ${
+            <button
+              onClick={() => handleNavigate("/company/staff/dashboard")}
+              disabled={navigating === "/company/staff/dashboard"}
+              className={`flex items-center gap-2 hover:text-yellow-400 transition disabled:opacity-50 disabled:cursor-wait ${
                 pathname === "/company/staff/dashboard"
                   ? "text-yellow-400 font-semibold"
                   : "text-gray-300"
               }`}
             >
-              <Home className="w-6 h-6" />
+              {navigating === "/company/staff/dashboard" ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <Home className="w-6 h-6" />
+              )}
               <span className="hidden sm:inline text-sm">Ana Sayfa</span>
-            </Link>
+            </button>
             <CompanyLogoutButton />
           </div>
         </div>
@@ -96,34 +115,44 @@ const CompanyNavbar = () => {
         {/* Menü */}
         <div className="flex items-center gap-6">
           {navItems.map(({ href, label, icon: Icon }) => (
-            <Link
+            <button
               key={href}
-              href={href}
-              className={`flex items-center gap-2 hover:text-yellow-400 transition ${
+              onClick={() => handleNavigate(href)}
+              disabled={navigating === href}
+              className={`flex items-center gap-2 hover:text-yellow-400 transition disabled:opacity-50 disabled:cursor-wait ${
                 pathname === href
                   ? "text-yellow-400 font-semibold"
                   : "text-gray-300"
               }`}
             >
-              <Icon className="w-6 h-6" />
+              {navigating === href ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <Icon className="w-6 h-6" />
+              )}
               {/* Mobilde gizle, sadece büyük ekranda göster */}
               <span className="hidden sm:inline text-sm">{label}</span>
-            </Link>
+            </button>
           ))}
 
           {/* Ayarlar Butonu */}
-          <Link
-            href="/company/profile"
-            className={`flex items-center gap-2 hover:text-yellow-400 transition ${
+          <button
+            onClick={() => handleNavigate("/company/profile")}
+            disabled={navigating === "/company/profile"}
+            className={`flex items-center gap-2 hover:text-yellow-400 transition disabled:opacity-50 disabled:cursor-wait ${
               pathname === "/company/profile"
                 ? "text-yellow-400 font-semibold"
                 : "text-gray-300"
             }`}
             title="Şirket Ayarları"
           >
-            <Settings className="w-6 h-6" />
+            {navigating === "/company/profile" ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : (
+              <Settings className="w-6 h-6" />
+            )}
             <span className="hidden sm:inline text-sm">Ayarlar</span>
-          </Link>
+          </button>
 
           <CompanyLogoutButton />
         </div>

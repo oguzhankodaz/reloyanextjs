@@ -14,10 +14,18 @@ const LogoutButton = () => {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    await fetch("/api/logout", { method: "POST", credentials: "include" });
-    setUser(null); // context temizlendi
+    
+    // 1. Önce context'i temizle (API çağrılarını durdur)
+    setUser(null);
     queryClient.clear();
-    router.replace("/"); // anasayfaya yönlendir
+    
+    // 2. Sonra token'ları sil
+    await fetch("/api/logout", { method: "POST", credentials: "include" });
+    
+    // 3. Kısa bir delay ile redirect (context güncellemesi için)
+    setTimeout(() => {
+      router.replace("/");
+    }, 100);
   };
 
   return (

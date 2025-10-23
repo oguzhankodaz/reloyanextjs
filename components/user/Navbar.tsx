@@ -1,14 +1,28 @@
 /** @format */
 
-import { usePathname } from "next/navigation";
-import React from "react";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Home, Star, Settings } from "lucide-react";
+import { Home, Star, Settings, Loader2 } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 import Image from "next/image";
 
 const UserNavbar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const [navigating, setNavigating] = useState<string | null>(null);
+
+  const handleNavigate = (href: string) => {
+    setNavigating(href);
+    router.push(href);
+  };
+
+  // Navigation tamamlandığında loading state'i temizle
+  useEffect(() => {
+    if (navigating && pathname === navigating) {
+      setNavigating(null);
+    }
+  }, [pathname, navigating]);
 
   const navItems = [
     { href: "/dashboard", label: "Ana Sayfa", icon: Home },
@@ -44,34 +58,44 @@ const UserNavbar = () => {
         {/* Menü */}
         <div className="flex items-center gap-6">
           {navItems.map(({ href, label, icon: Icon }) => (
-            <Link
+            <button
               key={href}
-              href={href}
-              className={`flex items-center gap-2 hover:text-yellow-400 transition ${
+              onClick={() => handleNavigate(href)}
+              disabled={navigating === href}
+              className={`flex items-center gap-2 hover:text-yellow-400 transition disabled:opacity-50 disabled:cursor-wait ${
                 pathname === href
                   ? "text-yellow-400 font-semibold"
                   : "text-gray-300"
               }`}
             >
-               <Icon className="w-6 h-6" />
-               {/* Mobilde gizle, sadece büyük ekranda göster */}
-               <span className="hidden sm:inline text-sm">{label}</span>
-            </Link>
+              {navigating === href ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <Icon className="w-6 h-6" />
+              )}
+              {/* Mobilde gizle, sadece büyük ekranda göster */}
+              <span className="hidden sm:inline text-sm">{label}</span>
+            </button>
           ))}
 
           {/* Ayarlar Butonu */}
-          <Link
-            href="/account/privacy"
-            className={`flex items-center gap-2 hover:text-yellow-400 transition ${
+          <button
+            onClick={() => handleNavigate("/account/privacy")}
+            disabled={navigating === "/account/privacy"}
+            className={`flex items-center gap-2 hover:text-yellow-400 transition disabled:opacity-50 disabled:cursor-wait ${
               pathname.startsWith("/account")
                 ? "text-yellow-400 font-semibold"
                 : "text-gray-300"
             }`}
             title="Ayarlar ve Gizlilik"
           >
-             <Settings className="w-6 h-6" />
-             <span className="hidden sm:inline text-sm">Ayarlar</span>
-          </Link>
+            {navigating === "/account/privacy" ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : (
+              <Settings className="w-6 h-6" />
+            )}
+            <span className="hidden sm:inline text-sm">Ayarlar</span>
+          </button>
 
           <LogoutButton />
         </div>

@@ -24,19 +24,38 @@ const UserDashboard = () => {
     },
     enabled: !!user?.userId,
     staleTime: 1000 * 60 * 5,
+    // ✅ Logout sırasında hata ekranı gösterme
+    retry: (failureCount, error: any) => {
+      // 401 Unauthorized ise retry yapma
+      if (error?.status === 401 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
+
+  // ✅ User yoksa loading göster (logout sırasında)
+  if (!user) {
+    return <LoadingState message="Oturum kontrol ediliyor..." />;
+  }
 
   if (isLoading) {
     return <LoadingState message="Dashboard verileriniz yükleniyor..." />;
   }
 
-  if (isError || !data) {
+  // ✅ Sadece gerçek hatalar için error state göster
+  if (isError && user) {
     return (
       <ErrorState
         message="Dashboard verileri yüklenirken bir hata oluştu. Lütfen tekrar deneyin."
         onRetry={() => refetch()}
       />
     );
+  }
+
+  // ✅ Data yoksa loading göster
+  if (!data) {
+    return <LoadingState message="Dashboard verileriniz yükleniyor..." />;
   }
 
   // Rozet hesaplama (totalEarnings üzerinden)
@@ -111,7 +130,7 @@ const UserDashboard = () => {
               {formatCurrency(data.totalEarnings)}
             </p>
             <p className="text-xs sm:text-sm text-gray-400 mt-1">
-              Bugüne kadar kazandığınız toplam para puan
+              Bugüne kadar bizimle beraber olduğunuz için kazandığınız para puan.
             </p>
           </div>
         </div>

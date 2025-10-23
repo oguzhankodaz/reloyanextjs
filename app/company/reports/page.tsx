@@ -29,7 +29,33 @@ const ReportsPage = () => {
     },
     enabled: !!company?.companyId,
     staleTime: 1000 * 60 * 10,
+    // ✅ Logout sırasında hata ekranı gösterme
+    retry: (failureCount, error: any) => {
+      // 401 Unauthorized ise retry yapma
+      if (error?.status === 401 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
+
+  // ✅ Company yoksa loading göster (logout sırasında)
+  if (!company) {
+    return (
+      <div className="min-h-screen text-white">
+        <CompanyNavbar />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center animate-spin">
+              <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">Oturum Kontrol Ediliyor</h3>
+            <p className="text-gray-400 text-sm">Lütfen bekleyin...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -40,7 +66,8 @@ const ReportsPage = () => {
     );
   }
 
-  if (isError || !data) {
+  // ✅ Sadece gerçek hatalar için error state göster
+  if (isError && company) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-500">
         Raporlar yüklenirken hata oluştu ❌

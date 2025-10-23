@@ -28,7 +28,31 @@ const ProductManager = () => {
     },
     enabled: !!company?.companyId, // company yoksa çalışmaz
     staleTime: 1000 * 60 * 5, // 5 dk cache
+    // ✅ Logout sırasında hata ekranı gösterme
+    retry: (failureCount, error: any) => {
+      if (error?.status === 401 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
+
+  // ✅ Company yoksa loading göster (logout sırasında)
+  if (!company) {
+    return (
+      <div className="bg-gray-800 text-white rounded-xl p-6 shadow">
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="text-center">
+            <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center animate-spin">
+              <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">Oturum Kontrol Ediliyor</h3>
+            <p className="text-gray-400 text-sm">Lütfen bekleyin...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-800 text-white rounded-xl p-6 shadow">

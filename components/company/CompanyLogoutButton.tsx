@@ -19,19 +19,23 @@ const CompanyLogoutButton = () => {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    // Hem company hem staff cookie'lerini temizlemeye çalış
+    
+    // 1. Önce context'leri temizle (API çağrılarını durdur)
+    setCompany(null);
+    setStaff(null);
+    queryClient.clear();
+    
+    // 2. Sonra token'ları sil
     await fetch("/api/logout", { method: "POST", credentials: "include" });
     await fetch("/api/staff/logout", {
       method: "POST",
       credentials: "include",
     });
 
-    // Context sıfırla
-    setCompany(null);
-    setStaff(null);
-    queryClient.clear();
-    // Ana sayfaya yönlendir
-    router.replace("/");
+    // 3. Kısa bir delay ile redirect (context güncellemesi için)
+    setTimeout(() => {
+      router.replace("/");
+    }, 100);
   };
 
   return (

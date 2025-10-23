@@ -45,12 +45,44 @@ const CashbackPage = () => {
     },
     enabled: !!user?.userId,
     staleTime: 1000 * 60 * 5,
+    // ✅ Logout sırasında hata ekranı gösterme
+    retry: (failureCount, error: any) => {
+      // 401 Unauthorized ise retry yapma
+      if (error?.status === 401 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 
   const handleNavigate = (companyId: string) => {
     setNavigating(companyId);
     router.push(`/points/${companyId}`);
   };
+
+  // ✅ User yoksa loading göster (logout sırasında)
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-2xl">
+              <Loader2 className="w-8 h-8 text-black animate-spin" />
+            </div>
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center animate-pulse">
+              <Sparkles className="w-3 h-3 text-yellow-600" />
+            </div>
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2 bg-gradient-to-r from-yellow-400 to-yellow-500 bg-clip-text text-transparent">
+            Oturum Kontrol Ediliyor
+          </h3>
+          <p className="text-gray-300 text-sm">
+            Lütfen bekleyin...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -75,7 +107,8 @@ const CashbackPage = () => {
     );
   }
 
-  if (isError) {
+  // ✅ Sadece gerçek hatalar için error state göster
+  if (isError && user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
         <div className="text-center">

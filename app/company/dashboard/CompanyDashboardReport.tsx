@@ -22,7 +22,30 @@ export default function CompanyDashboardReport() {
     },
     enabled: !!company && isPremium, // Sadece premium kullanıcılar için çalıştır
     staleTime: 1000 * 60 * 5,
+    // ✅ Logout sırasında hata ekranı gösterme
+    retry: (failureCount, error: any) => {
+      // 401 Unauthorized ise retry yapma
+      if (error?.status === 401 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
+
+  // ✅ Company yoksa loading göster (logout sırasında)
+  if (!company) {
+    return (
+      <div className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
+        <div className="bg-gray-800 rounded-lg p-4 text-center">
+          <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center animate-spin">
+            <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-2">Oturum Kontrol Ediliyor</h3>
+          <p className="text-gray-400 text-sm">Lütfen bekleyin...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Premium yükleme durumu
   if (premiumLoading) {
@@ -36,8 +59,8 @@ export default function CompanyDashboardReport() {
     );
   }
 
-  // Premium değilse - erişim engellendi mesajı
-  if (!isPremium) {
+  // ✅ Sadece company varsa premium kontrolü yap
+  if (company && !isPremium) {
     return (
       <div className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
         <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/40 rounded-lg p-6 text-center">

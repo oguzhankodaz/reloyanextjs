@@ -31,6 +31,13 @@ const CustomersPage = () => {
     },
     enabled: !!company?.companyId,
     staleTime: 1000 * 60 * 5,
+    // ✅ Logout sırasında hata ekranı gösterme
+    retry: (failureCount, error: any) => {
+      if (error?.status === 401 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 
   // ✅ Kullanıcı detayları
@@ -46,7 +53,32 @@ const CustomersPage = () => {
     },
     enabled: !!openUserId && !!company?.companyId,
     staleTime: 1000 * 60 * 2,
+    // ✅ Logout sırasında hata ekranı gösterme
+    retry: (failureCount, error: any) => {
+      if (error?.status === 401 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
+
+  // ✅ Company yoksa loading göster (logout sırasında)
+  if (!company) {
+    return (
+      <div className="min-h-screen text-white">
+        <CompanyNavbar />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center animate-spin">
+              <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">Oturum Kontrol Ediliyor</h3>
+            <p className="text-gray-400 text-sm">Lütfen bekleyin...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleShowDetails = (userId: string) => {
     setOpenUserId((prev) => (prev === userId ? null : userId));
@@ -125,7 +157,7 @@ const CustomersPage = () => {
                                       Adet
                                     </th>
                                     <th className="px-3 sm:px-4 py-2 text-center">
-                                      Fiyat (₺)
+                                      Harcama (₺)
                                     </th>
                                     <th className="px-3 sm:px-4 py-2 text-center">
                                       Nakit İade (₺)
