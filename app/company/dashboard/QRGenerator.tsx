@@ -3,21 +3,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { useCompanyOrStaffCompanyId } from "@/hooks/useCompanyOrStaffCompanyId";
 import { QrCode, Download } from "lucide-react";
-import Image from "next/image";
+import QRCode from "react-qr-code";
 
 export function QRGenerator() {
   const companyId = useCompanyOrStaffCompanyId();
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<number>(5); // cm cinsinden
 
   const menuUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/menu/${companyId}`;
 
   const generateQRCode = useCallback(async () => {
     setIsGenerating(true);
     try {
-      // QR kod oluşturma API'si
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(menuUrl)}`;
-      setQrCodeUrl(qrApiUrl);
+      // QR kod oluşturma - react-qr-code kütüphanesi ile
+      // API çağrısı yapmaya gerek yok, component otomatik oluşturur
+      setQrCodeUrl(menuUrl);
     } catch (error) {
       console.error("QR kod oluşturma hatası:", error);
     } finally {
@@ -31,16 +32,60 @@ export function QRGenerator() {
     }
   }, [companyId, generateQRCode]);
 
-  const downloadQR = () => {
+  const downloadQR = (sizeCm: number) => {
     if (qrCodeUrl) {
-      // Direkt PNG olarak indir - yeni sekme açmadan
-      const link = document.createElement('a');
-      link.href = qrCodeUrl;
-      link.download = `menu-qr-${companyId}.png`;
-      link.target = '_blank'; // Yeni sekmede aç
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // QR kod SVG'sini PNG olarak indir - daha spesifik selector
+      const qrContainer = document.querySelector('[data-testid="qr-code"]') || 
+                         document.querySelector('.inline-block svg') ||
+                         document.querySelector('svg');
+      
+      if (qrContainer) {
+        const svg = qrContainer.tagName === 'SVG' ? qrContainer : qrContainer.querySelector('svg');
+        
+        if (svg) {
+          // SVG'yi canvas'a çevir - transparan canvas
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          
+          // SVG'yi data URL'ye çevir - transparan arka plan
+          const svgData = new XMLSerializer().serializeToString(svg);
+          
+          const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+          const svgUrl = URL.createObjectURL(svgBlob);
+          
+          img.onload = () => {
+            // CM'yi pixel'e çevir (96 DPI varsayımı)
+            const pixelsPerCm = 96 / 2.54; // 1 cm = 37.8 pixel (96 DPI)
+            const sizeInPixels = Math.round(sizeCm * pixelsPerCm);
+            
+            canvas.width = sizeInPixels;
+            canvas.height = sizeInPixels;
+            
+            // Canvas'ı temizle - transparan yap
+            if (ctx) {
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              // QR kod'u çiz - boyutu ayarla
+              ctx.drawImage(img, 0, 0, sizeInPixels, sizeInPixels);
+            }
+            
+            // PNG olarak indir - transparan arka plan
+            const link = document.createElement('a');
+            link.download = `menu-qr-${companyId}-${sizeCm}cm.png`;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(svgUrl);
+          };
+          
+          img.src = svgUrl;
+        } else {
+          console.error('SVG bulunamadı');
+        }
+      } else {
+        console.error('QR container bulunamadı');
+      }
     }
   };
 
@@ -67,13 +112,11 @@ export function QRGenerator() {
         <div className="space-y-6">
           {/* QR Kod Görüntüleme */}
           <div className="text-center">
-            <div className="inline-block p-4 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
-              <Image 
-                src={qrCodeUrl} 
-                alt="Menu QR Code" 
-                width={192}
-                height={192}
-                className="mx-auto"
+            <div className="inline-block p-4 bg-white border-2 border-gray-200 rounded-xl shadow-sm" data-testid="qr-code">
+              <QRCode 
+                value={qrCodeUrl} 
+                size={192}
+                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
               />
             </div>
             <p className="text-sm text-gray-600 mt-3">
@@ -82,15 +125,32 @@ export function QRGenerator() {
           </div>
 
 
-          {/* Aksiyon Butonları */}
-          <div className="flex justify-center">
-            <button
-              onClick={downloadQR}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-            >
-              <Download className="w-4 h-4" />
-              PNG İndir
-            </button>
+          {/* Boyut Seçenekleri */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-gray-900 text-center">QR Kod Boyutu Seçin</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {[3, 5, 8, 10, 15, 20].map((size) => (
+                <button
+                  key={size}
+                  onClick={() => downloadQR(size)}
+                  className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border-2 transition-all ${
+                    selectedSize === size
+                      ? 'border-purple-600 bg-purple-50 text-purple-700'
+                      : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50 text-gray-900'
+                  }`}
+                >
+                  <div className="text-lg font-bold">{size} cm</div>
+                  <div className={`text-xs ${
+                    selectedSize === size ? 'text-purple-600' : 'text-gray-600'
+                  }`}>
+                    {size < 5 ? 'Küçük' : size < 10 ? 'Orta' : 'Büyük'}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <p className="text-sm text-gray-600 text-center">
+              Hangi boyutu seçerseniz o boyutta QR kod indirilir
+            </p>
           </div>
 
           {/* Kullanım Talimatları */}
@@ -101,7 +161,6 @@ export function QRGenerator() {
               <li>• Müşteriler QR kodu okutarak menünüze erişebilir</li>
               <li>• QR kod her zaman güncel menünüzü gösterir</li>
               <li>• Müşteriler üye olarak sadakat puanları kazanabilir</li>
-              <li>• <strong>Alternatif:</strong> QR koda sağ tıklayıp &quot;Resmi farklı kaydet&quot; ile de indirebilirsiniz</li>
             </ul>
           </div>
         </div>
