@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Star, Percent, UserPlus, ChevronDown } from "lucide-react";
+import { Star, ChevronDown } from "lucide-react";
 
 interface Product {
   id: number;
@@ -36,9 +35,6 @@ export function CompanyMenu({ company, categories }: CompanyMenuProps) {
   const [showCategoryProducts, setShowCategoryProducts] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredCategories = selectedCategory
-    ? categories.filter(cat => cat.id.toString() === selectedCategory)
-    : categories;
 
   // Arama fonksiyonu
   const filteredProducts = (products: Product[]) => {
@@ -157,7 +153,7 @@ export function CompanyMenu({ company, categories }: CompanyMenuProps) {
               {searchQuery.trim() ? (
                 <>
                   <h2 className="text-2xl font-bold text-orange-400 mb-2">Arama Sonuçları</h2>
-                  <p className="text-gray-400">"{searchQuery}" için bulunan ürünler</p>
+                  <p className="text-gray-400">&quot;{searchQuery}&quot; için bulunan ürünler</p>
                 </>
               ) : (
                 <>
@@ -185,7 +181,7 @@ export function CompanyMenu({ company, categories }: CompanyMenuProps) {
                     <div className="text-center py-12">
                       <div className="text-gray-400 text-4xl mb-4">🔍</div>
                       <h3 className="text-xl font-semibold text-gray-300 mb-2">Ürün bulunamadı</h3>
-                      <p className="text-gray-400">"{searchQuery}" araması için sonuç bulunamadı</p>
+                      <p className="text-gray-400">&quot;{searchQuery}&quot; araması için sonuç bulunamadı</p>
                     </div>
                   );
                 }
