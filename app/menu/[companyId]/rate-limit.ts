@@ -10,7 +10,7 @@ export function checkMenuRateLimit(request: NextRequest) {
   const identifier = `menu:${ip}`;
   
   // Menu sayfası için: 30 istek/dakika
-  const rateLimit = checkRateLimit(identifier, "api");
+  const rateLimit = checkRateLimit(identifier, "menu");
   
   if (!rateLimit.allowed) {
     return {

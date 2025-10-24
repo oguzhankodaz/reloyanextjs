@@ -208,7 +208,7 @@ export default function CompanyProfilePage() {
       if (data.success) {
         toast({
           title: "Başarılı",
-          description: "Nakit iade oranı güncellendi ✅",
+          description: data.message || `Nakit iade oranı güncellendi. ${data.updatedProducts || 0} ürün yeniden hesaplandı ✅`,
           variant: "success",
         });
       } else {
@@ -454,6 +454,24 @@ export default function CompanyProfilePage() {
           <div className="lg:col-span-2 bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-lg p-4 sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">Nakit İade Oranı</h2>
             <p className="text-gray-400 text-sm mb-4">Müşterilere verilecek varsayılan nakit iade yüzdesini belirleyin</p>
+            
+            {/* Uyarı Notu */}
+            <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-4">
+              <div className="flex items-start space-x-3">
+                <div className="text-yellow-400 text-xl">⚠️</div>
+                <div>
+                  <h3 className="text-yellow-400 font-semibold mb-2">
+                    Önemli Uyarı
+                  </h3>
+                  <p className="text-yellow-200 text-sm">
+                    Nakit iade oranını değiştirdiğinizde, <strong>tüm ürünlerinizin cashback değerleri</strong> yeni orana göre otomatik olarak yeniden hesaplanacaktır.
+                  </p>
+                  <p className="text-yellow-200 text-sm mt-2">
+                    Bu işlem geri alınamaz. Lütfen değişiklik yapmadan önce emin olun.
+                  </p>
+                </div>
+              </div>
+            </div>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium mb-2">Yüzde (%)</label>

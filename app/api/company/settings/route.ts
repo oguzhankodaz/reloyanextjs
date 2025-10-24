@@ -114,14 +114,31 @@ export async function PUT(req: Request) {
       );
     }
 
+    // Şirket ayarlarını güncelle
     await prisma.company.update({
       where: { id: decoded.companyId },
       data: { cashbackPercentage },
     });
 
+    // Tüm ürünlerin cashback değerlerini yeni orana göre güncelle
+    const products = await prisma.product.findMany({
+      where: { companyId: decoded.companyId },
+      select: { id: true, price: true },
+    });
+
+    // Her ürün için yeni cashback değerini hesapla ve güncelle
+    for (const product of products) {
+      const newCashback = (product.price * cashbackPercentage) / 100;
+      await prisma.product.update({
+        where: { id: product.id },
+        data: { cashback: newCashback },
+      });
+    }
+
     return NextResponse.json({
       success: true,
-      message: "Ayarlar güncellendi",
+      message: `Ayarlar güncellendi. ${products.length} ürünün cashback değeri yeniden hesaplandı.`,
+      updatedProducts: products.length,
     });
   } catch (error) {
     console.error("Settings PUT error:", error);

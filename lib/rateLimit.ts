@@ -32,6 +32,11 @@ const RATE_LIMIT_CONFIG = {
     maxRequests: 100,
     windowMs: 60 * 1000, // 1 minute
   },
+  // Menu pages: 30 requests per minute
+  menu: {
+    maxRequests: 30,
+    windowMs: 60 * 1000, // 1 minute
+  },
   // Auth endpoints: 5 login attempts per 15 minutes
   auth: {
     maxRequests: 5,
@@ -70,7 +75,7 @@ function cleanup() {
  */
 export function checkRateLimit(
   identifier: string,
-  type: "dsar" | "api" | "auth" | "passwordReset" = "api"
+  type: "dsar" | "api" | "menu" | "auth" | "passwordReset" = "api"
 ): {
   allowed: boolean;
   remaining: number;
