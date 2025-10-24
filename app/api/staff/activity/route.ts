@@ -198,7 +198,7 @@ export async function POST(req: Request) {
         if (p.cashbackEarned > 0 && up) {
           await tx.userPoints.update({
             where: { id: up.id },
-            data: { totalPoints: { decrement: Math.round(p.cashbackEarned) } },
+            data: { totalPoints: { decrement: p.cashbackEarned } },
           });
         }
         await tx.purchase.delete({ where: { id } });

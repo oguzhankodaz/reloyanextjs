@@ -61,8 +61,8 @@ export async function addPurchaseByStaffAction(formData: FormData) {
 
       await tx.userPoints.upsert({
         where: { userId_companyId: { userId, companyId } },
-        update: { totalPoints: { increment: Math.round(cashbackEarned) } },
-        create: { userId, companyId, totalPoints: Math.round(cashbackEarned) },
+        update: { totalPoints: { increment: cashbackEarned } },
+        create: { userId, companyId, totalPoints: cashbackEarned },
       });
 
       // 🏆 Kullanıcının toplam kazancını güncelle (rozet sistemi için)
