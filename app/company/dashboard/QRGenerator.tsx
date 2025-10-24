@@ -146,6 +146,11 @@ export function QRGenerator() {
                   }`}>
                     {size < 5 ? 'Küçük' : size < 10 ? 'Orta' : 'Büyük'}
                   </div>
+                  <div className={`text-xs font-medium ${
+                    selectedSize === size ? 'text-purple-600' : 'text-gray-500'
+                  }`}>
+                    İndir
+                  </div>
                 </button>
               ))}
             </div>
