@@ -5,6 +5,7 @@ import { CompanyMenuSkeleton } from "./CompanyMenuSkeleton";
 import { CompanyMenu } from "./CompanyMenu";
 import { checkMenuRateLimit } from "./rate-limit";
 import { headers } from "next/headers";
+import type { NextRequest } from "next/server";
 
 interface MenuPageProps {
   params: Promise<{ companyId: string }>;
@@ -57,7 +58,7 @@ export default async function MenuPage({ params }: MenuPageProps) {
   
   // Rate limiting kontrolü
   const headersList = await headers();
-  const request = new Request('http://localhost', { headers: headersList }) as any;
+  const request = new Request('http://localhost', { headers: headersList }) as NextRequest;
   const rateLimit = checkMenuRateLimit(request);
   
   if (!rateLimit.allowed) {
