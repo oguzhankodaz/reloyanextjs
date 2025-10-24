@@ -7,6 +7,11 @@ frontend:
         - nvm use 20
         - node -v
         - npm ci --include=dev
+        # --- ENV GUARDS (değerleri yazdırmadan var mı yok mu kontrol) ---
+        - '[ -n "$DATABASE_URL" ] && echo "✅ DATABASE_URL set" || (echo "❌ DATABASE_URL missing" && exit 1)'
+        - '[ -n "$JWT_SECRET" ] && echo "✅ JWT_SECRET set"   || (echo "❌ JWT_SECRET missing" && exit 1)'
+        # (opsiyonel) diğer gizliler için benzer satırlar ekleyebilirsin:
+        # - '[ -n "$SENDGRID_API_KEY" ] && echo "✅ SENDGRID_API_KEY set" || echo "⚠️ SENDGRID_API_KEY missing"'
     build:
       commands:
         - npm run build
@@ -16,5 +21,5 @@ frontend:
       - '**/*'
   cache:
     paths:
-      - node_modules/**/*
       - .next/cache/**/*
+      - .npm/**/*
