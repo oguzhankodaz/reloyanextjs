@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useCompanyOrStaffCompanyId } from "@/hooks/useCompanyOrStaffCompanyId";
-import { QrCode, Download } from "lucide-react";
+import { QrCode, Download, ExternalLink } from "lucide-react";
 import QRCode from "react-qr-code";
+import Link from "next/link";
 
 export function QRGenerator() {
   const companyId = useCompanyOrStaffCompanyId();
@@ -151,6 +152,19 @@ export function QRGenerator() {
             <p className="text-sm text-gray-600 text-center">
               Hangi boyutu seçerseniz o boyutta QR kod indirilir
             </p>
+          </div>
+
+          {/* Menüyü Gör Linki */}
+          <div className="flex justify-center">
+            <Link
+              href={`/menu/${companyId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Menüyü Gör
+            </Link>
           </div>
 
           {/* Kullanım Talimatları */}

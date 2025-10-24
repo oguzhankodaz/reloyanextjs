@@ -17,12 +17,17 @@ export default function CategoryManager() {
   const [name, setName] = useState("");
   const toast = useRadixToast();
 
-  // Kategorileri yükle
+  // Kategorileri yükle - ilk eklenen en üstte
   const { data: categoriesData, isLoading } = useQuery({
     queryKey: ["categories", company?.companyId],
     queryFn: async () => {
       const response = await fetch("/api/categories");
-      return response.json();
+      const data = await response.json();
+      // İlk eklenen en üstte olacak şekilde sırala (id'ye göre artan)
+      if (data.categories) {
+        data.categories.sort((a: Category, b: Category) => a.id - b.id);
+      }
+      return data;
     },
     enabled: !!company?.companyId,
   });
@@ -169,7 +174,13 @@ export default function CategoryManager() {
 
       {/* Kategori Listesi */}
       <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
-        <h3 className="text-lg font-semibold text-white mb-4">Kategoriler</h3>
+        <h3 className="text-lg font-semibold text-white mb-2">Kategoriler</h3>
+        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3 mb-4">
+          <p className="text-blue-300 text-sm">
+            <span className="font-semibold">📋 Sıralama Bilgisi:</span> Kategoriler menüde ilk eklenen en üstte görünür. 
+            Sıra numaraları (#1, #2, #3...) bu sayfada gösterilir.
+          </p>
+        </div>
         
         {isLoading ? (
           <div className="text-center py-4">
@@ -182,14 +193,19 @@ export default function CategoryManager() {
           </div>
         ) : (
           <div className="space-y-2">
-            {categories.map((category) => (
+            {categories.map((category, index) => (
               <div
                 key={category.id}
                 className="flex items-center justify-between bg-gray-600 rounded-lg p-3 border border-gray-500 min-h-[60px]"
               >
-                <span className="text-white font-medium flex-1 min-w-0 pr-2 line-clamp-2">
-                  {category.name}
-                </span>
+                <div className="flex items-center flex-1 min-w-0 pr-2">
+                  <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full mr-3 flex-shrink-0">
+                    #{index + 1}
+                  </span>
+                  <span className="text-white font-medium line-clamp-2">
+                    {category.name}
+                  </span>
+                </div>
                 <button
                   onClick={() => handleDelete(category.id, category.name)}
                   disabled={deleteMutation.isPending}

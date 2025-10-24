@@ -64,8 +64,9 @@ model CompanyStaff {
 }
 
 model Category {
-  id   Int    @id @default(autoincrement())
-  name String
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
 
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String

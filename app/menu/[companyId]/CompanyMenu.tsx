@@ -33,6 +33,7 @@ interface CompanyMenuProps {
 export function CompanyMenu({ company, categories }: CompanyMenuProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState<{ [productId: number]: boolean }>({});
+  const [showCategoryProducts, setShowCategoryProducts] = useState(false);
 
   const filteredCategories = selectedCategory 
     ? categories.filter(cat => cat.id.toString() === selectedCategory)
@@ -45,19 +46,29 @@ export function CompanyMenu({ company, categories }: CompanyMenuProps) {
     }));
   };
 
+  const handleCategoryClick = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setShowCategoryProducts(true);
+  };
+
+  const handleBackToCategories = () => {
+    setShowCategoryProducts(false);
+    setSelectedCategory(null);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Top Register Banner - İnce Mor Tasarım */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
+      {/* Top Register Banner - Modern Siyah Tasarım */}
+      <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-2 border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Star className="w-4 h-4 text-yellow-300" />
-              <span className="text-sm font-medium">Reloya ile harcadıkça kazan</span>
+              <Star className="w-4 h-4 text-yellow-400" />
+              <span className="text-sm font-medium text-gray-200">Reloya ile harcadıkça kazan</span>
             </div>
             <Link 
               href="/register"
-              className="bg-white text-purple-600 px-3 py-1.5 rounded-md text-sm font-bold hover:bg-purple-50 transition-colors"
+              className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1.5 rounded-md text-sm font-bold hover:from-green-600 hover:to-green-700 transition-all shadow-lg"
             >
               Üye Ol
             </Link>
@@ -68,95 +79,76 @@ export function CompanyMenu({ company, categories }: CompanyMenuProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6">
             {company.name}
           </h1>
-          
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Categories Sidebar - Mobile: Horizontal Scroll, Desktop: Vertical */}
-          <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-8">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Kategoriler</h2>
-              
-              {/* Mobile: Horizontal Scroll */}
-              <div className="lg:hidden">
-                <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-                  <button
-                    onClick={() => setSelectedCategory(null)}
-                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                      selectedCategory === null
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "bg-white/70 backdrop-blur-sm text-gray-700 border border-white/50 hover:bg-white/80 hover:shadow-sm"
-                    }`}
-                  >
-                    Tümü
-                  </button>
-                  {categories.map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category.id.toString())}
-                      className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                        selectedCategory === category.id.toString()
-                          ? "bg-blue-600 text-white shadow-md"
-                          : "bg-white/70 backdrop-blur-sm text-gray-700 border border-white/50 hover:bg-white/80 hover:shadow-sm"
-                      }`}
-                    >
+        {/* Ana İçerik */}
+        {!showCategoryProducts ? (
+          // Kategoriler Listesi
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">Kategoriler</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryClick(category.id.toString())}
+                  className="bg-gray-800/70 backdrop-blur-sm rounded-xl p-6 border border-gray-600 hover:border-orange-400/50 hover:bg-gray-700/80 transition-all duration-300 text-left group"
+                >
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-orange-400 mb-2 group-hover:text-orange-300">
                       {category.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Desktop: Vertical List */}
-              <div className="hidden lg:block">
-                <div className="space-y-2 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                  <button
-                    onClick={() => setSelectedCategory(null)}
-                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${
-                      selectedCategory === null
-                        ? "bg-blue-600 text-white font-medium shadow-md"
-                        : "bg-white/70 backdrop-blur-sm text-gray-700 border border-white/50 hover:bg-white/80 hover:shadow-sm"
-                    }`}
-                  >
-                    Tümü
-                  </button>
-                  {categories.map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category.id.toString())}
-                      className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${
-                        selectedCategory === category.id.toString()
-                          ? "bg-blue-600 text-white font-medium shadow-md"
-                          : "bg-white/70 backdrop-blur-sm text-gray-700 border border-white/50 hover:bg-white/80 hover:shadow-sm"
-                      }`}
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                    </h3>
+                    <p className="text-gray-400 text-sm">
+                      {category.products.length} ürün
+                    </p>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
+        ) : (
+          // Seçili Kategori Ürünleri
+          <div className="max-w-6xl mx-auto">
+            {/* Geri Butonu */}
+            <button
+              onClick={handleBackToCategories}
+              className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Geri
+            </button>
 
-          {/* Products Grid */}
-          <div className="lg:col-span-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              {filteredCategories.map((category) =>
-                category.products.map((product) => (
+            {/* Kategori Başlığı */}
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-orange-400 mb-2">
+                {categories.find(cat => cat.id.toString() === selectedCategory)?.name}
+              </h2>
+              <p className="text-gray-400">
+                {categories.find(cat => cat.id.toString() === selectedCategory)?.products.length} ürün
+              </p>
+            </div>
+
+            {/* Ürünler Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {categories
+                .find(cat => cat.id.toString() === selectedCategory)
+                ?.products.map((product) => (
                   <div
                     key={product.id}
-                    className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-sm border border-white/50 overflow-hidden hover:shadow-lg hover:bg-white/80 transition-all duration-300"
+                    className="bg-gray-800/70 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-600 overflow-hidden hover:shadow-lg hover:bg-gray-700/80 transition-all duration-300 hover:border-orange-400/50"
                   >
-                    <div className="p-4 sm:p-6">
-                      <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
+                    <div className="p-6">
+                      <h3 className="text-lg sm:text-xl font-semibold text-orange-400 mb-3">
                         {product.name}
                       </h3>
                       
                       {product.description && (
                         <div className="mb-4">
-                          <p className={`text-gray-600 text-sm sm:text-base leading-relaxed ${
+                          <p className={`text-gray-300 text-sm sm:text-base leading-relaxed ${
                             expandedDescriptions[product.id] ? '' : 'line-clamp-2'
                           }`}>
                             {product.description}
@@ -164,13 +156,13 @@ export function CompanyMenu({ company, categories }: CompanyMenuProps) {
                           {product.description.length > 100 && (
                             <button
                               onClick={() => toggleDescription(product.id)}
-                              className="text-blue-600 text-sm font-medium mt-2 flex items-center hover:text-blue-700 transition-colors"
+                              className="text-cyan-400 text-sm font-medium mt-2 flex items-center hover:text-cyan-300 transition-colors"
                             >
                               {expandedDescriptions[product.id] ? 'Daha az göster' : 'Devamını oku'}
                               <ChevronDown 
                                 className={`w-4 h-4 ml-1 transition-transform ${
                                   expandedDescriptions[product.id] ? 'rotate-180' : ''
-                                }`} 
+                                }`}
                               />
                             </button>
                           )}
@@ -178,30 +170,18 @@ export function CompanyMenu({ company, categories }: CompanyMenuProps) {
                       )}
 
                       <div className="flex items-center justify-between mb-4">
-                        <div className="text-xl sm:text-2xl font-bold text-gray-900">
+                        <div className="text-xl sm:text-2xl font-bold text-green-400 bg-green-900/20 px-3 py-1 rounded-lg">
                           ₺{product.price.toFixed(2)}
                         </div>
                       </div>
-
-                      {/* Mini Reloya Reklamı */}
-                    
                     </div>
                   </div>
-                ))
-              )}
+                ))}
             </div>
-
-            {filteredCategories.every(cat => cat.products.length === 0) && (
-              <div className="text-center py-12">
-                <div className="text-gray-500 text-lg">
-                  Bu kategoride henüz ürün bulunmuyor
-                </div>
-              </div>
-            )}
           </div>
-
-        </div>
+        )}
       </div>
     </div>
   );
 }
+

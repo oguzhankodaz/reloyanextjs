@@ -24,24 +24,24 @@ async function getCompanyData(companyId: string) {
       return null;
     }
 
-    const categories = await prisma.category.findMany({
-      where: { companyId },
-      select: {
-        id: true,
-        name: true,
-        products: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            price: true,
-            cashback: true,
-          },
-          orderBy: { name: "asc" },
+  const categories = await prisma.category.findMany({
+    where: { companyId },
+    select: {
+      id: true,
+      name: true,
+      products: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          price: true,
+          cashback: true,
         },
+        orderBy: { name: "asc" },
       },
-      orderBy: { name: "asc" },
-    });
+    },
+    orderBy: { id: "asc" }, // İlk eklenen en üstte (id'ye göre)
+  });
 
     return { company, categories };
   } catch (error) {
