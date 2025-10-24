@@ -12,6 +12,8 @@ import { NextRequest } from "next/server";
 import { LEGAL_CONFIG } from "@/legal/config";
 import { isValidEmail, isValidName, isValidPhone } from "@/lib/helpers";
 
+export const runtime = "nodejs";
+
 /**
  * İstek gövdesi tipi
  */

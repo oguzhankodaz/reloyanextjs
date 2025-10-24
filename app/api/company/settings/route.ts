@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 
+export const runtime = "nodejs";
+
 // GET - Şirket ayarlarını getir (hem company hem staff erişebilir)
 export async function GET() {
   try {

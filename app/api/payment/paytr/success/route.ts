@@ -5,6 +5,8 @@ import crypto from "crypto";
 import prisma from "@/lib/prisma";
 import { addMonths, addYears } from "date-fns";
 
+export const runtime = "nodejs";
+
 const MERCHANT_KEY = process.env.PAYTR_MERCHANT_KEY;
 const MERCHANT_SALT = process.env.PAYTR_MERCHANT_SALT;
 

@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkSession } from "@/actions/auth";
 
+export const runtime = "nodejs";
+
 // GET - Kullanıcının onaylarını getir
 export async function GET() {
   try {

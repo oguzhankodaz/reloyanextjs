@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { sendPasswordResetEmail } from "@/lib/mailer";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rateLimit";
 
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
   try {
     // ✅ Rate limiting

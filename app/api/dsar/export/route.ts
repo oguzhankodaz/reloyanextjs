@@ -10,6 +10,8 @@ import {
 } from "@/lib/rateLimit";
 import { NextRequest } from "next/server";
 
+export const runtime = "nodejs";
+
 /**
  * DSAR Export - Kullanıcının tüm verilerini dışa aktarma
  * KVKK m.11 - Kişisel verilerin bir kopyasını talep etme hakkı

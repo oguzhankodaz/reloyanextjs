@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import { isValidPassword } from "@/lib/helpers";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rateLimit";
 
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
   try {
     // ✅ Rate limiting

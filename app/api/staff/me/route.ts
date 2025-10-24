@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
+export const runtime = "nodejs";
+
 interface StaffPayload extends jwt.JwtPayload {
   staffId: string;
   email: string;

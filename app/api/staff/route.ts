@@ -5,6 +5,8 @@ import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 
+export const runtime = "nodejs";
+
 interface CompanyPayload extends jwt.JwtPayload {
   type: string;
   companyId: string;

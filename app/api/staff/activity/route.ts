@@ -8,6 +8,8 @@ import { toTitleCase } from "@/lib/helpers";
 import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { startOfDay } from "date-fns";
 
+export const runtime = "nodejs";
+
 // Türkiye saat dilimi
 const TIMEZONE = "Europe/Istanbul";
 

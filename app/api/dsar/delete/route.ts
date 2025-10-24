@@ -11,6 +11,8 @@ import {
 import { NextRequest } from "next/server";
 import { LEGAL_CONFIG } from "@/legal/config";
 
+export const runtime = "nodejs";
+
 /**
  * DSAR Delete - Kullanıcının verilerinin silinmesi talebi
  * KVKK m.7 - Kişisel verilerin silinmesini/yok edilmesini isteme hakkı
